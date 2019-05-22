@@ -1,4 +1,5 @@
-# www.mtreiber.de/mixedTraffic/
+# Fully Twodimensional Mixed Traffic Simulation
+
 Source code for the interactive Javascript simulation at
 [www.mtreiber.de/mixedTraffic](http://www.mtreiber.de/mixedTraffic)
 
@@ -11,12 +12,8 @@ here, I will concentrate on the implementation.
 
 Presently,
 I have implemented the "Mixed Traffic flow Model" (MTM) described in detail in
-the paper  
-[Self-Driven Particle Model for Mixed Traffic and Other Disordered
-Flows](https://doi.org/10.1016/j.physa.2018.05.086), Physica A:
-Statistical Mechanics and its Applications 509, 1-11. This reference is also
-accessible via the [https://arxiv.org/abs/1805.05076](arXiv
-server).
+[Reference 1](https://doi.org/10.1016/j.physa.2018.05.086), also
+available [here](https://arxiv.org/abs/1805.05076).
 
 To my knowledge, this is the first fully operational 2d model
 for traffic flow. Notice that, while similar from a formal;
@@ -35,8 +32,8 @@ Driver Model, or variants thereof.
 This simulation uses JavaScript together with html5.
 
 The master html file index.html, starts the actual simulation by the canvas tag:
-```
-<canvas id="canvas_mixed" ...  </canvas>
+```html
+<canvas id="canvas_mixed"...> ...  </canvas>
 ```
 What to do with this canvas is specified in the _init()_ procedure of sim-straight.js which starts the simulation and is assocoated with this canvas by the first command of the init procedure,
 
@@ -46,7 +43,9 @@ What to do with this canvas is specified in the _init()_ procedure of sim-straig
 
 At the end of the initialization, _init()_ starts the actual simulation thread by the command 
 
-`return setInterval(main_loop, 1000/fps);`
+```
+return setInterval(main_loop, 1000/fps);
+```
 
 The initial canvas dimensions are overridden depending on the actual browser's
 viewport size by additional controls in _canvasresize.js_ implementing a responsive design.
@@ -84,14 +83,14 @@ onedimensional lanes.
 It also provides methods to draw the road and the vehicles and obstacles
 on it, and optionally vehicle IDs and the actual acceleration
 vectors for each vehicle. These drawing methods depend on the road geometry functions
-```axis_x``` and ```axis_y``` defining the road axis in physical x-y
+_axis\_x_ and _axis\_y_ defining the road axis in physical x-y
 coordinates as a parametric function of the logical longitudinal
-position u. This function is provided in the calling class _sim-straight.js
+position u. This function is provided in the calling class _sim-straight.js_
 
 ### vehicle.js
 
 each vehicle has _(i)_ properties such as length, width, and type, _(ii)_ dynamic variables such as the
-longitudinal and lateral position (u,v) in logical coordinates, the
+longitudinal and lateral position _(u,v)_ in logical coordinates, the
 velocity (speedLong, speedLat) and acceleration vectors, and _(iii_)
 instances of the acceleration models/methods from _models.js_.
 
@@ -107,10 +106,9 @@ for more details.
 ### models.js
 
 a collection of pseudo-classes for the underlying longitudinal
-car-following models, presently, the IDM and the ACC model (see
-M. Treiber and A. Kesting, "Traffic Flow Dynamics", Springer, 2013,
-for details) as well as the MTM generalizing the longitudinal models
-to a fully twodimensional dynamics
+car-following models, presently, the IDM and the ACC model (see Ref[2]
+for details) as well as the MTM (Ref [1]) generalizing the longitudinal models
+to a fully twodimensional dynamics.
 
 ### plotxy.js
 
@@ -124,31 +122,34 @@ Helper functions providing some speed and type-dependent color maps to draw the 
 ### arrow.js
 
 Helper function for drawing the arrows representing the acceleration
-vectors if "Display Forces" is on.
+vectors if the GUI element _Display Forces_ is on.
 
 
 ## Numerical Integration
 
 Like the Social-Force Model, the MTM is a time-continuous
 acceleration-based particle model, i.e., the formal dynamics is like
-that of Newtonian particles of unit mass. While generally, Runge-Kutta
-of forth order (RK4) is used for such updates, we use the ballistic update,
-i.e., considering the accelerations for the positional update (second
+that of Newtonian particles of unit mass. Mathematically, we obtain
+coupled ordinary differential equations (ODEs). While, generally, Runge-Kutta
+of forth order (RK4) is used for approximatively numerically solving
+such a system of ODEs, we use the ballistic update instead,
+i.e., taking into consideration the accelerations for the positional update (second
 order) but keeping the acceleration constant during this step
 (first-order Euler update for the velocities). Although this ballistic update
 method is first order as a whole, it turned out to be more efficient
 than RK4 (and also than the simple Euler update scheme). The reason is
-that the right-hand sides of the coupled ordinary
-differential equations generally are not smooth effectively reducing also RK4 to
-first order. Details can be found in the reference "Comparing Numerical Integration Schemes for Time-Continuous Car-Following Models
-Physica A: Statistical Mechanics and its Applications 419C, 183-195
-[download from arXiv](https://arxiv.org/abs/1403.4881)
+that the right-hand sides of the ODEs are generally not smooth
+(sufficiently often differentiable with respect to the state variables) effectively reducing also RK4 to
+first order. Details can be found in [Reference
+5](https://arxiv.org/abs/1403.4881). 
 
 The pseudo-code for the ballistic update over a fixed time interval _dt_ is as follows:
 
-_velocityVector(t+dt)=velocityVector(t)+accVector(t)*dt,_
+```
+velocityVector(t+dt)=velocityVector(t)+accVector(t)*dt;
+posVector(t+dt)=posVector(t)+velocityVector(t)*dt+1/2*accVector(t)*dt^2;
 
-_posVector(t+dt)=posVector(t)+velocityVector(t)*dt+1/2*accVector(t)*dt^2_,
+```
 
 where _accVector(t)_ is calculated by the MTM.
 
@@ -162,9 +163,9 @@ Notice that we implement parallel update. One complete update step
 
 The drawing is essentially based on images:
 
-* The background is just a jpeg image.
+* The background is just a _jpeg_ or _png_ image.
 
-* Each road network element is composed of typically 50-100 small road segments. Each   road segment  (a small png file) represents typically 10m-20m of the road length with all the lanes. By transforming this image (translation, rotation,scaling) and drawing it multiple times, realistically looking roads can be drawn.
+* Each road network element is composed of typically 50-100 small road segments. Each   road segment  (a small _png_ file) represents typically 10m-20m of the road length with all the lanes. By transforming this image (translation, rotation,scaling) and drawing it multiple times, realistically looking roads can be drawn.
 
 * The vehicles are drawn first as b/w. images (again translated, rotated, and scaled accordingly) to which an (appropriately transformed) semi-transparent rectangle is added to display the color-coding of the speeds.
 
