@@ -1,0 +1,235 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+        "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+
+
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=iso-8859-1">
+    <link href="css/styleMixed.css" rel="stylesheet" type="text/css"/>
+
+    <title>Microsimulation of Mixed Traffic Flow</title> 
+</head>
+
+
+<body>
+
+
+<!-- ############################################## -->
+<!-- outer container                                -->
+<!-- ############################################## -->
+
+<div id="container">
+
+
+<!-- ############################################## -->
+<!-- header: title image loaded as background image via css -->
+<!-- ############################################## -->
+
+<div id="header"> 
+  Mixed Traffic Flow 
+  <!--<img class="title" src="figs/Mixed_Traffic_Flow.png"  width="100%"/>-->
+</div> 
+
+<div id="infoLink">
+ <a href="info.html"> <img src="figs/infoBlue.png" width="100%"/></a>
+</div> 
+<!-- ############################################## -->
+<!-- Buttons                                        -->
+<!-- ############################################## -->
+
+
+<div id="scenarios">
+
+
+  <button id="startStop" onclick="myStartStopFunction()">Stop</button>
+
+
+ 
+  <button id="forcefieldToggle" 
+          onclick="myForcefieldToggle()">Display Forces</button>
+
+  <button id="varWidthLeftToggle" 
+          onclick="myVarWidthLeftToggle()">Var. width left</button>
+
+  <button id="varWidthRightToggle" 
+          onclick="myVarWidthRightToggle()">Var. width right</button>
+
+  <button id="floorFieldToggle" 
+          onclick="myFloorFieldToggle()">Floor field</button>
+
+
+  <!-- interactively read new initial conditions from file -->
+  <!-- label "for" forwards action/focus to hidden input=file button-->
+  <!--BUG: DOS of label width -->
+
+  <label for="microICalt" 
+         class="custom-file-upload">IC from<br>file</label>
+
+  <!-- input=file hidden in css since it is unflexible (always
+  "choose") -->
+  <!-- only onchange works! oninput DOS in chrome, onclick error in
+  Chrome. However, onchange needs a *different* file each time it is
+  selected in Chrome! see <GRMPF> in gui.js -->
+  <input id="microICalt" type="file" onchange="readTextFile(this)"/>
+
+ 
+
+</div> 
+
+
+<!-- ############################################## -->
+<!-- the actual simulation canvas -->
+<!-- ############################################## -->
+
+<div id="contents"> 
+  <canvas id="canvas_mixed" width="800" height="700"
+    onmousemove="activateCoordDisplay(event)"
+    onmouseout="deactivateCoordDisplay(event)">
+    <!-- on[cC]lick,onmousedown,onmousemove,onmouseover,onmousedragged-->
+
+    You are probably using a very ancient web browser (or an Internet Explorer) 
+    not supporting html5 canvas. Please switch to another browser for
+    running this simulation.
+  </canvas>
+</div>
+
+<div id="displayCoords"></div>
+
+
+<!-- ################################################# -->
+<!-- Sliders 1: global simulation and demand variables -->
+<!-- ################################################# -->
+
+<div id="sliders1">
+<table  border="0" cellspacing="1" cellpadding="1" >
+<!-- !! ">Density<", not "> Density <" etc because of engl2ger. bash-->
+
+<tr>
+  <td> Timewarp </td>
+  <td> <input id="sliderTimewarp" type="range" min="0" max="10" step="0.05" value="1.5"></td>
+  <td> <div id="sliderTimewarpVal"></div></td>
+</tr>
+
+
+
+<tr>
+  <td> Inflow </td>
+  <td> <input id="slider_inflow" type="range" 
+              min="0" max="2" step="0.01" value="1.8"></td>
+  <td> <div id="slider_inflowVal"></div></td>
+</tr>
+
+<tr>
+  <td> MaxOutflow </td>
+  <td> <input id="slider_outflow" type="range" 
+              min="0" max="1" step="0.01" value="0.6"></td>
+  <td> <div id="slider_outflowVal"></div></td>
+</tr>
+
+<!-- at slider_speedmax commenting out works!! -->
+<!--
+<tr>
+  <td> MaxSpeed </td>  
+  <td> <input id="slider_speedmax" type="range" 
+              min="1" max="30" step="0.5" value="20"></td>
+  <td> <div id="slider_speedmaxVal"></div></td>
+</tr>
+-->
+
+<tr>
+  <td> fracTruck </td>
+  <td> <input id="slider_fracTruck" type="range" 
+              min="0" max="1" step="0.01" value="0.2"></td>
+  <td> <div id="slider_fracTruckVal"></div></td>
+</tr>
+
+<tr>
+  <td> fracBike </td>
+  <td> <input id="slider_fracBike" type="range" 
+              min="0" max="1" step="0.01" value="0.2"></td>
+  <td> <div id="slider_fracBikeVal"></div></td>
+</tr>
+
+<tr>
+  <td> politeness </td>
+  <td> <input id="slider_politeness" type="range" 
+              min="-0.2" max="1" step="0.01" value="0.2"></td>
+  <td> <div id="slider_politenessVal"></div></td>
+</tr>
+
+<tr>
+  <td> tau<sub>latOVM</sub> </td>
+  <td> <input id="slider_tauLatOVM" type="range" 
+              min="0.2" max="3" step="0.1" value="0.4"></td>
+  <td> <div id="slider_tauLatOVMVal"></div></td>
+</tr>
+
+<tr>
+  <td> sens<sub>dvy</sub> </td>
+  <td> <input id="slider_sensDvy" type="range" 
+              min="0" max="2" step="0.01" value="0.0"></td>
+  <td> <div id="slider_sensDvyVal"> </div></td>
+</tr>
+
+
+
+
+
+<!--  only if displayForces=true and displayStile=0 (with probe --
+  --  vehicle)-->
+<!-- control by js:
+  http://www.w3schools.com/jsref/met_table_insertrow.asp-->
+
+<!--
+<tr>
+  <td> SpeedProbe </td>
+  <td> <input id="slider_speedProbe" type="range" 
+              min="0" max="30" step="0.1" value="4"></td>
+  <td> <div id="slider_speedProbeVal"></div></td>
+</tr>
+-->
+
+</table>
+
+
+
+</div>
+
+
+
+<!-- ############################################## -->
+<!-- other elements on main html page
+<!-- ############################################## -->
+
+<div id="impressum"> <a href="impressum.html">
+  &copy; Martin Treiber</a></div>
+
+<!-- ############################################## -->
+<!-- end former navigation*.html frame   -->
+<!-- ############################################## -->
+
+
+</div> <!-- end outer container -->
+
+
+<!-- ########################################################## -->
+<!-- specific scripts; position below any simulation elements ! -->
+<!-- ########################################################## -->
+
+<script src="js/seedrandom.min.js"></script> <!-- random w seed debug -->
+
+<script src="js/colormanip.js"></script> 
+<script src="js/plotxy.js"></script> 
+<script src="js/arrow.js"></script> 
+
+<script src="js/models.js"></script> 
+<script src="js/vehicle.js"></script> 
+<script src="js/road.js"></script>
+
+<script src="js/sim-straight.js"></script>
+<script src="js/gui.js" type="text/javascript"></script>
+
+
+</body>
+</html>

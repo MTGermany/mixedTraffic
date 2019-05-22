@@ -1,0 +1,63 @@
+# user-defined ignores (avoid committing large files)
+
+*.swp
+*.zip
+*.sh
+README_*
+
+## Core latex/pdflatex auxiliary files:
+*.aux
+*.lof
+*.log
+*.lot
+*.fls
+*.out
+*.toc
+*.dvi
+*.bash
+
+## Figure files (no longer)
+#*.fig
+
+## generated files (not info/info_*.html !)
+index_ger.html
+offramp_ger.html
+onramp_ger.html
+roadworks_ger.html
+routing_ger.html
+uphill_ger.html
+ring_ger.html
+roundabout_ger.html
+
+
+*_ger.js
+*~
+int
+*.bak
+trafficSimulationLocalVersion*
+*screenshot*
+
+## other files
+save
+uml_savedFiles
+info_links_old.html
+README_Responsinator
+README_privateContributions
+#README_TODO
+README_formalChanges
+bash/generateSpiffyTrafficSim2.README
+bash/generateSpiffyTrafficSim2.sh.old
+old
+css_old
+info_old
+trafficSimulationLocalVersion
+testNetwork
+js/save
+testfile
+documentation
+competition/2017_10_18_notWon
+*save.*
+
+# eclipse settings
+/.settings/
+/.project

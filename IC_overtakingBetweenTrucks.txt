@@ -1,0 +1,7 @@
+# test circumventing two smaller vehicles
+#type     length   width  u	v	speedLong	speedLat
+car	  5	   2	  30.0	0	20.		0.
+truck	  10	   3	  80.0	2	10.		0.
+truck	  10	   3	  70.0	-2	10.		0.
+bike	  2	   1	  10	0	20		0
+

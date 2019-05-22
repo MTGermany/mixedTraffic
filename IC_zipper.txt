@@ -1,0 +1,21 @@
+#test zipper-like merging (take vehicles of one type as input)
+#type     length   width  u	v	speedLong	speedLat
+car	  8.0	   3.0	  20	3	15		0
+car	  8.0	   3.0	  28	-3	15		0
+car	  8.0	   3.0	  50	3	15		0
+car	  8.0	   3.0	  53	-3	15		0
+obstacle  110	   24	  300	10	0		0
+obstacle  15	   24	  200	10	0		0
+obstacle  15	   24	  190	10	0		0
+obstacle  15	   24	  180	10	0		0
+obstacle  15	   30	  170	10	0		0
+obstacle  15	   29	  160	10	0		0
+obstacle  15	   28	  150	10	0		0
+obstacle  15	   26	  140	10	0		0
+obstacle  8	   22	  130	10	0		0
+obstacle  8	   18	  125	10	0		0
+obstacle  8	   14	  120	10	0		0
+obstacle  8	   10	  115	10	0		0
+obstacle  8	   6	  110	10	0		0
+obstacle  8	   3	  105	10	0		0
+obstacle  8	   1	  100	10	0		0

@@ -1,0 +1,172 @@
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=iso-8859-1">
+    <link href="css/styleMixed.css" rel="stylesheet" type="text/css"/>
+
+    <title>Information on the mixed traffic flow simulation</title> 
+</head>
+
+<center><h1> Information on the mixed traffic flow simulation</h1></center>
+<div id="infoLink">
+ <a href="index.html">Back to the simulation</a>
+</div> 
+
+<div id="infotext">
+This is a simulation of the fully two-dimensional model which is fully
+documented in following reference:<br>
+
+&nbsp;
+<div id="citation">
+Venkatesan Kanagaraj and Martin Treiber (2018)<br>
+<i>Self-Driven Particle Model for Mixed Traffic and Other Disordered Flows</i><br>
+Physica A: Statistical Mechanics and its Applications 509, 1-11<br>
+<a href="https://doi.org/10.1016/j.physa.2018.05.086">https://doi.org/10.1016/j.physa.2018.05.086</a><br>
+<a href="https://arxiv.org/abs/1805.05076">[arxiv e-print: 1805.05076]</a>
+</p>
+</div>
+
+The simulation starts with little traffic on a homogeneous road (the
+U-bend is only there in order to display a longer road segment). There
+are two insert diagrams: speed-density scatter plot at the top, and
+flow-density scatter plot at the bottom. Furthermore, there
+are three possibilities for interaction: The sliders, the buttons to
+the right, and loading a custom initial configuration
+
+<h2> The sliders</h2>
+
+<ul>
+  <li> <i>Timewarp</i> controls the time-lapse factor simulated time
+    progression/real time progression</li>
+    
+  <li> <i>Inflow</i> controls the traffic demand</li>
+    
+  <li><i>MaxOutflow</i> installs a bottleneck at the outflow and thus
+    controls the maximum outflow. By controlling the Inflow and Max
+    Outflow sliders, the simulated flow-density scatter plot can be
+      created (lower right insert diagram).
+      <ul>
+	<li> The free branch is
+	  controlled by the inflow with MaxOutflow set to 100%</li>
+	  <li> The congested branch is controlled by MaxOutflow with
+	    the Inflow set to the maximum</li>
+      </ul>
+  </li>
+
+  <li> The sliders <i>FracTruck</i> and  <i>FracBike</i> control the
+  traffic composition with the remaining percentage consiting of
+    cars</li>
+
+  <li> The last three sliders control selected model parameters,
+    see <a href="https://arxiv.org/abs/1805.05076">the paper</a>:
+    <ul>
+      <li>The <i>politeness factor p</i> determines to which extent
+      back vehicles are taken into account when moving
+      laterally. For </i>p=0</i>, the followers are exclusively
+      responsible for avoiding crashs and the leaders do not look
+      behind (not yet in the paper)</li>
+
+      <li> <i>tau<sub>lat,OVM</sub></i> is the time constant for the
+      lateral Optimal Velocity Model (see Chapter 10 of <a href="http://www.springer.com/physics/complexity/book/978-3-642-32459-8"><i>Traffic
+    Flow Dynamics</i></a>)
+ controlling the lateral 
+      motion. The lower <i>tau<sub>lat,OVM</sub></i>, the more
+	responsively the lateral movements become</li>
+
+      <li> <i>sens<sub>dvy</sub></i> is a new experimental parameter
+      introducing relative speeds to the OVM-like lateral
+	dynamics </li>
+  </ul>
+</ul>
+
+
+<h2> The buttons</h2>
+
+<ul>
+  <li> The <i>Display Forces</i> toggle indicates, if on,
+    the actual acceleration vector
+    for each vehicle by an arrow (the simulation needs to be running
+    to see the effect of this button)
+    
+  <li> The <i> Var. Width Left</i> and  <i> Var. Width Right</i>
+  toggles introduce bottlenecks at the right and left sides,
+  respectively. Particularly the obstacle at the left in form of an
+  abrupt road narrowing takes the model to its limits
+    
+  <li> If the <i> Floor Field</i> toggle is on, lane-based traffic is
+  simulated. This is introduced into the mixed traffic flow model by
+  adding a floor field producing lateral forces whenever a car or a
+  truck is not at the center of one of the five lanes. The bike
+  drivers, however, drive just between the lanes. Since they are
+  sufficiently wide, bike drivers can overtake and be
+  overtaken. However, destroying the lanes by switching the floor
+  field off leads to more effective mixed flow in congested conditions
+  (create congestion by increasing the inflow, switching on Var Width
+  Left or Right, or 
+  reducing MaxOutflow)
+</ul>
+
+<h2> Custom initial conditions (micro ICs)</h2>
+
+The simulation can be initialized by micro initial conditions
+prescribing the type, initial longitudinal and lateral position
+(u,v),  and initial velocity
+(speedLong,speedLat)  of any
+object. The file format is as follows:
+<pre>
+ # type     length   width  u     v       speedLong  speedLat
+ car        5.0      2.0    20    3       15         0
+ truck      10.0     3.0    20    -3      15         0
+ bike       2.0      1.0    40    -3      5          1
+ obstacle   80       2      300   9.5     0          0
+ ...        ...      ...    ...   ...     ...        ...
+</pre>
+Besides the three moving types <tt>car</tt>, <tt>truck</tt>,
+and <tt>bike</tt>, there is also a 
+type <tt>obstacle</tt> which can be used to implement various
+bottlenecks. <br>
+
+Micro ICs are useful when analyzing certain model aspects with
+reproducible scenarios. For this reason, I also seed the random number
+generator when a new
+IC file is loaded. This is necessary because a certain acceleration noise is added
+to resolve stalemates in the traffic flow (see file
+IC_resolveStalemate.txt below). When using micro ICs, it is best to set the inflow to
+zero because otherwise new incoming vehicles may disturb the
+analysis/experiments. With zero inflow, there are also no further stochastic
+elements in the simulation in addition to the 
+acceleration noise. Notice that the simulation is cleared from all
+past vehicles and past obstacles and bottlenecks when a new
+IC file is loaded but the other slider settings are unchanged. <br>
+
+As examples and templates for further modification, you
+can download following initial 
+configurations:
+<ul>
+  <li> <a href="IC_resolveStalemate.txt">Five trucks in parallel and one
+  car</a>. Is it possible for the car to eventually overtake? With
+    lanes (floor field on) not, without, yes.</li>
+    
+  <li> <a href="IC_collisionDanger.txt">A car and a truck just touching
+  each other while driving at the beginning</a>. How will the situation be
+  resolved? For this, it is useful to set the timewarp to very low
+  values before loading the file. </li>
+    
+ <li> <a href="IC_obstacles.txt">A single car moving through a
+  parcours of obstacles and road narrowings</a>. This demonstrates what
+  can be done with several objects of type obstacle. </li>
+    
+<li> <a href="IC_overtakingBetweenTrucks.txt">A car and a bike
+  overtaking some slower trucks in the middle</a>. This is more effective
+  with lanes since, otherwise, the space between the trucks is quite
+  narrow. Without lanes, it is only possible if the politeness is
+  above about <i>p=0.1</i> since, otherwise, the trucks in front do
+  not care and the initial space is too low.</li>
+    
+<li> <a href="IC_zipper2.txt">A very strong road narrowing down to one
+  lane</a>. Some cooperation is necessary so that everyone can pass the
+  bottleneck. </li>
+    
+<li> <a href="IC_zipper2.txt">2-to-one narrowing with more vehicles</a>. </li>
+    
+
+
+</div>

@@ -1,0 +1,717 @@
+
+
+//#############################################################
+// Gloal var definitions and initial settings
+//#############################################################
+
+
+// sim control settings 
+
+var fps=30;  // frames per second (unchanged during runtime)
+var dt;      // depends on timewarp value -> (init: html; update: gui.js
+var time=0;  // only initialization
+var itime=0; // only initialization
+var isStopped=false; // only initialization; simulation starts (not) running
+
+
+// specification of vehicle types and dimensions [SI units]
+// (the actual vehicles are constructed in the road cstr)
+
+var car_length=5; 
+var car_width=2.5;
+var truck_length=10;
+var truck_width=4; 
+var bike_length=2; // bicycles or motorbikes, depending on parameterisation
+var bike_width=0.8;
+var obstacle_length=10;
+var obstacle_width=1.5;
+
+
+// specification and (initial) parameterisation of underlying longmodels
+
+var v0=20;
+var Tgap=1;
+var s0=2;
+var amax=2;
+var bcomf=2;
+
+var v0Truck=12;
+var TgapTruck=1.5;
+var s0Truck=2;
+var amaxTruck=1;
+var bcomfTruck=2;
+
+var v0Bike=15;
+var TgapBike=0.8;
+var s0Bike=1.5;
+var amaxBike=3;
+var bcomfBike=2;
+var v0Obstacle=0;
+
+var v0max=Math.max(v0,v0Truck,v0Bike); // to define max dist range of neigbors
+
+
+//!!!
+//var longModelCar=new IDM(v0,Tgap,s0,amax,bcomf);
+//var longModelTruck=new IDM(v0Truck,TgapTruck,s0Truck,amaxTruck,bcomfTruck);
+//var longModelBike=new IDM(v0Bike,TgapBike,s0Bike,amaxBike,bcomfBike);
+var longModelCar=new ACC(v0,Tgap,s0,amax,bcomf);
+var longModelTruck=new ACC(v0Truck,TgapTruck,s0Truck,amaxTruck,bcomfTruck);
+var longModelBike=new ACC(v0Bike,TgapBike,s0Bike,amaxBike,bcomfBike);
+
+
+
+// specification of the mixed traffic models (MTM) for the veh types
+//!! later: to allow for gui ctrl and distributied params, 
+// keep referencing to a few standard models defined here but
+// generalize model accel function to include 
+// alpha=[alpha_v0, alpha_T, alpha_a] 
+// with alpha set individually by the vehicles
+
+
+
+var s0y=0.15;       // lat. attenuation scale [m] for long veh-veh interact
+var s0yLat=0.30;    // lat. attenuation scale [m] for lat veh-veh interact
+var s0yB=0.15;  // long. attenuation scale [m] for lat wall-veh interact
+var s0yLatB=0.20;   // lat. attenuation scale [m] for lat wall-veh interact
+var sensLat=0.4;    // sensitivity (desired lat speed)/(long accel) [s]
+var tauLatOVM=parseFloat(slider_tauLatOVM.value);  // time constant[s] 
+                    // lateral OVM (sensLat/tauLatOVM=maxAccRatio)
+var sensDvy=parseFloat(slider_sensDvy.value); // FVDM-like inclusion of
+                    // rel lateral speed, but multiplicative
+var dvdumax=0.2;    // tan of maximum angle with respect to road axis
+                    // (overridden by MTM.v0LatEvadeObstacles
+                    // if long speed is very small/zero)
+// politeness fraction of considering back vehicles 
+                    // (exclusively lateral)(initial val; changed by slider)
+
+var mixedModelCar=new MTM(longModelCar,s0y,s0yLat,s0yB,s0yLatB,
+			  sensLat,tauLatOVM,sensDvy);
+var mixedModelTruck=new MTM(longModelTruck,s0y,s0yLat,s0yB,s0yLatB,
+			    sensLat,tauLatOVM,sensDvy);
+var mixedModelBike=new MTM(longModelBike,s0y,s0yLat,s0yB,s0yLatB,
+			    sensLat,tauLatOVM,sensDvy);
+var mixedModelObstacle=new ModelObstacle();
+
+
+
+
+// initial traffic flow and composition settings ctrl by sliders
+// (timewarp slider separately; 
+// speedProb slider value directly if applicable)
+
+var qIn=parseFloat(slider_inflow.value);
+var fracTruck=parseFloat(slider_fracTruck.value); // !! otherwise string
+var fracBike=parseFloat(slider_fracBike.value);  // frac+frac=e.g.0.20.2!!
+var politeness=parseFloat(slider_politeness.value);
+var speedMax=20; // later controlled by slider if not commented out in html
+
+// initial outflow restriction in terms of rel max outflow=(1-relBottleStrength)
+
+var relOutflow=1.;  // overridden by slider_outflowVal if it exists
+
+// initial values not controlled by sliders
+
+var speedInit=20;
+var densityInit=0.0; 
+
+// initialize floor-field toggle
+
+var floorField=false;
+
+
+// create road or road network geometry
+// (road cstr needs the models and vehicle dimensions defined above 
+// and the axis_x(u), axis_y(u), widthLeft(u), and widthRight(u)
+// function pointers
+// (as pointers they are automatically updated if arcRadius
+// etc changes due to the responsive design )
+ 
+var roadID=1;
+var roadLen=300;
+var roadWidthRef=20;
+var isRing=false;
+
+var varWidthLeft=false;
+var varWidthRight=false;
+
+function axis_x(u){ // physical coordinates
+        var dxPhysFromCenter= // center=origin of half-circle element
+	    (u<straightLen) ? straightLen-u
+	  : (u>straightLen+arcLen) ? u-roadLen+straightLen
+	  : -arcRadius*Math.sin((u-straightLen)/arcRadius);
+	return center_xPhys+dxPhysFromCenter;
+}
+
+function axis_y(u){ // physical coordinates
+        var dyPhysFromCenter=
+ 	    (u<straightLen) ? arcRadius
+	  : (u>straightLen+arcLen) ? -arcRadius
+	  : arcRadius*Math.cos((u-straightLen)/arcRadius);
+	return center_yPhys+dyPhysFromCenter;
+}
+
+//
+function widthLeft(u){ // width left boundary - road axis
+    if((!varWidthLeft)&&(relOutflow>=0.9999)){return 0.5*roadWidthRef;}
+    var narrow1Beg=0.25*roadLen;
+    var narrow1End=0.40*roadLen;
+    var narrow2Beg=0.80*roadLen;
+    var narrow2End=0.85*roadLen;
+    var narrow3Beg=0.85*roadLen; // outflow BC
+    var narrow3End=0.95*roadLen;
+
+    var wLeftRef=0.5*roadWidthRef;
+    var wLeftNarrow1=(varWidthLeft)? 0.2*roadWidthRef : wLeftRef;
+    var wLeft2Beg=wLeftRef;
+    var wLeft2End=(varWidthLeft)? 0.2*roadWidthRef : wLeftRef;
+
+    var wLeft3Beg=wLeft2End; // outflow BC
+    var wLeft3End=(relOutflow>=0.9999) ? wLeft2End
+	: Math.min(wLeft2End,relOutflow*wLeftRef);
+
+    return (u<narrow1Beg) ? wLeftRef
+	: (u<narrow1End) ? wLeftNarrow1
+	: (u<narrow2Beg) ? wLeft2Beg
+	: (u<narrow2End) 
+	? wLeft2Beg+(u-narrow2Beg)/(narrow2End-narrow2Beg)*(wLeft2End-wLeft2Beg)
+	: (u<narrow3Beg) ? wLeftRef
+	: (u<narrow3End) 
+	? wLeft3Beg+(u-narrow3Beg)/(narrow3End-narrow3Beg)*(wLeft3End-wLeft3Beg)
+	: wLeft3End;
+}
+
+//!!
+function widthRight(u){ // width road axis - right boundary
+    if((!varWidthRight)&&(relOutflow>=0.9999)){return 0.5*roadWidthRef;}
+    var narrowBeg=0.5*roadLen;
+    var narrowEnd=0.8*roadLen;
+    var narrowWiden=0.85*roadLen;
+
+    var narrow3Beg=0.85*roadLen; // outflow BC
+    var narrow3End=0.95*roadLen;
+
+    var wRightRef=0.5*roadWidthRef;
+
+    var wRightBeg=wRightRef;
+    var wRightEnd=(varWidthRight)  ? -0.1*roadWidthRef : wRightRef;
+    var wRightWiden=(varWidthRight) ? 0.1*roadWidthRef : wRightRef;
+
+    var wRight3Beg=wRightWiden; // outflow BC
+    var wRight3End=(relOutflow>=0.9999) ? wRightWiden
+	: Math.min(wRightWiden,relOutflow*wRightRef);
+
+    return (u<narrowBeg) ? wRightBeg
+	: (u<narrowEnd)
+	? wRightBeg+(u-narrowBeg)/(narrowEnd-narrowBeg)*(wRightEnd-wRightBeg)
+	: (u<narrowWiden) ? wRightEnd
+	: (u<narrow3Beg) ? wRightWiden
+	: (u<narrow3End)
+	? wRight3Beg+(u-narrow3Beg)/(narrow3End-narrow3Beg)*(wRight3End-wRight3Beg)
+	: wRight3End;
+}
+
+
+var mainroad=new road(roadID, isRing, roadLen, widthLeft, widthRight,
+		      densityInit, speedInit, fracTruck, fracBike, 
+		      v0max, politeness, dvdumax);
+
+
+
+
+// graphical: speedmap to visualize speeds
+
+var speedmap_min=0; // min speed for speed colormap (drawn in red)
+var speedmap_max=Math.max(v0, v0Truck, v0Bike); // max speed (fixed in sim)
+
+
+// graphical: forcefield to visualize accelerations
+
+var displayForcefield=false; // can be changed interactively -> gui.js
+var displayForceStyle=2;  // 0: with probe, 1: arrow field arround veh,
+                     // 2: moving arrows at veh
+ 
+
+// graphical: display logical (u,v) coords of mouse position
+// get mouse positions from gui.activateCoordDisplay which is called
+// if html.onmousemove=true (only true if over client area AND moving)
+
+var xMouse; // get from activateCoordDisplay event if html.onmousemove=true
+var yMouse;
+var showMouseCoords=false; // start with false 
+                           // since otherw NaN if mouse initially outside
+
+
+// graphical: whether to draw road and grass/other background image
+
+var drawBackground=true;
+var drawRoad=true;
+
+// graphical: vehicle and background images
+
+var car_srcFile='figs/blackCarCropped.gif';
+var truck_srcFile='figs/truck1Small.png';
+var bike_srcFile='figs/bikeCropped.gif';
+//var road_srcFile='figs/threeLanesRoadRealisticCropped.png';
+var road_srcFile='figs/noLanesRoadSegment.png';
+var obstacle_srcFile='figs/obstacleImg.png';
+var background_srcFile='figs/backgroundGrass.jpg'; 
+
+
+// graphical: the actual canvas
+
+var canvas; // defined in init() by canvas = document.getElementById("...");
+var ctx;  // graphics context
+ 
+// data for evaluation
+
+var macroProperties=[];
+var ndtSample=60; // every ndtSample timestep will be sampled for macroProperties
+
+var umin=150;    // upstream boundary of sampled region [m];
+var umax=250;    // downstream boundary of sampled region [m];
+
+// helper functions for tick-mark intervals as function of max value (max>1,min=0)
+
+function dTic(xmax){
+    var log10xmax=Math.log(xmax)/Math.log(10);
+    var orderMagn=Math.pow(10,Math.floor(log10xmax)); // log10xmax>0
+    var firstDigit=xmax/orderMagn;
+    //console.log("in dTic: xmax=",xmax,
+//		" log10xmax=",log10xmax,
+//		" Math.floor(log10xmax)=",Math.floor(log10xmax),
+//		" orderMagn=",orderMagn," firstDigit=",firstDigit);
+    return (firstDigit==1) ? 0.2*orderMagn :
+	    (firstDigit<5) ? 0.5*orderMagn :orderMagn;
+}
+
+
+// general-purpose xy-plot function
+
+
+
+//#################################################################
+function updateSim(dt){    // called here by main_loop()
+//#################################################################
+
+
+    // update times
+    time +=dt; // dt depends on initial html and timewarp slider (fps=const)
+    itime++;
+    //console.log("\nbegin updateSim: itime=",itime);
+    if(itime==1){ // initializeMicro(types, len, w, u, v,speed,speedLat)
+	mainroad.initializeMicro( ["car"], [truck_length],
+				  [truck_width], [150], [4], 
+				 [20], [0]);
+	//mainroad.initializeMicro( ["car","truck"], [car_length,truck_length],
+	//			  [car_width,truck_width], [50,150], [0,4], 
+	//			 [10,10], [0,0]);
+     }
+
+    //console.log("1:"); mainroad.writeVehicles();
+
+
+    // implement slider changes 
+
+
+    qIn=parseFloat(slider_inflow.value);
+    fracTruck=parseFloat(slider_fracTruck.value); // !! otherwise string
+    fracBike=parseFloat(slider_fracBike.value);  // frac+frac=e.g.0.20.2!!
+    if(slider_speedmax !== null){
+      if(Math.abs(parseFloat(slider_speedmax.value)-speedMax)>1e-6){
+	  speedMax=parseFloat(slider_speedmax.value);
+	  longModelCar.speedmax=speedMax;  // passed by model ref to all cars!
+	  longModelTruck.speedmax=speedMax;
+	  longModelBike.speedmax=speedMax;
+      }
+    }
+
+    relOutflow=parseFloat(slider_outflow.value);
+
+    if(Math.abs(parseFloat(slider_tauLatOVM.value)-tauLatOVM)>1e-6){
+	tauLatOVM=parseFloat(slider_tauLatOVM.value);
+	mixedModelCar.tauLatOVM=tauLatOVM; // passed by model ref to all cars!
+	mixedModelTruck.tauLatOVM=tauLatOVM;
+	mixedModelBike.tauLatOVM=tauLatOVM;
+    }
+    if(Math.abs(parseFloat(slider_sensDvy.value)-sensDvy)>1e-6){
+	sensDvy=parseFloat(slider_sensDvy.value);
+	mixedModelCar.sensDvy=sensDvy; // passed by model ref to all cars!
+	mixedModelTruck.sensDvy=sensDvy;
+	mixedModelBike.sensDvy=sensDvy;
+    }
+
+    politeness=slider_politeness.value;
+    mainroad.politeness=slider_politeness.value;
+
+
+    //console.log("2:"); mainroad.writeVehicles();
+
+
+    // do central simulation update of vehicles
+    //checked: mainroad.sortVehicles() not necessary
+
+
+    mainroad.calcAccelerations();  
+    //console.log("3:"); mainroad.writeVehicles();
+    mainroad.updateSpeedPositions(dt);
+    //console.log("4:"); mainroad.writeVehicles();
+    mainroad.updateBCdown();
+    mainroad.updateBCup(qIn,fracTruck,fracBike,dt); 
+     // later: array vehCompos[] instead of *Frac*
+
+
+    if(itime<2){mainroad.writeVehicles();}
+
+// improve statistics procedure to average over time interval dt*ndtSample as well!!!:
+// void mainroad.updateStatistics(umin,umax) 
+// called in every timestep
+// adds to road's speed array (only new element needed!
+
+// array[] mainroad.calcMacroProperties(umin,umax,nt) doing the time averaging over nt time steps:
+// outputs rho=n/(L*nt), n=speedArray.length, L=umax-umin
+// Q=rho*Vavg, V=Vavg, 5 quantiles
+// probably increase nt=ndtSample
+
+    mainroad.updateSpeedStatistics(umin,umax);
+    if(itime%ndtSample==0){
+	var iSample=Math.max(0,itime/ndtSample-1);
+	macroProperties[iSample]=mainroad.calcMacroProperties(ndtSample);
+    }
+
+}//updateSim
+
+
+
+
+
+//##################################################
+function drawSim() {
+//##################################################
+
+
+    // (1) redefine graphical and gemetrical
+    // aspects of road (arc radius etc) using
+    // responsive design if canvas has been resized 
+
+    var critAspectRatio=1.8; // U covers full height if aspectRatio>crit
+    var hasChanged=false; // window dimensions have changed
+    var simWindow=document.getElementById("contents");
+
+    if (canvas.width!=simWindow.clientWidth){
+	hasChanged=true;
+	canvas.width  = simWindow.clientWidth;
+    }
+    if (canvas.height != simWindow.clientHeight){
+	hasChanged=true;
+        canvas.height  = simWindow.clientHeight;
+    }
+    var aspectRatio=canvas.width/canvas.height;
+    var refSizePix=Math.min(canvas.height,canvas.width);
+
+    if(hasChanged){
+      var lenPix=0.5*Math.PI*canvas.height
+	    +2*Math.max(canvas.width-0.5*canvas.height, 0);
+      if(aspectRatio>critAspectRatio){lenPix*= critAspectRatio/aspectRatio;}
+
+      scale=lenPix/roadLen;
+      widthPix=scale*roadWidthRef;
+      arcRadiusPix=0.49*canvas.height-0.5*widthPix;
+      arcRadius=arcRadiusPix/scale;
+      arcLen=arcRadius*Math.PI;
+      straightLen=0.5*(roadLen-arcLen);  // len of one straight segment
+
+      // coordinate origin left top => visible physical coordinates all <0 
+      center_xPhys=arcRadius+0.5*roadWidthRef + 5/scale;
+      center_yPhys=-0.5*canvas.height/scale; 
+      center_xPix=scale*center_xPhys;
+      center_yPix=-scale*center_yPhys;
+      console.log("canvas size ",canvas.width,"X",canvas.height,
+		  " lenPix=",Math.round(lenPix),
+		  " scale=",scale,
+		  " widthPix=",Math.round(widthPix),
+		  " arcRadiusPix=",Math.round(arcRadiusPix)
+		 );
+
+      if(false){
+	console.log("canvas has been resized: new dim ",
+		    canvas.width,"X",canvas.height,
+		    " arcRadius=",arcRadius,
+		    " scale=",scale);
+      }
+    }
+
+
+
+    // (2) reset transform matrix and draw background
+    // (only needed if no explicit road drawn but "%10"-or condition"
+    //  because some older firefoxes do not start up/draw properly)
+
+    ctx.setTransform(1,0,0,1,0,0); 
+    if(drawBackground){
+	if(hasChanged||(itime<=1) || (itime%10==0) || false || (!drawRoad)){ 
+          ctx.drawImage(background,0,0,canvas.width,canvas.height);
+      }
+    }
+
+
+    // (3) draw mainroad
+    // (always drawn; changedGeometry only triggers building a new lookup table)
+
+    
+     var changedGeometry=hasChanged||(itime<=1); 
+     mainroad.draw(roadImg,scale,axis_x,axis_y,changedGeometry);
+
+
+ 
+    // (4) draw vehicles (obstacleImg here empty, only needed for interface)
+
+    mainroad.drawVehicles(carImg,truckImg,bikeImg,obstacleImg,scale,axis_x,axis_y,
+			  speedmap_min, speedmap_max);
+
+    // (4a) draw acceleration vector field
+
+    if(displayForcefield){
+        //mainroad.drawVectorfield(parseFloat(slider_speedProbe.value),
+        mainroad.drawVectorfield(15,
+				 scale,axis_x,axis_y,
+				 speedmap_min, speedmap_max, 
+				 displayForceStyle);
+    }
+
+    // (4b) draw vehicle IDs
+
+    if(true){
+	mainroad.drawVehIDs(scale,axis_x,axis_y,0.015*canvas.height);
+    }
+
+    
+    // (5) draw some running-time vars
+
+
+    ctx.setTransform(1,0,0,1,0,0); 
+    var textsize=0.02*Math.min(canvas.width,canvas.height); // 2vw;
+    ctx.font=textsize+'px Arial';
+
+
+    var timeStr="Time="+Math.round(10*time)/10;
+    var timeStr_xlb=textsize;
+    var timeStr_ylb=1.8*textsize;
+    var timeStr_width=6*textsize;
+    var timeStr_height=1.2*textsize;
+
+    ctx.fillStyle="rgb(255,255,255)";
+    ctx.fillRect(timeStr_xlb,timeStr_ylb-timeStr_height,
+		 timeStr_width,timeStr_height);
+    ctx.fillStyle="rgb(0,0,0)";
+    ctx.fillText(timeStr, timeStr_xlb+0.2*textsize,
+		 timeStr_ylb-0.2*textsize);
+
+    
+    var scaleStr="scale="+Math.round(10*scale)/10;
+    var scaleStr_xlb=8*textsize;
+    var scaleStr_ylb=timeStr_ylb;
+    var scaleStr_width=5*textsize;
+    var scaleStr_height=1.2*textsize;
+
+    ctx.fillStyle="rgb(255,255,255)";
+    ctx.fillRect(scaleStr_xlb,scaleStr_ylb-scaleStr_height,
+		 scaleStr_width,scaleStr_height);
+    ctx.fillStyle="rgb(0,0,0)";
+    ctx.fillText(scaleStr, scaleStr_xlb+0.2*textsize, 
+		 scaleStr_ylb-0.2*textsize);
+
+
+    // (6) draw the speed colormap (speedmaxDisplay set for nice axis scaling)
+
+    var speedmaxDisplay=25*Math.round(3.6*speedmap_max/25)/3.6; 
+
+    drawColormap(10+1.1*widthPix+0.05*refSizePix,
+                 center_yPix,
+                 0.1*refSizePix, 0.2*refSizePix,
+		 speedmap_min,speedmap_max,0,speedmaxDisplay);
+
+
+    // (7) display the logical coordinates if mouse inside canvas
+    // set/controlled in gui.js; sets ctx.setTransform(1,0,0,1,0,0) at end 
+
+    if(showMouseCoords){showLogicalCoords(xMouse,yMouse);}
+
+
+    // (8) draw flow-density data of selected region
+
+    if((itime%ndtSample==0)||(itime%10==0)){ // the "or" condition because of update of bg
+
+
+        // determine overall rel dimensions 
+
+	var xCenterRel=0.77;
+	var yCenterRel=0.60; // 0: top, 1: bottom of canvas
+	var wRel=0.35;
+	var hRel=0.20;
+
+        // determine arguments for plotxy
+
+	var wPix=refSizePix*wRel;
+	var hPix=refSizePix*hRel;
+	var xPixLeft=canvas.width*xCenterRel-0.5*refSizePix*wRel;
+	var yPixTop=canvas.height*yCenterRel-0.5*refSizePix*hRel;
+
+        // determine axes specifications [colx, xmult,xmax,xlabel]
+
+	var rhoSpec=[0,1000,200,"Density [veh/km]"];
+	var QSpec=[1,3600,3600,"Flow [veh/h]"];
+	var VSpec=[2,3.6,50,"Speed [km/h]"];
+	var boxSpec=[3,4,5,6,7];
+
+        // define plot instance and do the plotting
+
+	var plot1=new plotxy(wPix,hPix,xPixLeft,yPixTop); // new necessary!
+	plot1.scatterplot(ctx,macroProperties,rhoSpec,QSpec);
+
+	var plot2=new plotxy(wPix,hPix,xPixLeft,yPixTop-1.05*hPix);
+	plot2.scatterplot(ctx,macroProperties,rhoSpec,VSpec,boxSpec);
+
+    } // do xy plots [ if (itime%ndtSample==0) ]
+
+
+} // drawSim
+ 
+
+
+
+function showLogicalCoords(xMouse,yMouse){
+
+
+   // get (x,y) physical coordinates of these pixel coordinates
+
+    var xPhys= xMouse/scale;
+    var yPhys=-yMouse/scale;
+
+    // get region of U: 1,3: first/last straight section; 2: arc segment
+
+    var iRegion=(xPhys-center_xPhys<0) ? 2
+	: (yPhys>center_yPhys) ? 1 : 3
+
+    // default iRegion=1;
+
+    var u=-xPhys+center_xPhys+straightLen;
+    var v=yPhys-center_yPhys-arcRadius;
+
+    if(iRegion==3){
+	u=roadLen-straightLen+xPhys-center_xPhys;
+	v=-yPhys+center_yPhys-arcRadius;
+    }
+
+    else if(iRegion==2){
+	var dxPhys=xPhys-center_xPhys;
+	var dyPhys=yPhys-center_yPhys;
+	var r=Math.sqrt(dxPhys*dxPhys+dyPhys*dyPhys);
+	var phi=Math.atan(dyPhys/dxPhys); // phi=0 at u=roadLen/2
+	u=0.5*roadLen+phi*arcRadius;
+	v=r-arcRadius;
+    }
+
+    var coordsStr="log coords u="+parseFloat(u,6).toFixed(1)
+	+", v="+parseFloat(v,10).toFixed(1);
+
+    var textsize=0.02*Math.min(canvas.width,canvas.height); // 2vw;
+    var coordsStr_width=14*textsize;
+    var coordsStr_height=1.2*textsize;
+    var coordsStr_xlb=0.50*canvas.width-0.5*coordsStr_width;
+    var coordsStr_ylb=0.99*canvas.height;
+
+    ctx.setTransform(1,0,0,1,0,0);
+    ctx.font=textsize+'px Arial';
+    ctx.fillStyle="rgb(255,255,255)";
+    ctx.fillRect(coordsStr_xlb,coordsStr_ylb-coordsStr_height,
+		 coordsStr_width,coordsStr_height);
+    ctx.fillStyle="rgb(0,0,0)";
+    ctx.fillText(coordsStr, coordsStr_xlb+0.2*textsize, 
+		 coordsStr_ylb-0.2*textsize);
+
+    if(false){
+	console.log("sim-straight.showLogicalCoords:",
+		    " straightLen=",parseFloat(straightLen,6).toFixed(1),
+		" scale=",parseFloat(scale,6).toFixed(2),
+		" xMouse=",xMouse,
+		" yMouse=",yMouse,
+		" xPhys=",parseFloat(xPhys,6).toFixed(2),
+		" yPhys=",parseFloat(yPhys,6).toFixed(2),
+		" iRegion=",iRegion,
+		" center_yPhys=",parseFloat(center_yPhys,6).toFixed(1),
+		    " coordsStr=",coordsStr
+	       );
+    }
+
+
+} //showLogicalCoords
+
+
+//##################################################
+// Running function of the sim thread (triggered by setInterval in init())
+//##################################################
+
+function main_loop() {
+    dt=parseFloat(sliderTimewarp.value)/fps;
+    if(dt>0.5*tauLatOVM){
+	console.log("Warning: dt=",parseFloat(dt).toFixed(2),
+		    " due to timewarp ",
+		    parseFloat(sliderTimewarp.value).toFixed(2),
+		    " is greater than stability limit.",
+		    " Reducing to ",parseFloat(0.5*tauLatOVM).toFixed(2)
+		   );
+	dt=0.5*tauLatOVM;
+    }
+    drawSim();
+    updateSim(dt);
+    //mainroad.writeVehicles(); // for debugging
+}
+ 
+
+//##################################################
+// function to initialize/start the simulation thread "main_loop"
+//##################################################
+
+function init() {
+
+    canvas = document.getElementById("canvas_mixed");
+    ctx = canvas.getContext("2d"); 
+
+    // associate all images to image files
+
+    background = new Image();
+    background.src =background_srcFile;
+
+    roadImg = new Image();
+    roadImg.src=road_srcFile;
+
+    carImg = new Image();
+    carImg.src = car_srcFile;
+    truckImg = new Image();
+    truckImg.src = truck_srcFile;
+    bikeImg = new Image();
+    bikeImg.src = bike_srcFile;
+    obstacleImg = new Image();
+    obstacleImg.src = obstacle_srcFile;
+
+
+    // starts simulation thread "main_loop"
+    // with update time interval 1000/fps milliseconds
+    // thread starts with "myRun=init();" (below)
+    // thread stops with "clearInterval(myRun) (gui.js) 
+
+    return setInterval(main_loop, 1000/fps); 
+} // end init()
+
+
+
+//##################################################
+// Actual start of the simulation thread
+// the only line where a function is called at top-level
+// => THIS starts the simulation => must be at the end of file (checked)
+//##################################################
+
+var myRun;
+if(isStopped==false){myRun=init();}
+
