@@ -60,7 +60,8 @@ the right, and loading a custom initial configuration
   </li>
 
   <li> The sliders <i>FracTruck</i> and  <i>FracBike</i> control the
-  traffic composition with the remaining percentage consiting of
+  traffic composition of the respective vehicle types with the
+  remaining percentage (if any) consisting of 
     cars</li>
 
   <li> The last three sliders control selected model parameters,
@@ -95,9 +96,9 @@ the right, and loading a custom initial configuration
     to see the effect of this button)
     
   <li> The <i> Var. Width Left</i> and  <i> Var. Width Right</i>
-  toggles introduce bottlenecks at the right and left sides,
-  respectively. Particularly the obstacle at the left in form of an
-  abrupt road narrowing takes the model to its limits
+  toggles introduce bottlenecks as road narrowings at the right and
+  left sides, 
+  respectively. Activating both bottlenecks simultaneously takes the model to its limits
     
   <li> If the <i> Floor Field</i> toggle is on, lane-based traffic is
   simulated. This is introduced into the mixed traffic flow model by
@@ -105,11 +106,21 @@ the right, and loading a custom initial configuration
   truck is not at the center of one of the five lanes. The bike
   drivers, however, drive just between the lanes. Since they are
   sufficiently wide, bike drivers can overtake and be
-  overtaken. However, destroying the lanes by switching the floor
-  field off leads to more effective mixed flow in congested conditions
+    overtaken.
+    <ul>
+      <li> Notice how the vehicles spontaneously order when
+	switching this toggle on
+	<li> destroying the lanes by switching the floor
+  field off may lead to more effective mixed flow in congested
+  conditions, particularly in the presence of congestions/stronger bottlenecks
   (create congestion by increasing the inflow, switching on Var Width
-  Left or Right, or 
-  reducing MaxOutflow)
+  Left or Right, or  
+    reducing MaxOutflow)
+    <li>
+    Notice that the floor field a.k.a lanes is only sensible if there
+    are no significant road narrowings. Otherwise, the vehicles may
+    leave the road...
+    </ul>
 </ul>
 
 <h2> Custom initial conditions (micro ICs)</h2>
@@ -118,7 +129,14 @@ The simulation can be initialized by micro initial conditions
 prescribing the type, initial longitudinal and lateral position
 (u,v),  and initial velocity
 (speedLong,speedLat)  of any
-object. The file format is as follows:
+object. Pressing the button "IC from file" opens a file selector for
+user-supplied files. Once selecting one, the simulation is cleared and
+re-run (the bottlenecks are retained from the previous setting) with
+the user-supplied vehicle configuration (examples can be downloaded
+from
+the <a href="https://github.com/MTGermany/mixedTraffic/blob/master/README.md">GitHub
+  link </a> or from the links further below). The
+file format is as follows:
 <pre>
  # type     length   width  u     v       speedLong  speedLat
  car        5.0      2.0    20    3       15         0

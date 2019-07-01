@@ -224,9 +224,9 @@ input[type=range]:focus::-webkit-slider-runnable-track {
 
 #githubLink{
   position: absolute;
-  top: 0vmin;
-  left: 65vw;
-  width: 20vmin; /* needed for reference of width in img: */
+  top: 1vmin;
+  left: 55vw;
+  width: 25vmin; /* needed for reference of width in img: */
   height: 7vmin; /* needed for reference of width in img: */
   font-size: 2.5vmin;
   font-weight:bold;
@@ -293,7 +293,7 @@ img.title{
 #startStopDiv{
   position: absolute;
   left: calc(99vw - 10vmin);
-  top:     30vmin;
+  top:     32vmin;
   height: 8vmin;
   width: 8vmin;
   z-index: 2; /* the higher the integer, the more on top */
