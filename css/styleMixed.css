@@ -204,7 +204,7 @@ input[type=range]:focus::-webkit-slider-runnable-track {
 #header{
   position: absolute;
   top: 0vmin;
-  height: 6vh;
+  height: 4vh;
   left: calc( 5vw + 15vmin);
   width: 40vw; /* needed for reference of width: */
   font-size: 3.8vmin;

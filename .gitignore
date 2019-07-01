@@ -17,18 +17,6 @@ README_*
 *.bash
 *.fig
 
-## Figure files (no longer)
-#*.fig
-
-## generated files (not info/info_*.html !)
-index_ger.html
-offramp_ger.html
-onramp_ger.html
-roadworks_ger.html
-routing_ger.html
-uphill_ger.html
-ring_ger.html
-roundabout_ger.html
 
 
 *_ger.js
@@ -49,8 +37,6 @@ README_formalChanges
 bash/generateSpiffyTrafficSim2.README
 bash/generateSpiffyTrafficSim2.sh.old
 old
-css_old
-info_old
 trafficSimulationLocalVersion
 testNetwork
 js/save
