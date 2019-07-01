@@ -44,12 +44,18 @@
 <!-- Buttons                                        -->
 <!-- ############################################## -->
 
+<!-- if startStop as image button -->
+
+<div id="startStopDiv"><img id="startStop" width="100%" 
+     src="figs/buttonStop3_small.png" onclick="myStartStopFunction()"/>
+</div>
 
 <div id="scenarios">
 
-
+<!-- if startStop as text button (inside scenarios) -->  
+<!--
   <button id="startStop" onclick="myStartStopFunction()">Stop</button>
-
+-->
 
  
   <button id="forcefieldToggle" 
@@ -129,7 +135,7 @@
 <tr>
   <td> MaxOutflow </td>
   <td> <input id="slider_outflow" type="range" 
-              min="0" max="1" step="0.01" value="0.6"></td>
+              min="0" max="1" step="0.01" value="0.7"></td>
   <td> <div id="slider_outflowVal"></div></td>
 </tr>
 

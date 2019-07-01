@@ -288,12 +288,21 @@ img.title{
 }
 
 
-/* (3) the buttons field for selecting the scenarios */
+/* (3) the buttons for start/stop and selecting the scenarios */
+
+#startStopDiv{
+  position: absolute;
+  left: calc(99vw - 10vmin);
+  top:     30vmin;
+  height: 8vmin;
+  width: 8vmin;
+  z-index: 2; /* the higher the integer, the more on top */
+}
 
 #scenarios{
   position: absolute;
   left: calc(99vw - 14vmin);
-  top:     35vmin;
+  top:     40vmin;
   z-index: 3;
   /*height:  30vmin;
   width: 30vmin;

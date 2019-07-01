@@ -18,18 +18,18 @@ var isStopped=false; // only initialization; simulation starts (not) running
 // (the actual vehicles are constructed in the road cstr)
 
 var car_length=5; 
-var car_width=2.5;
+var car_width=2.2;
 var truck_length=10;
-var truck_width=4; 
+var truck_width=3.2; 
 var bike_length=2; // bicycles or motorbikes, depending on parameterisation
-var bike_width=0.8;
+var bike_width=0.7;
 var obstacle_length=10;
 var obstacle_width=1.5;
 
 
 // specification and (initial) parameterisation of underlying longmodels
 
-var v0=20;
+var v0=25;
 var Tgap=1;
 var s0=2;
 var amax=2;
@@ -41,8 +41,8 @@ var s0Truck=2;
 var amaxTruck=1;
 var bcomfTruck=2;
 
-var v0Bike=15;
-var TgapBike=0.8;
+var v0Bike=25;
+var TgapBike=0.5;
 var s0Bike=1.5;
 var amaxBike=3;
 var bcomfBike=2;
@@ -154,61 +154,58 @@ function axis_y(u){ // physical coordinates
 //
 function widthLeft(u){ // width left boundary - road axis
     if((!varWidthLeft)&&(relOutflow>=0.9999)){return 0.5*roadWidthRef;}
-    var narrow1Beg=0.25*roadLen;
-    var narrow1End=0.40*roadLen;
-    var narrow2Beg=0.80*roadLen;
-    var narrow2End=0.85*roadLen;
-    var narrow3Beg=0.85*roadLen; // outflow BC
-    var narrow3End=0.95*roadLen;
+    var u1_1=0.20*roadLen; // begin narrowing Bottl 1
+    var u1_2=0.30*roadLen; // end narrowing 1 (begin minimum capacity)
+    var u1_3=0.40*roadLen; // begin widening 1
+    var u1_4=0.45*roadLen; // end widening 1 (restore original capacity)
+    var u2_1=0.70*roadLen; // begin narrowing Bottl 2
+    var u2_2=0.75*roadLen; // end narrowing 2 (begin minimum capacity)
+    var u2_3=0.80*roadLen; // begin widening 2
+    var u2_4=0.85*roadLen; // end widening 2 (restore original capacity)
+    var u3_1=0.85*roadLen; // begin narrowing for outflow restriction
+    var u3_2=0.95*roadLen; // end narrowing for outflow restriction
 
     var wLeftRef=0.5*roadWidthRef;
-    var wLeftNarrow1=(varWidthLeft)? 0.2*roadWidthRef : wLeftRef;
-    var wLeft2Beg=wLeftRef;
-    var wLeft2End=(varWidthLeft)? 0.2*roadWidthRef : wLeftRef;
+    var wNarrow1=(varWidthLeft)? 0.2*roadWidthRef : wLeftRef;
+    var wNarrow2=(varWidthLeft)? 0.3*roadWidthRef : wLeftRef;
+    var wNarrow3=0.5*roadWidthRef*relOutflow;
 
-    var wLeft3Beg=wLeft2End; // outflow BC
-    var wLeft3End=(relOutflow>=0.9999) ? wLeft2End
-	: Math.min(wLeft2End,relOutflow*wLeftRef);
 
-    return (u<narrow1Beg) ? wLeftRef
-	: (u<narrow1End) ? wLeftNarrow1
-	: (u<narrow2Beg) ? wLeft2Beg
-	: (u<narrow2End) 
-	? wLeft2Beg+(u-narrow2Beg)/(narrow2End-narrow2Beg)*(wLeft2End-wLeft2Beg)
-	: (u<narrow3Beg) ? wLeftRef
-	: (u<narrow3End) 
-	? wLeft3Beg+(u-narrow3Beg)/(narrow3End-narrow3Beg)*(wLeft3End-wLeft3Beg)
-	: wLeft3End;
+    return (u<u1_1) ? wLeftRef
+	: (u<u1_2) ? wLeftRef+(wNarrow1-wLeftRef)*(u-u1_1)/(u1_2-u1_1)
+	: (u<u1_3) ? wNarrow1
+	: (u<u1_4) ? wNarrow1+(wLeftRef-wNarrow1)*(u-u1_3)/(u1_4-u1_3)
+	: (u<u2_1) ? wLeftRef
+	: (u<u2_2) ? wLeftRef+(wNarrow2-wLeftRef)*(u-u2_1)/(u2_2-u2_1)
+	: (u<u2_3) ? wNarrow2
+	: (u<u2_4) ? wNarrow2+(wLeftRef-wNarrow2)*(u-u2_3)/(u2_4-u2_3)
+	: (u<u3_1) ? wLeftRef
+	: (u<u3_2) ? wLeftRef+(wNarrow3-wLeftRef)*(u-u3_1)/(u3_2-u3_1)
+	: wNarrow3;
 }
 
 //!!
 function widthRight(u){ // width road axis - right boundary
     if((!varWidthRight)&&(relOutflow>=0.9999)){return 0.5*roadWidthRef;}
-    var narrowBeg=0.5*roadLen;
-    var narrowEnd=0.8*roadLen;
-    var narrowWiden=0.85*roadLen;
-
-    var narrow3Beg=0.85*roadLen; // outflow BC
-    var narrow3End=0.95*roadLen;
+    var u1_1=0.45*roadLen; // begin narrowing Bottl 1
+    var u1_2=0.70*roadLen; // end narrowing 1 (begin minimum capacity)
+    var u1_3=0.75*roadLen; // begin widening 1
+    var u1_4=0.75*roadLen; // end widening 1 (restore original capacity)
+    var u3_1=0.85*roadLen; // begin narrowing for outflow restriction
+    var u3_2=0.95*roadLen; // end narrowing for outflow restriction
 
     var wRightRef=0.5*roadWidthRef;
+    var wNarrow1=(varWidthRight)  ? 0.10*roadWidthRef : wRightRef;
+    var wNarrow3=0.5*roadWidthRef*relOutflow;
 
-    var wRightBeg=wRightRef;
-    var wRightEnd=(varWidthRight)  ? -0.1*roadWidthRef : wRightRef;
-    var wRightWiden=(varWidthRight) ? 0.1*roadWidthRef : wRightRef;
 
-    var wRight3Beg=wRightWiden; // outflow BC
-    var wRight3End=(relOutflow>=0.9999) ? wRightWiden
-	: Math.min(wRightWiden,relOutflow*wRightRef);
-
-    return (u<narrowBeg) ? wRightBeg
-	: (u<narrowEnd)
-	? wRightBeg+(u-narrowBeg)/(narrowEnd-narrowBeg)*(wRightEnd-wRightBeg)
-	: (u<narrowWiden) ? wRightEnd
-	: (u<narrow3Beg) ? wRightWiden
-	: (u<narrow3End)
-	? wRight3Beg+(u-narrow3Beg)/(narrow3End-narrow3Beg)*(wRight3End-wRight3Beg)
-	: wRight3End;
+    return (u<u1_1) ? wRightRef
+	: (u<u1_2) ? wRightRef+(wNarrow1-wRightRef)*(u-u1_1)/(u1_2-u1_1)
+	: (u<u1_3) ? wNarrow1
+	: (u<u1_4) ? wNarrow1+(wRightRef-wNarrow1)*(u-u1_3)/(u1_4-u1_3)
+	: (u<u3_1) ? wRightRef
+	: (u<u3_2) ? wRightRef+(wNarrow3-wRightRef)*(u-u3_1)/(u3_2-u3_1)
+    	: wNarrow3;
 }
 
 
@@ -227,7 +224,7 @@ var speedmap_max=Math.max(v0, v0Truck, v0Bike); // max speed (fixed in sim)
 
 // graphical: forcefield to visualize accelerations
 
-var displayForcefield=false; // can be changed interactively -> gui.js
+var displayForcefield=true; // can be changed interactively -> gui.js
 var displayForceStyle=2;  // 0: with probe, 1: arrow field arround veh,
                      // 2: moving arrows at veh
  
@@ -252,8 +249,8 @@ var drawRoad=true;
 var car_srcFile='figs/blackCarCropped.gif';
 var truck_srcFile='figs/truck1Small.png';
 var bike_srcFile='figs/bikeCropped.gif';
-//var road_srcFile='figs/threeLanesRoadRealisticCropped.png';
-var road_srcFile='figs/noLanesRoadSegment.png';
+var roadLanes_srcFile='figs/roadSegmentLanesFig.png';
+var roadNoLanes_srcFile='figs/tarmac.jpg';
 var obstacle_srcFile='figs/obstacleImg.png';
 var background_srcFile='figs/backgroundGrass.jpg'; 
 
@@ -459,8 +456,9 @@ function drawSim() {
     // (always drawn; changedGeometry only triggers building a new lookup table)
 
     
-     var changedGeometry=hasChanged||(itime<=1); 
-     mainroad.draw(roadImg,scale,axis_x,axis_y,changedGeometry);
+    var changedGeometry=hasChanged||(itime<=1);
+    var roadImg=(floorField) ? roadImgLanes : roadImgNoLanes
+    mainroad.draw(roadImg,scale,axis_x,axis_y,changedGeometry);
 
 
  
@@ -683,8 +681,11 @@ function init() {
     background = new Image();
     background.src =background_srcFile;
 
-    roadImg = new Image();
-    roadImg.src=road_srcFile;
+    roadImgLanes = new Image();
+    roadImgLanes.src=roadLanes_srcFile;
+    roadImgNoLanes = new Image();
+    roadImgNoLanes.src=roadNoLanes_srcFile;
+    //roadImgNoLanes.src='figs/tarmacOrig.jpg';
 
     carImg = new Image();
     carImg.src = car_srcFile;

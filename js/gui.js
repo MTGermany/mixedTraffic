@@ -35,9 +35,54 @@ function deactivateCoordDisplay(event){
     showMouseCoords=false;
 }
 
-
 //################################################################
-// Start/Stop button callback (triggered by "onclick" callback in html file)
+// Start/Stop button action as images
+// (triggered by "onclick" callback in html file)
+//#################################################################
+
+// in any case need first to stop;
+// otherwise multiple processes after clicking 2 times start
+// define no "var myRun "; otherwise new local instance started
+// whenever myRun is inited
+
+var isStopped=false; // only initialization
+
+function myStartStopFunction(){ 
+
+    clearInterval(myRun);
+    console.log("in myStartStopFunction: isStopped=",isStopped);
+
+    if(isStopped){
+	isStopped=false;
+	document.getElementById("startStop").src="figs/buttonStop3_small.png";
+	myRun=init();
+    }
+    else{
+	document.getElementById("startStop").src="figs/buttonGo_small.png";
+	isStopped=true;
+    }
+
+    // just test "misusing" start/stop to trigger it: 
+    // write the model's  acceleration fields to the console
+
+    if(false){
+	console.log("before mixedModelCar.calcAccTable1_dxvx");
+	mixedModelCar.calcAccTable1_dxvx(0,10,0,0,
+					 car_length,car_length,car_width); 
+	//console.log("\nbefore longModelCar.calcAccTable1_dxvx");
+	//longModelCar.calcAccTable_dxvx(10,0,car_length);
+    }
+
+    console.log("end of myStartStopFunction: isStopped=",isStopped);
+
+
+    
+} // end Start/Stop button callback as images
+
+/*
+//################################################################
+// Start/Stop button callback as text
+// (triggered by "onclick" callback in html file)
 //#################################################################
 
 // in any case need first to stop;
@@ -66,20 +111,11 @@ function myStartStopFunction(){
 	isStopped=true;
     }
 
-    // just test "misusing" start/stop to trigger it: 
-    // write the model's  acceleration fields to the console
-
-    if(false){
-	console.log("before mixedModelCar.calcAccTable1_dxvx");
-	mixedModelCar.calcAccTable1_dxvx(0,10,0,0,
-					 car_length,car_length,car_width); 
-	//console.log("\nbefore longModelCar.calcAccTable1_dxvx");
-	//longModelCar.calcAccTable_dxvx(10,0,car_length);
-    }
-
-    console.log("end of myStartStopFunction: isStopped=",isStopped);
-
 }
+// end Start/Stop button callback as text
+*/
+
+
 
 //####################################################################
 // control displaying of the forcefield
@@ -323,7 +359,7 @@ function myVarWidthRightToggle(){
 
 function myFloorFieldToggle(){ 
 
-    console.log("in myFloorFieldToggle: varWidthRight=",varWidthRight);
+    console.log("in myFloorFieldToggle: floorField=",floorField);
     if(floorField){
 	floorField=false;
 	document.getElementById('floorFieldToggle').innerHTML="Floor field";

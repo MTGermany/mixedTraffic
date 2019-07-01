@@ -15,6 +15,7 @@ README_*
 *.toc
 *.dvi
 *.bash
+*.fig
 
 ## Figure files (no longer)
 #*.fig
