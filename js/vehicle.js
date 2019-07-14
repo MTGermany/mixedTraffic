@@ -7,10 +7,11 @@ function vehicle(type, len, width, u, v, speedLong, speedLat, mixedModel){
 
 
     this.type=type;
-    this.len=len; // car length[m]
+    this.len=len;       // car length[m]
     this.width=width;   // car width[m]
     this.u=u;           // arc length [m]
-    this.v=v;           // transv logical coord [m] (incr to the right, center=0)
+    this.v=v;           // transv log. coord [m] (up to the right, center=0)
+    this.travTime=0;    // calculated in road.updateStatistics(umin,umax,dt)
     this.speed=speedLong;
     this.speedLat=speedLat;
     this.mixedModel=mixedModel;

@@ -129,7 +129,42 @@ road.prototype.writeVehicles= function() {
   if(this.veh.length==0){console.log(" no vehicles on road!");}
 }
 
+// ###########################################################
+// TODO
+// calculate realized travel times
+// ###########################################################
 
+//road.prototype.updateTravelTimes= function(time,umin,umax) {
+    // (1) determine if a vehicle moved from u<umin to u>umin.
+    //     if so, set this.veh[i].startTime=time  => add new veh property
+    // (2) determine if a vehicle moved from u<umax to u>umax.
+    //     if so, this.travTimes.push(time-this.veh[i].startTime); => def this.travTimes
+//    ;
+//}
+
+// ###########################################################
+// Calculate realized travel times
+// scans road section from umin to umax
+// and adds vehicle travelling times to this.travTime array if umax passed
+// !!! copied from old version, may not work
+// ###########################################################
+
+road.prototype.updateTravelTimes= function(umin,umax,dt) {
+    this.Lmacro=umax-umin;
+    for(var i=0; i<this.veh.length; i++){
+	if(this.veh[i].type !="obstacle"){
+	    if((this.veh[i].u>=umin)&&(this.veh[i].u<=umax)){
+		this.speed.push(this.veh[i].speed);
+		this.veh[i].travTime += dt;
+	    }
+
+            // signature for exiting region (if precise, need history avriable uOld)
+	    if((this.veh[i].u>umax)&&(this.veh[i].u<=umax+this.veh[i].speed*dt)){
+		this.travTime.push(this.veh[i].travTime);
+	    }
+	}
+    }
+}
 
 // ###########################################################
 // scans road section from umin to umax
@@ -150,18 +185,6 @@ road.prototype.updateSpeedStatistics= function(umin,umax) {
 
 
 
-// ###########################################################
-// TODO
-// calculate realized travel times
-// ###########################################################
-
-road.prototype.updateTravelTimes= function(time,umin,umax) {
-    // (1) determine if a vehicle moved from u<umin to u>umin.
-    //     if so, set this.veh[i].startTime=time  => add new veh property
-    // (2) determine if a vehicle moved from u<umax to u>umax.
-    //     if so, this.travTimes.push(time-this.veh[i].startTime); => def this.travTimes
-    ;
-}
 
 // ###########################################################
 // calculates macroscopic statistics out of the array this.speed

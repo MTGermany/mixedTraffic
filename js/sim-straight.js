@@ -360,6 +360,8 @@ function updateSim(dt){    // called here by main_loop()
 
     if(itime<2){mainroad.writeVehicles();}
 
+//!!! Clean up with road.prototype.updateSpeedStatistics,
+// road.prototype.updateTravelTimes
 // improve statistics procedure to average over time interval dt*ndtSample as well!!!:
 // void mainroad.updateStatistics(umin,umax) 
 // called in every timestep
