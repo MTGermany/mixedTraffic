@@ -437,29 +437,43 @@ road.prototype.calcAccelerations=function(){
     //this.writeVehicles();
 
     for(var i=0; i<this.veh.length; i++){
-	this.calcAccelerationsOfVehicle(i);
+	//if(true){
+	if(this.veh[i].type!=="obstacle"){
+	    this.calcAccelerationsOfVehicle(i);
+	}
     }
 }
 
 
 //######################################################################
-// calculation of long and lat accelerations of Vehicle i
+// calculates long and lat accelerations of Vehicle i
+// and sets this.veh[i].accLong and this.veh[i].accLat
 // !!! central control of dynamics at place which knows nearly all vars
 //######################################################################
 
 road.prototype.calcAccelerationsOfVehicle=function(i){
 
-    // (0) get index range of candidate vehicles 
+    // just in case... road.prototype.calcAccelerations also checks it
+    if(this.veh[i].type==="obstacle"){console.log("obstacle!"); return;}
+
+ 
+   // (0) preselection: get ordered index range of candidate vehicles 
+    //     (only longitudinal range considered)
 
     var irange=this.get_neighborIndexRange(i);
     var imin=irange[0];
     var imax=irange[1];
 
     // (0a) get interacting leading and lagging vehicles (subset of above)
-    // notice: too many differences between calcLeaderInteraction and 
-    // calcAccLong, calcAccLat
-    //  => no performance optimisation by saving accs sensible
-    // (actual accs calculated by only few vehs nLeaders+nFollowers, anyway)
+    // notice: too many differences between veh.calcLeaderInteraction and 
+    // veh.calcAccLong, veh.calcAccLat
+    // => hardly performance gain by reusing actual accelerations
+    //    from the parts calculated by veh.calcLeaderInteraction
+    //    (actual interacting accelerations calculated for much fewer 
+    //    leaders and followers than are in the preselection, anyway)
+    // => make selection independently from the operative part
+
+    // result: nLeaders, iLeaders[], nFollowers, iFollowers[]
 
     var bIntCrit=0.1; //!!
 
@@ -494,13 +508,12 @@ road.prototype.calcAccelerationsOfVehicle=function(i){
     }
 
  
-    //(1) longitudinal accelerations traffic: just chose the single LEADER
+    //(1) longitudinal accelerations due to other vehicles ("traffic"): 
+    //  just chose the single LEADER
     //  with strongest interaction 
-    // start with no interaction (leader is own vehicle, nLeaders=0)
-    // models.js: reduce longInt if parallel (dx<Ll) and no collision (sy>0)
-
+    //  initialize with no interaction (nLeaders=0)
+ 
     var accLongTraffic=this.veh[i].calcAccLongFree();
-    var iRelevantLeader=i;
     for(var ilead=0; ilead<nLeaders; ilead++){
 	var j=iLeaders[ilead];
 	var accLongLeader=this.veh[i].calcAccLong(this.veh[j]);
@@ -508,13 +521,10 @@ road.prototype.calcAccelerationsOfVehicle=function(i){
     }
 
 
-    //(2) lateral accelerations traffic: 
-    // try chosing ALL leaders and followers, 
-    // leaders with weight 1
-    // followers with weight politeness
-
-
-    // start with free lat acceleration (only if nLeaders=nFollowers=0)
+    //(2) lateral accelerations due to other vehicles ("traffic"):
+    //  include ALL leaders and followers, also leading obstacles
+    //  leaders with weight 1, followers with weight politeness
+    //  initialize with no interaction (nLeaders=nFollowers=0)
 
     var accLatTraffic=this.veh[i].calcAccLatFree();
 
@@ -527,40 +537,44 @@ road.prototype.calcAccelerationsOfVehicle=function(i){
     }
 
     // followers (actio=reactio => "-=" instead of "+=" !)
-    // but obstacles do not budge
+    // of course, do not consider back obstacles
 
     for(var ifollow=0; ifollow<nFollowers; ifollow++){
 	var j=iFollowers[ifollow];
-	var factor=(this.veh[i].type==="obstacle") ? 0 : this.politeness; 
+	var factor=(this.veh[j].type==="obstacle") ? 0 : this.politeness; 
 	accLatTraffic 
 	    -= factor*this.veh[j].calcAccLatInt(this.veh[i],false);
     }
 
 
-    // (3) repulsion effects of road boundaries/walls
+    // (3) repulsion effects of road boundaries/walls (vector)
     // ! (possibly replaceable by obstacles but probably less effective)
+    // !!! make them more effective at high speeds to avoid BC crashes
+    // !!! make them not blindly "anticipate" situations further ahead
 
     var accBoundaries=this.veh[i].calcAccB(widthLeft,widthRight);
+   //console.log("accBoundaries=",accBoundaries);
 
 
     // (4) calculate final result w/o floor fields
 
-    //console.log("accBoundaries=",accBoundaries);
     this.veh[i].accLong=accLongTraffic+accBoundaries[0];
     this.veh[i].accLat=accLatTraffic+accBoundaries[1];
 
-    // (5) add floor fields (at present, testing)
+ 
+   // (5) add floor fields (inited in sim-straight, controlled by gui)
+   //  wide vehs in lane center
+   //  bikes between lanes
 
-
-    if(floorField){ // inited in sim-straight, controlled by gui; 
+    if(floorField){
 	var wLane=4;
 	var accFloorMax=6.5;
 
 	var phase=2*Math.PI*this.veh[i].v/wLane; // phase=0: center of lane
 	var accFloor=((this.veh[i].type=="car")||(this.veh[i].type=="truck"))
-	? -accFloorMax*Math.sin(phase) // wide vehs in lane center
+	? -accFloorMax*Math.sin(phase)      
 	: (this.veh[i].type=="bike")
-	? + accFloorMax*Math.sin(phase) : 0; // bikes between lanes, obst not
+	? + accFloorMax*Math.sin(phase) : 0;
 	this.veh[i].accLat += accFloor;
     }
 
