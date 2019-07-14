@@ -261,19 +261,17 @@ function MTM(longModel,s0y,s0yLat,s0yB,s0yLatB,sensLat,tauLatOVM,sensDvy){
     // fixed values within MTM (acc noise at longModels, v0LatMax at road!)
 
     this.accLatIntMax=2*longModel.b; // max lat interact accel = x*comf decel 
-    this.longParReductFactor=0.2; // !!! reduce longInt if parallel (dx<Ll)
+    this.longParReductFactor=0.0; // !!! reduce longInt if parallel (dx<Ll)
                                   //  and no collision (sy>0)
 
     // !! fixed boundary parameters (only needed for variable road widths)
 
     this.accLatBMax=8;     //max boundary lat accel; can set =bmax
-    this.accLatRef=0.8*this.longModel.b; //defines lat accel if veh touches bd
-    this.accLongRef=1*this.longModel.a; //defines long accel "
-    this.longAttenFactor=0.4; // long atten length of both in units of dxStop
-
-    this.longGridFactor=0.1;  // disretisation grid size in units of dxStop
+    this.accLatBRef=2*this.longModel.b; //defines lat accel if veh touches bd
+    this.accLongBRef=0.1*this.longModel.a; //defines long accel "
+    this.anticFactorB=2; // B-anticipation TTC in multiples of longModel.T
     this.nj=8; // number of discr. steps; 
-              // max antic length=(nj-1)*longGridFactor*dxStop
+              // max antic length approx 2*relLongAttenLen*sStop
 
 
 }
@@ -360,7 +358,7 @@ MTM.prototype.calcAccLong=function(dx,dy,vx,vxl,axl,Ll,Wavg){
     }
 
     return accFree+alpha*accCFint;
-}
+}//MTM.prototype.calcAccLong
 
 
 /**
@@ -395,6 +393,13 @@ MTM lateral interaction acceleration effected by one vehicle
 @param Wavg: 1/2(W+Wl) avg. vehicle width [m]
 
 @return:  desired lateral acceleration [m/s^2] (including sign)
+
+!! minor performance improvement would be to reuse accLongFree, accCFint
+   by adding these state variables to the vehicle class 
+   (defined in prior vehicle.calcAccLong call) 
+   and to the function param list but more obscure information flow 
+   (I have checked it!)  and
+   less flexible to accLong with multiple leaders=> forget it
 */
 
 MTM.prototype.calcAccLatInt=function(dx,dy,vx,vxl,vy,vyl,axl,
@@ -403,17 +408,19 @@ MTM.prototype.calcAccLatInt=function(dx,dy,vx,vxl,vy,vyl,axl,
     var sy=Math.abs(dy)-Wavg;
     var sign_dy=(dy<0) ? -1 : 1;
     var accFree=this.longModel.calcAccFree(vx); 
-    var accCFint=this.longModel.calcAccInt(sx,vx,vxl,axl);
+    var accCFint=this.longModel.calcAccInt(sx,vx,vxl,axl); // possibly reuse
     var alpha=(sy<0) // sy=-Wavg ... infty; Math.abs(dy)/Wavg=1+sy/Wavg
 	? 1+sy/Wavg : Math.exp(-sy/this.s0yLat); //sy<0 => lin increase
     var v0LatInt=+sensLat*sign_dy*alpha*accCFint; // accCFint<0!! 
 
-    // sensDvy=1/rel speed where accLatInt=doubled or zeroed!!!
+    // add multiplicative (sic!) FVDM-like effect on lat speed difference
+    // 1/sensDvy=lateral speed difference where accLatInt=doubled or zeroed
+
     var accLatInt=v0LatInt/this.tauLatOVM
-        //*(1+Math.max(-1, -sign_dy*(vyl-vy)*this.sensDvy));
-        *(Math.max(0., 1.-sign_dy*(vyl-vy)*this.sensDvy));
+         *(Math.max(0., 1.-sign_dy*(vyl-vy)*this.sensDvy));
 
     // restrict to +/- accLatIntMax
+
     accLatInt=Math.max(-this.accLatIntMax, 
 		       Math.min(this.accLatIntMax,accLatInt));
 
@@ -442,7 +449,7 @@ MTM.prototype.calcAccLatInt=function(dx,dy,vx,vxl,vy,vyl,axl,
     }
     return accLatInt;
 
-}
+}//MTM.prototype.calcAccLatInt
 
 
 
@@ -458,24 +465,24 @@ y: lateral distance from road axis (positive if to the right)
    (=v in simulation, for consistency here y)
 
 accLatB(x,y)=      int_0^infty(ds) lam*exp(-lam*s)*ayB(x+s,y)
-            approx sum_{j=0}^nj c*exp(-j*c)*ayB(x+j*c*dxStop,y),
+            approx sum_{j=0}^nj c*exp(-j*c)*ayB(x+j*c*sStop,y),
 where
 
-dxStop=s0+vT+v^2/(2b):             stopping distance
-lam=1/dxStop:                      long attenuation scale
+sStop=s0+vT+v^2/(2b):             stopping distance
+lam=1/sStop:                      long attenuation scale
 ayB(x,y)=-accRef*f(w_rB(x)-y-W/2)  local lat accel induced by right boundary
 ayB(x,y)=+accRef*f(w_lB(x)+y-W/2)  local lat accel induced by right boundary
 f(sy)=exp(-sy/syLatB)              fraction ayB(sy)/ayB(sy=0) for sy>0
 f(sy)=1                            fraction ayB(sy)/ayB(sy=0) for sy<=0
 accRef=b                           max lat acceleration by boundary
 
-c                              x step of discretisation in units dxStop
-nj                             #of summation terms; max range nj*c*dxStop
+c                              x step of discretisation in units sStop
+nj                             #of summation terms; max range nj*c*sStop
 
 new parameter: s0yB,s0yLatB
 
 notice: road width should not change too quickly 
-(no narrowing of length less than c*dxStop; otherwise, use obstacle-vehicles)
+(no narrowing of length less than c*sStop; otherwise, use obstacle-vehicles)
 
 
 @param widthLeft:  function pointer roadAxis-leftBd as a funct of arcLength u
@@ -491,65 +498,84 @@ notice: road width should not change too quickly
 
 // helper functions: dimensionless absolute factor
 // of long/lat acceleration as f(gap to boundary)
+// @param signed lateral gap (<0 if boundary exceeded)
 
-MTM.prototype.accLongBfun=function(sy){
+// no addtl deceleration if boundary exceeded
+
+MTM.prototype.alphaLongBfun=function(sy){
     return (sy>0) ? Math.exp(-sy/this.s0yB) : 1;
 }
 
-MTM.prototype.accLatBfun=function(sy){
-    //return Math.exp(-sy/this.s0yLatB);
-    return (sy>0) ? Math.exp(-sy/this.s0yLatB) 
-	: 1-sy/this.s0yLatB; //!!! need increasing force outside for antic
-	//: 1; //!! need increasing force outside for antic!
+// increasing lateral restoring force if boundary exceeded
+
+MTM.prototype.alphaLatBfun=function(sy){
+    return (sy>0) ? Math.exp(-sy/this.s0yLatB) : 1-sy/this.s0yLatB;
 }
 
+
 MTM.prototype.calcAccB=function(widthLeft,widthRight,x,y,vx,vy,Wveh){
-    var dxStop=this.longModel.s0
-	+vx*this.longModel.T+0.5*vx*vx/this.longModel.b;
-    var lam=1./(this.longAttenFactor*dxStop); // longitudinal attenuation
+
+
+    var Tantic=this.anticFactorB*(this.longModel.T+this.longModel.s0/vx);
+    var dTantic=2*Tantic/this.nj; // sampling width (weight=0 ... exp(-2))
+    var denom=1./(1-Math.exp(-dTantic/Tantic)); // geom series 1/(1-q)
+
     var accLatB=0;
     var accLongB=0;
-
+    var alphaLongLeftMax=0; // multiplication alpha(sy)*alpha(sx)
+    var alphaLongRightMax=0;
+    var alphaLatLeftMax=0; // multiplication alpha(sy)*alpha(sx)
+    var alphaLatRightMax=0;
+ 
     for(var j=0; j<this.nj; j++){
-	var sAnti=j*this.longGridFactor*dxStop;
-	var weight=1./this.nj*Math.exp(-lam*sAnti);
-	var syLeft =widthLeft(x+sAnti) +y-0.5*Wveh;
-	var syRight=widthRight(x+sAnti)-y-0.5*Wveh;
-        // !!! test factor v/v0 in accLong and/or accLat accelerations!
-        // => .tex file
-	var accLongLeft  =-this.accLongRef*this.accLongBfun(syLeft);
-	var accLongRight =-this.accLongRef*this.accLongBfun(syRight);
-	var accLatLeft   =+this.accLatRef*this.accLatBfun(syLeft);
-	var accLatRight  =-this.accLatRef*this.accLatBfun(syRight);
+	var TTC=j*dTantic;
+	var weight=Math.exp(-TTC/Tantic)/denom;
+	var syLeft =widthLeft(x+vx*TTC) +y-0.5*Wveh;
+	var syRight=widthRight(x+vx*TTC)-y-0.5*Wveh;
 
-	accLongB +=weight*(accLongLeft+accLongRight);
-	accLatB  +=weight*(accLatLeft+accLatRight);
+	var alphaLongLeft =this.alphaLongBfun(syLeft)*weight;
+	var alphaLongRight=this.alphaLongBfun(syRight)*weight;
+	var alphaLatLeft  =this.alphaLatBfun(syLeft)*weight;
+	var alphaLatRight =this.alphaLatBfun(syRight)*weight;
 
-	if(false){
-	    console.log("\n sAnti=",parseFloat(sAnti).toFixed(2),
-			" syLeft=",parseFloat(syLeft).toFixed(2),
-			" syRight=",parseFloat(syRight).toFixed(2),
-			" accLongLeft=",parseFloat(accLongLeft).toFixed(2),
-			" accLongRight=",parseFloat(accLongRight).toFixed(2),
-			" accLatLeft=",parseFloat(accLatLeft).toFixed(2),
-			" accLatRight=",parseFloat(accLatRight).toFixed(2),
-			" weight=",parseFloat(weight).toFixed(2),
-			" sum accLatB=",parseFloat(accLatB).toFixed(2)
-		       )
-	}
+	alphaLongLeftMax=Math.max(alphaLongLeft,alphaLongLeftMax);
+	alphaLongRightMax=Math.max(alphaLongRight,alphaLongRightMax);
+	alphaLatLeftMax=Math.max(alphaLatLeft,alphaLatLeftMax);
+	alphaLatRightMax=Math.max(alphaLatRight,alphaLatRightMax);
     }
+
+
+    accLongB +=this.accLongBRef*( - alphaLongLeftMax - alphaLongRightMax);
+    accLatB  +=this.accLatBRef *( + alphaLatLeftMax  - alphaLatRightMax);
+
+    // apply restrictions (hardly effective)
 
     var accLatBrestr=Math.max(-this.accLatBMax, 
 			      Math.min(this.accLatBMax,accLatB));
 
-    if(false){
-	console.log(
-	    "\n accLongB=",accLongB," accLatB=",accLatBrestr,
-	    " vy=",vy," accLatFree=",this.calcAccLatFree(vy));
+   // test output
+
+    if(true){
+	var boundaryRelevant=false;
+	if(alphaLatLeftMax>0.1){
+	    boundaryRelevant=true;
+	    console.log("\nMTM.calcAccB: Left boundary:");
+	    console.log("x=",x," y=",y,"alphaLatLeftMax=",alphaLatLeftMax);
+	}
+	if(alphaLatRightMax>0.1){
+	    boundaryRelevant=true;
+	    console.log("MTM.calcAccB: Right boundary:");
+	    console.log("x=",x," y=",y,"alphaLatRightMax=",alphaLatRightMax);
+	}
+	if(boundaryRelevant){
+	    console.log("accLongB=",accLongB," accLatB=",accLatBrestr);
+	}
     }
 
+ 
     return [accLongB,accLatBrestr];
-}
+
+}//MTM.prototype.calcAccB
 
 
 
