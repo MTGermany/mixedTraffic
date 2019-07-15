@@ -27,7 +27,9 @@ var obstacle_length=10;
 var obstacle_width=1.5;
 
 
+//#############################################################
 // specification and (initial) parameterisation of underlying longmodels
+//#############################################################
 
 var v0=25;
 var Tgap=1;
@@ -51,17 +53,21 @@ var v0Obstacle=0;
 var v0max=Math.max(v0,v0Truck,v0Bike); // to define max dist range of neigbors
 
 
-//!!!
+
 //var longModelCar=new IDM(v0,Tgap,s0,amax,bcomf);
 //var longModelTruck=new IDM(v0Truck,TgapTruck,s0Truck,amaxTruck,bcomfTruck);
 //var longModelBike=new IDM(v0Bike,TgapBike,s0Bike,amaxBike,bcomfBike);
+
 var longModelCar=new ACC(v0,Tgap,s0,amax,bcomf);
 var longModelTruck=new ACC(v0Truck,TgapTruck,s0Truck,amaxTruck,bcomfTruck);
 var longModelBike=new ACC(v0Bike,TgapBike,s0Bike,amaxBike,bcomfBike);
 
 
 
+//#############################################################
 // specification of the mixed traffic models (MTM) for the veh types
+//#############################################################
+
 //!! later: to allow for gui ctrl and distributied params, 
 // keep referencing to a few standard models defined here but
 // generalize model accel function to include 
@@ -69,21 +75,32 @@ var longModelBike=new ACC(v0Bike,TgapBike,s0Bike,amaxBike,bcomfBike);
 // with alpha set individually by the vehicles
 
 
-
 var s0y=0.15;       // lat. attenuation scale [m] for long veh-veh interact
 var s0yLat=0.30;    // lat. attenuation scale [m] for lat veh-veh interact
 var s0yB=0.15;  // long. attenuation scale [m] for lat wall-veh interact
 var s0yLatB=0.20;   // lat. attenuation scale [m] for lat wall-veh interact
 var sensLat=0.4;    // sensitivity (desired lat speed)/(long accel) [s]
+
+// slider params
+
 var tauLatOVM=parseFloat(slider_tauLatOVM.value);  // time constant[s] 
-                    // lateral OVM (sensLat/tauLatOVM=maxAccRatio)
+                    // lateral OVM (sensLat/tauLatOVM=maxAccRatio)=>slider
 var sensDvy=parseFloat(slider_sensDvy.value); // FVDM-like inclusion of
-                    // rel lateral speed, but multiplicative
-var dvdumax=0.2;    // tan of maximum angle with respect to road axis
-                    // (overridden by MTM.v0LatEvadeObstacles
-                    // if long speed is very small/zero)
-// politeness fraction of considering back vehicles 
-                    // (exclusively lateral)(initial val; changed by slider)
+                    // rel lateral speed, but multiplicative=>slider
+var politeness=parseFloat(slider_politeness.value);
+
+
+
+// behavioural and graphical driver-vehicle constants
+// for boundary repulsion, see also models.js->"fixed boundary parameters"
+
+var dvdumax=0.2;       // tan of maximum angle with respect to road axis
+                       // (overridden by MTM.v0LatEvadeObstacles
+                       // if long speed is very small/zero)
+var dotdvdumax=0.3;    // max change rate of angle to road axis
+var phiVehRelMax=0.15; // only drawing: maximum visual angle to road axis
+var speedLatStuck=1;   // max lateral speed if long speed low
+
 
 var mixedModelCar=new MTM(longModelCar,s0y,s0yLat,s0yB,s0yLatB,
 			  sensLat,tauLatOVM,sensDvy);
@@ -96,14 +113,16 @@ var mixedModelObstacle=new ModelObstacle();
 
 
 
+//#############################################################
 // initial traffic flow and composition settings ctrl by sliders
+//#############################################################
+
 // (timewarp slider separately; 
 // speedProb slider value directly if applicable)
 
 var qIn=parseFloat(slider_inflow.value);
 var fracTruck=parseFloat(slider_fracTruck.value); // !! otherwise string
 var fracBike=parseFloat(slider_fracBike.value);  // frac+frac=e.g.0.20.2!!
-var politeness=parseFloat(slider_politeness.value);
 var speedMax=20; // later controlled by slider if not commented out in html
 
 // initial outflow restriction in terms of rel max outflow=(1-relBottleStrength)
@@ -120,7 +139,11 @@ var densityInit=0.0;
 var floorField=false;
 
 
+//#############################################################
 // create road or road network geometry
+//#############################################################
+
+
 // (road cstr needs the models and vehicle dimensions defined above 
 // and the axis_x(u), axis_y(u), widthLeft(u), and widthRight(u)
 // function pointers
@@ -297,20 +320,26 @@ function updateSim(dt){    // called here by main_loop()
     itime++;
     //console.log("\nbegin updateSim: itime=",itime);
     if(itime==1){ // initializeMicro(types, len, w, u, v,speed,speedLat)
-	//mainroad.initializeMicro( ["car"], [truck_length],
-	//			  [truck_width], [150], [4], 
-	//			 [20], [0]);
-	mainroad.initializeMicro( ["obstacle"], [20], //!!! TEST pointer err
-				  [20], [120], [0], 
-				 [0], [0]);
+	mainroad.initializeMicro( ["car"], [truck_length],
+				  [truck_width], [150], [4], 
+				 [20], [0]);
+	//mainroad.initializeMicro( ["obstacle"], [20], //!!! TEST pointer err
+	//			  [20], [120], [0], 
+	//                        [0], [0]);
+
+
         Math.seedrandom(42); //!! start reproducibly (see docu at onramp.js)
 
-	//mainroad.initializeMicro( ["car","truck"], [car_length,truck_length],
-	//			  [car_width,truck_width], [50,150], [0,4], 
-	//			 [10,10], [0,0]);
-     }
+    }
 
-    //console.log("1:"); mainroad.writeVehicles();
+//TEST
+    if(false){
+        if(time>13.6){
+	    console.log("t=",time);
+	    mainroad.writeVehicles();
+	}
+	if(time>13.8){clearInterval(myRun);}
+    }
 
 
     // implement slider changes 

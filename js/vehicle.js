@@ -14,6 +14,7 @@ function vehicle(type, len, width, u, v, speedLong, speedLat, mixedModel){
     this.travTime=0;    // calculated in road.updateStatistics(umin,umax,dt)
     this.speed=speedLong;
     this.speedLat=speedLat;
+    this.dvdu=speedLat/(Math.max(speedLong,0.0001)); //tan angle to road axis
     this.mixedModel=mixedModel;
     if(this.type=="obstacle"){
 	this.speed=0;

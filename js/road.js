@@ -22,6 +22,10 @@ with road geometry functions (u,v)->(x,y) to be provided by the main program
 */
 
 
+
+
+// constructor
+
 function road(roadID, isRing, roadLen, widthLeft, widthRight, 
 	      densInit, speedInit, fracTruckInit, fracBikeInit, 
 	      v0max,politeness,dvdumax){
@@ -114,7 +118,7 @@ road.prototype.writeVehicles= function() {
     console.log("in road.writeVehicles(): roadLen="+this.roadLen);
 
   for(var i=0; i<this.veh.length; i++){
-      console.log(" i=",i,
+      console.log(" i=",i," id=",this.veh[i].id,
 		  " type=",this.veh[i].type,
 		  " len=",  parseFloat(this.veh[i].len).toFixed(2),
 		  " width=",parseFloat(this.veh[i].width).toFixed(2),
@@ -581,10 +585,12 @@ road.prototype.calcAccelerationsOfVehicle=function(i){
 
 
     //################################
-    // debug logging
+    // debug logging calcAccelerationsOfVehicle
     //################################
 
     if(false){
+    //if(true){
+    //if((!isNumeric(this.veh[i].accLong))||(!isNumeric(this.veh[i].accLat))){
 	console.log("\nroad.calcAccelerationsOfVehicle: id=",this.veh[i].id);
 	//console.log(" (x,y)=(",parseFloat(this.veh[i].u).toFixed(2),",",
 	//	    parseFloat(this.veh[i].v).toFixed(2),")");
@@ -598,6 +604,7 @@ road.prototype.calcAccelerationsOfVehicle=function(i){
 		    " accy=",accBoundaries[1]);
 	console.log(" acc:            accx=",this.veh[i].accLong,
 		    " accy=",this.veh[i].accLat);
+	clearInterval(myRun); //!!!
 
 	if(false){
 	  console.log("\n nLeaders=",nLeaders);
@@ -642,50 +649,59 @@ road.prototype.calcAccelerationsOfVehicle=function(i){
 */
 
 road.prototype.updateSpeedPositions=function(dt){
-  for(var i=0; i<this.veh.length; i++){
-    var accLong=this.veh[i].accLong;
-    var speedOld=this.veh[i].speed;
+    for(var i=0; i<this.veh.length; i++){
+        var accLong=this.veh[i].accLong;
+	var speedOld=this.veh[i].speed;
 
-    var du=speedOld*dt+0.5*accLong*dt*dt;
-    this.veh[i].speed = speedOld + accLong*dt;
-    if(this.veh[i].speed<-1e-6){
-      this.veh[i].speed=0;
-      du=-0.5*speedOld*speedOld/accLong;
-    }
-    this.veh[i].u += du;
+	var du=speedOld*dt+0.5*accLong*dt*dt;
+	this.veh[i].speed = speedOld + accLong*dt;
+	if(this.veh[i].speed<-1e-6){
+	    this.veh[i].speed=0;
+	    du=-0.5*speedOld*speedOld/accLong;
+	}
+	this.veh[i].u += du;
 
-    var dv=this.veh[i].speedLat*dt+0.5*this.veh[i].accLat*dt*dt;
-    this.veh[i].v += dv;
+	var dv=this.veh[i].speedLat*dt+0.5*this.veh[i].accLat*dt*dt;
+	this.veh[i].v += dv;
 
-    this.veh[i].speedLat += this.veh[i].accLat*dt;
+	this.veh[i].speedLat += this.veh[i].accLat*dt;
 
-    // restrict speedLat
+        // restrict speedLat
 
-    var speedLatStuck=1; // !! max lateral speed if long speed low
-    var speedLatMax=Math.max(speedLatStuck,dvdumax*this.veh[i].speed);
-    this.veh[i].speedLat
-	=Math.max(-speedLatMax, Math.min(speedLatMax,this.veh[i].speedLat));
+        //(i) restrict change of angle to road axis
 
-    // close ring if isRing
+	var dvdu=this.veh[i].speedLat/(Math.max(this.veh[i].speed,0.0001));
+	var sign_dvdu=(dvdu-this.veh[i].dvdu>0) ? 1 : -1;
+	if(Math.abs(dvdu-this.veh[i].dvdu)>dt*dotdvdumax){
+	    this.veh[i].speedLat=(this.veh[i].dvdu+sign_dvdu*dotdvdumax*dt)
+		*this.veh[i].speed;
+	}
+	this.veh[i].dvdu=this.veh[i].speedLat // save for next restriction
+	    /(Math.max(this.veh[i].speed,0.0001));
 
-    if((this.isRing)&&(this.veh[i].u>this.roadLen)){
-	this.veh[i].u -= this.roadLen;
-    }
 
-    // debug
+        // (ii) restrict angle itself and value of speedLat
 
-    if(false){
-      console.log("updateSpeedPositions: veh ID ",this.veh[i].id,
+        var speedLatMax=Math.max(speedLatStuck,dvdumax*this.veh[i].speed);
+        this.veh[i].speedLat
+	  =Math.max(-speedLatMax,Math.min(speedLatMax,this.veh[i].speedLat));
+
+        // close ring if isRing
+
+        if((this.isRing)&&(this.veh[i].u>this.roadLen)){
+	    this.veh[i].u -= this.roadLen;
+	}
+
+        // debug
+
+        if(false){
+            console.log("updateSpeedPositions: veh ID ",this.veh[i].id,
 		  " accy=",this.veh[i].accLat,
 		  " vy=",this.veh[i].speedLat);
+	}
     }
-  }
 
-
-
-
-
-  this.sortVehicles(); // positional update may have disturbed sorting
+    this.sortVehicles(); // positional update may have disturbed sorting
 }
 
 
@@ -718,6 +734,8 @@ road.prototype.updateBCup=function(Qin,fracTruck,fracBike,dt){
 		" inVehBuffer=",this.inVehBuffer);
   }
   this.inVehBuffer+=Qin*dt;
+  this.inVehBuffer=Math.min(5,this.inVehBuffer); // !!avoid queue at inflow 
+
   if((!this.isRing)&&(this.inVehBuffer>=1)){
     var success=false; // false initially
     var sNew=0; // =0 just initializer
@@ -919,7 +937,6 @@ road.prototype.drawVehicles=function(carImg, truckImg, bikeImg, obstacleImg,
   // very small to resolve deadlocks of stopped vehicles
 
     
-  var phiVehRelMax=0.05; //!! purely drawing
 
   for(var i=0; i<this.veh.length; i++){
       var type=this.veh[i].type;
