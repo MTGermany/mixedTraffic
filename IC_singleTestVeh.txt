@@ -1,0 +1,5 @@
+# single vehicle, e.g., for testing boundary forces
+#type     length   width  u	v	speedLong	speedLat
+bike	  2	   1	  30	-8	14.		-1.
+
+

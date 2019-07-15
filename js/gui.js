@@ -134,10 +134,11 @@ document.getElementById('forcefieldToggle').innerHTML=
 //  ../readerDemo.html, ../js_demo/file2string.js
 // also seed the random number generator by Math.seedrandom(42)
 // needs seedrandom.min.js to do this
+//!!! BUG: Cannot call same file twice!!!
 //####################################################################
 
 function readTextFile(filePath){
-    console.log("entering readTextFile, filePath=",filePath,
+    console.log("\n\n\n\nentering readTextFile, filePath=",filePath,
 		" filePath.files[0].name=",filePath.files[0].name);
     var output="start"; // resulting string containing the text
     var reader; //File Reader object
@@ -170,13 +171,16 @@ function readTextFile(filePath){
             //define it as independent function handleContents
 
 
-	    //<GRMPF!>
-	    //!! DOS to reset "onchange" event to be able to load file twice in hrome
-	    // combin error: other actions ("onclick", "onsubmit" etc do not work
-	    // give up, bad job
- 	    //filePath.files[0].name='Martin'; // onchange
-	    //console.log("after change: filePath.files[0].name=",filePath.files[0].name);
-              // unchanged!! also with "Martin" etc
+	    //<GRMPF!!!>
+            // only onchange works, not "onload", "onclick", "onsubmit" etc
+	    // onchange loads file only one ("on change")
+            // reset ocument.getElementById("microICalt") 
+            //       as command in html fails 
+	    // give up, bad job?? 
+            // 
+            // (2019-07-15) finally success programmatically reset !
+            // reset document.getElementById("microICalt").value 
+            // at end of readTextFile
 	    //</GRMPF!>
 
 	    
@@ -206,7 +210,7 @@ function readTextFile(filePath){
     
     slider_outflow.value=1;
     slider_outflowVal.innerHTML=parseInt(100*slider_outflow.value)+" %";
-    
+    document.getElementById("microICalt").value = ""; //success!!
     return true;
 }
 

@@ -82,8 +82,8 @@
   "choose") -->
   <!-- only onchange works! oninput DOS in chrome, onclick error in
   Chrome. However, onchange needs a *different* file each time it is
-  selected in Chrome! see <GRMPF> in gui.js -->
-  <input id="microICalt" type="file" onchange="readTextFile(this)"/>
+  selected in Chrome! see <GRMPF> in gui.js xxx -->
+  <input id="microICalt" type="file" onchange="readTextFile(this);"/>
 
  
 
@@ -128,7 +128,7 @@
 <tr>
   <td> Inflow </td>
   <td> <input id="slider_inflow" type="range" 
-              min="0" max="2" step="0.01" value="1.8"></td>
+              min="0" max="2" step="0.01" value="1.8"></td> <!--1.8-->
   <td> <div id="slider_inflowVal"></div></td>
 </tr>
 
@@ -173,14 +173,14 @@
 <tr>
   <td> tau<sub>latOVM</sub> </td>
   <td> <input id="slider_tauLatOVM" type="range" 
-              min="0.2" max="3" step="0.1" value="0.4"></td>
+              min="0.2" max="3" step="0.1" value="1.5"></td>
   <td> <div id="slider_tauLatOVMVal"></div></td>
 </tr>
 
 <tr>
   <td> sens<sub>dvy</sub> </td>
   <td> <input id="slider_sensDvy" type="range" 
-              min="0" max="2" step="0.01" value="0.0"></td>
+              min="0" max="2" step="0.01" value="1.0"></td>
   <td> <div id="slider_sensDvyVal"> </div></td>
 </tr>
 

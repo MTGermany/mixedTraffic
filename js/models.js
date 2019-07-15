@@ -555,7 +555,7 @@ MTM.prototype.calcAccB=function(widthLeft,widthRight,x,y,vx,vy,Wveh){
 
    // test output
 
-    if(true){
+    if(false){
 	var boundaryRelevant=false;
 	if(alphaLatLeftMax>0.1){
 	    boundaryRelevant=true;

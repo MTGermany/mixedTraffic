@@ -585,11 +585,23 @@ road.prototype.calcAccelerationsOfVehicle=function(i){
     //################################
 
     if(false){
-	console.log("\nroad.calcAccelerationsOfVehicle: id=",this.veh[i].id,
-		    " u=",parseFloat(this.veh[i].u).toFixed(2),
-		    " v=",parseFloat(this.veh[i].v).toFixed(2),":");
-	//console.log(" nLeaders=",nLeaders);
-	for(var ilead=0; ilead<nLeaders; ilead++){
+	console.log("\nroad.calcAccelerationsOfVehicle: id=",this.veh[i].id);
+	//console.log(" (x,y)=(",parseFloat(this.veh[i].u).toFixed(2),",",
+	//	    parseFloat(this.veh[i].v).toFixed(2),")");
+	console.log(" position:       posx=",this.veh[i].u,
+		    " posy=",this.veh[i].v);
+	console.log(" velocity:         vx=",this.veh[i].speed,
+		    " vy=  ",this.veh[i].speedLat);
+	console.log(" acc traffic:    accx=",accLongTraffic,
+		    " accy=",accLatTraffic);
+	console.log(" acc boundaries: accx=",accBoundaries[0],
+		    " accy=",accBoundaries[1]);
+	console.log(" acc:            accx=",this.veh[i].accLong,
+		    " accy=",this.veh[i].accLat);
+
+	if(false){
+	  console.log("\n nLeaders=",nLeaders);
+	  for(var ilead=0; ilead<nLeaders; ilead++){
 	    var j=iLeaders[ilead];
 	    console.log(
 		"  leader id=",this.veh[j].id,
@@ -598,10 +610,11 @@ road.prototype.calcAccelerationsOfVehicle=function(i){
 		" accInteraction=",
 		parseFloat(accInteractionLeaders[ilead]).toFixed(3)
 	    );
+	  }
 	}
 
-	//console.log(" nFollowers=",nFollowers);
-	for(var ifollow=0; ifollow<nFollowers; ifollow++){
+	if(false){
+	  for(var ifollow=0; ifollow<nFollowers; ifollow++){
 	    var j=iFollowers[ifollow];
 	    console.log(
 		"  follower id=",this.veh[j].id,
@@ -610,10 +623,9 @@ road.prototype.calcAccelerationsOfVehicle=function(i){
 		" accInteraction=",
 		parseFloat(accInteractionFollowers[ifollow]).toFixed(3)
 	    );
+	  }
 	}
 
-	console.log(" accLongTraffic=",accLongTraffic);
-	console.log(" accLatTraffic=",accLatTraffic);
 
     }
 
@@ -659,7 +671,19 @@ road.prototype.updateSpeedPositions=function(dt){
     if((this.isRing)&&(this.veh[i].u>this.roadLen)){
 	this.veh[i].u -= this.roadLen;
     }
+
+    // debug
+
+    if(false){
+      console.log("updateSpeedPositions: veh ID ",this.veh[i].id,
+		  " accy=",this.veh[i].accLat,
+		  " vy=",this.veh[i].speedLat);
+    }
   }
+
+
+
+
 
   this.sortVehicles(); // positional update may have disturbed sorting
 }

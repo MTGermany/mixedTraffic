@@ -337,6 +337,7 @@ input{
   width: 17vmin;
 }
 
+/* otherwise, addtl box "choose file" appears, unflexible */
 input[type="file"] {
     display: none;
 }
