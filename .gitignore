@@ -2,7 +2,6 @@
 
 *.swp
 *.zip
-*.sh
 README_*
 
 ## Core latex/pdflatex auxiliary files:
