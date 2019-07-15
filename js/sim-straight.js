@@ -297,9 +297,14 @@ function updateSim(dt){    // called here by main_loop()
     itime++;
     //console.log("\nbegin updateSim: itime=",itime);
     if(itime==1){ // initializeMicro(types, len, w, u, v,speed,speedLat)
-	mainroad.initializeMicro( ["car"], [truck_length],
-				  [truck_width], [150], [4], 
-				 [20], [0]);
+	//mainroad.initializeMicro( ["car"], [truck_length],
+	//			  [truck_width], [150], [4], 
+	//			 [20], [0]);
+	mainroad.initializeMicro( ["obstacle"], [20], //!!! TEST pointer err
+				  [20], [120], [0], 
+				 [0], [0]);
+        Math.seedrandom(42); //!! start reproducibly (see docu at onramp.js)
+
 	//mainroad.initializeMicro( ["car","truck"], [car_length,truck_length],
 	//			  [car_width,truck_width], [50,150], [0,4], 
 	//			 [10,10], [0,0]);

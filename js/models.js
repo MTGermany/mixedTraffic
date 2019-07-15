@@ -266,7 +266,7 @@ function MTM(longModel,s0y,s0yLat,s0yB,s0yLatB,sensLat,tauLatOVM,sensDvy){
 
     // !! fixed boundary parameters (only needed for variable road widths)
 
-    this.accLatBMax=8;     //max boundary lat accel; can set =bmax
+    this.accLatBMax=20;     //max boundary lat accel; can set =bmax
     this.accLatBRef=2*this.longModel.b; //defines lat accel if veh touches bd
     this.accLongBRef=0.1*this.longModel.a; //defines long accel "
     this.anticFactorB=2; // B-anticipation TTC in multiples of longModel.T
@@ -520,19 +520,23 @@ MTM.prototype.calcAccB=function(widthLeft,widthRight,x,y,vx,vy,Wveh){
     var dTantic=2*Tantic/this.nj; // sampling width (weight=0 ... exp(-2))
     var denom=1./(1-Math.exp(-dTantic/Tantic)); // geom series 1/(1-q)
 
-    var accLatB=0;
-    var accLongB=0;
     var alphaLongLeftMax=0; // multiplication alpha(sy)*alpha(sx)
     var alphaLongRightMax=0;
     var alphaLatLeftMax=0; // multiplication alpha(sy)*alpha(sx)
     var alphaLatRightMax=0;
  
+    var v0yBleft=0;  // check if road boundaries induce lat desired vel comp
+    var v0yBright=0;
+
     for(var j=0; j<this.nj; j++){
 	var TTC=j*dTantic;
 	var weight=Math.exp(-TTC/Tantic)/denom;
 	var syLeft =widthLeft(x+vx*TTC) +y-0.5*Wveh;
 	var syRight=widthRight(x+vx*TTC)-y-0.5*Wveh;
-
+	if(j>1){
+	    v0yBleft=Math.max(v0yBleft, -syLeft/TTC);
+	    v0yBright=Math.min(v0yBright, -(-syRight/TTC));
+	}
 	var alphaLongLeft =this.alphaLongBfun(syLeft)*weight;
 	var alphaLongRight=this.alphaLongBfun(syRight)*weight;
 	var alphaLatLeft  =this.alphaLatBfun(syLeft)*weight;
@@ -544,35 +548,48 @@ MTM.prototype.calcAccB=function(widthLeft,widthRight,x,y,vx,vy,Wveh){
 	alphaLatRightMax=Math.max(alphaLatRight,alphaLatRightMax);
     }
 
+    var v0y=(Math.abs(v0yBleft)>Math.abs(v0yBright)) ? v0yBleft : v0yBright;
+    var accLongB =this.accLongBRef*( - alphaLongLeftMax - alphaLongRightMax);
+    var accLatB  =this.accLatBRef *( + alphaLatLeftMax  - alphaLatRightMax);
 
-    accLongB +=this.accLongBRef*( - alphaLongLeftMax - alphaLongRightMax);
-    accLatB  +=this.accLatBRef *( + alphaLatLeftMax  - alphaLatRightMax);
+    // add OVM like effect
+    // active if boundaries induce lateral component of desired velocity 
 
-    // apply restrictions (hardly effective)
+    accLatB +=(v0y-vy)/this.tauLatOVM;  
+
+
+
+    //var accLatInt=v0LatInt/this.tauLatOVM
+     //    *(Math.max(0., 1.-sign_dy*(vyl-vy)*this.sensDvy));
+
+
+
+    // apply restrictions (rarely in effect)
 
     var accLatBrestr=Math.max(-this.accLatBMax, 
 			      Math.min(this.accLatBMax,accLatB));
-
    // test output
 
     if(false){
 	var boundaryRelevant=false;
 	if(alphaLatLeftMax>0.1){
 	    boundaryRelevant=true;
-	    console.log("\nMTM.calcAccB: Left boundary:");
-	    console.log("x=",x," y=",y,"alphaLatLeftMax=",alphaLatLeftMax);
+	    console.log("\nMTM.calcAccB: Left boundary:",
+			" alphaLatLeftMax=",alphaLatLeftMax);
 	}
 	if(alphaLatRightMax>0.1){
 	    boundaryRelevant=true;
-	    console.log("MTM.calcAccB: Right boundary:");
-	    console.log("x=",x," y=",y,"alphaLatRightMax=",alphaLatRightMax);
+	    console.log("MTM.calcAccB: Right boundary:",
+			" alphaLatRightMax=",alphaLatRightMax);
 	}
 	if(boundaryRelevant){
-	    console.log("accLongB=",accLongB," accLatB=",accLatBrestr);
+	    console.log("x=",x," y=",y);
+	    console.log("vx=",vx," vy=",vy," v0y=",v0y);
+            console.log(" accLongB=",accLongB," accLatB=", accLatBrestr);
 	}
     }
 
- 
+
     return [accLongB,accLatBrestr];
 
 }//MTM.prototype.calcAccB

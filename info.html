@@ -74,16 +74,17 @@ the right, and loading a custom initial configuration
       responsible for avoiding crashs and the leaders do not look
       behind (not yet in the paper)</li>
 
-      <li> <i>tau<sub>lat,OVM</sub></i> is the time constant for the
+      <li> <i>&tau;<sub>lat,OVM</sub></i> is the time constant for the
       lateral Optimal Velocity Model (see Chapter 10 of <a href="http://www.springer.com/physics/complexity/book/978-3-642-32459-8"><i>Traffic
     Flow Dynamics</i></a>)
  controlling the lateral 
-      motion. The lower <i>tau<sub>lat,OVM</sub></i>, the more
-	responsively the lateral movements become</li>
+      motion. The lower <i>&tau;<sub>lat,OVM</sub></i>, the faster
+	lateral movements are adapted to the desired ones (often zero)</li>
 
       <li> <i>sens<sub>dvy</sub></i> is a new experimental parameter
       introducing relative speeds to the OVM-like lateral
-	dynamics </li>
+	dynamics. This avoids lateral crashes for
+      larger <i>&tau;<sub>lat,OVM</sub></i> values (approx &gt; 1 s) </li>
   </ul>
 </ul>
 
