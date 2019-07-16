@@ -95,6 +95,11 @@ vehicle.prototype.calcAccLongFree=function(){
     return this.mixedModel.longModel.calcAccFree(this.speed);
 }
 
+// difference is backwards interaction acceleration
+
+vehicle.prototype.calcAccLongInt=function(leadveh){
+    return this.calcAccLong(leadveh)-this.calcAccLongFree();
+}
 
 
 /** 

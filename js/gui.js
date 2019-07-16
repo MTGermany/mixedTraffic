@@ -468,18 +468,6 @@ slider_fracBikeVal.innerHTML=slider_fracBike.value;
 
 
 
-// politeness slider
-
-var slider_politeness = document.getElementById('slider_politeness');
-var slider_politenessVal = document.getElementById("slider_politenessVal");
-slider_politeness.oninput = function() {
-    console.log("in slider_politeness.oninput: this.value="
-		+ slider_politeness.value);
-    slider_politenessVal.innerHTML = this.value;
-}
-
-slider_politenessVal.innerHTML=slider_politeness.value;
-
 // tauLatOVM slider
 
 var slider_tauLatOVM = document.getElementById('slider_tauLatOVM');
@@ -505,6 +493,31 @@ slider_sensDvy.oninput = function() {
 
 slider_sensDvyVal.innerHTML=slider_sensDvy.value+" s/m";
 
+
+// longitudinal pushing slider
+
+var slider_pushLong = document.getElementById('slider_pushLong');
+var slider_pushLongVal = document.getElementById("slider_pushLongVal");
+slider_pushLong.oninput = function() {
+    console.log("in slider_pushLong.oninput: this.value="
+		+ slider_pushLong.value);
+    slider_pushLongVal.innerHTML = this.value;
+}
+
+slider_pushLongVal.innerHTML=slider_pushLong.value;
+
+
+// latitudinal pushing slider
+
+var slider_pushLat = document.getElementById('slider_pushLat');
+var slider_pushLatVal = document.getElementById("slider_pushLatVal");
+slider_pushLat.oninput = function() {
+    console.log("in slider_pushLat.oninput: this.value="
+		+ slider_pushLat.value);
+    slider_pushLatVal.innerHTML = this.value;
+}
+
+slider_pushLatVal.innerHTML=slider_pushLat.value;
 
 
 

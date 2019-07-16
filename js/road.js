@@ -16,8 +16,6 @@ with road geometry functions (u,v)->(x,y) to be provided by the main program
 @param fracTruckInit:  initial truck fraction [0-1]
 @param fracBikeInit:   initial bike fraction [0-1] (later on array of veh. compos.)
 @param v0max:          max v0 of vehicles to define max distRange of forces
-@param politeness:     average politeness (weight factor for considering
-                       back vehicle) of the traffic flow on road
 @return:               road segment instance
 */
 
@@ -28,7 +26,7 @@ with road geometry functions (u,v)->(x,y) to be provided by the main program
 
 function road(roadID, isRing, roadLen, widthLeft, widthRight, 
 	      densInit, speedInit, fracTruckInit, fracBikeInit, 
-	      v0max,politeness,dvdumax){
+	      v0max,dvdumax){
 
     console.log("road: in road cstr: roadID=",roadID," roadLen=",roadLen);
     this.roadID=roadID;
@@ -53,7 +51,6 @@ function road(roadID, isRing, roadLen, widthLeft, widthRight,
     var LMeasure=10; // assume time gap of lMeasure
     this.dumaxLag= LMeasure+0.5*(v0max*TMeasure+0.5*v0max*v0max/bMeasure);  
     this.dumaxLead=LMeasure+1.0*(v0max*TMeasure+0.5*v0max*v0max/bMeasure);
-    this.politeness=politeness=0.5;
 
     console.log("road cstr: v0max=",v0max," dumaxLag=",this.dumaxLag,
 		" dumaxLead=",this.dumaxLead);
@@ -524,10 +521,23 @@ road.prototype.calcAccelerationsOfVehicle=function(i){
 	if(accLongLeader<accLongTraffic){accLongTraffic=accLongLeader;}
     }
 
+    //(1a) experimental: Longitudinal push from behind
+    //  just chose the single LEADER
+    //  with strongest interaction 
+    //  initialize with no interaction (nLeaders=0)
 
+    var gammax=1; //!!!corresponds to pushing/repuslive ratio gamma_x in Papa
+    var accLongPush=0;
+    for(var ifollow=0; ifollow<nFollowers; ifollow++){
+	var j=iFollowers[ifollow];
+	accLongPush=Math.max(-this.veh[j].calcAccLongInt(this.veh[i]),
+			     accLongPush); // i <-> j, + <-> -
+    }
+    accLongTraffic += pushLong*accLongPush;
+    console.log("pushLong=",pushLong);
     //(2) lateral accelerations due to other vehicles ("traffic"):
     //  include ALL leaders and followers, also leading obstacles
-    //  leaders with weight 1, followers with weight politeness
+    //  leaders with weight 1, followers with weight pushLat
     //  initialize with no interaction (nLeaders=nFollowers=0)
 
     var accLatTraffic=this.veh[i].calcAccLatFree();
@@ -545,7 +555,7 @@ road.prototype.calcAccelerationsOfVehicle=function(i){
 
     for(var ifollow=0; ifollow<nFollowers; ifollow++){
 	var j=iFollowers[ifollow];
-	var factor=(this.veh[j].type==="obstacle") ? 0 : this.politeness; 
+	var factor=(this.veh[j].type==="obstacle") ? 0 : pushLat; 
 	accLatTraffic 
 	    -= factor*this.veh[j].calcAccLatInt(this.veh[i],false);
     }

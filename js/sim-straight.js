@@ -8,7 +8,8 @@
 // sim control settings 
 
 var fps=30;  // frames per second (unchanged during runtime)
-var dt;      // depends on timewarp value -> (init: html; update: gui.js
+var dt;
+      // depends on timewarp value -> (init: html; update: gui.js
 var time=0;  // only initialization
 var itime=0; // only initialization
 var isStopped=false; // only initialization; simulation starts (not) running
@@ -87,7 +88,8 @@ var tauLatOVM=parseFloat(slider_tauLatOVM.value);  // time constant[s]
                     // lateral OVM (sensLat/tauLatOVM=maxAccRatio)=>slider
 var sensDvy=parseFloat(slider_sensDvy.value); // FVDM-like inclusion of
                     // rel lateral speed, but multiplicative=>slider
-var politeness=parseFloat(slider_politeness.value);
+var pushLong=parseFloat(slider_pushLong.value);
+var pushLat=parseFloat(slider_pushLat.value);
 
 
 
@@ -119,6 +121,7 @@ var mixedModelObstacle=new ModelObstacle();
 
 // (timewarp slider separately; 
 // speedProb slider value directly if applicable)
+var dt=parseFloat(sliderTimewarp.value)/fps;
 
 var qIn=parseFloat(slider_inflow.value);
 var fracTruck=parseFloat(slider_fracTruck.value); // !! otherwise string
@@ -234,7 +237,7 @@ function widthRight(u){ // width road axis - right boundary
 
 var mainroad=new road(roadID, isRing, roadLen, widthLeft, widthRight,
 		      densityInit, speedInit, fracTruck, fracBike, 
-		      v0max, politeness, dvdumax);
+		      v0max, dvdumax);
 
 
 
@@ -344,37 +347,36 @@ function updateSim(dt){    // called here by main_loop()
 
     // implement slider changes 
 
-
+    dt=parseFloat(sliderTimewarp.value)/fps;
     qIn=parseFloat(slider_inflow.value);
+    relOutflow=parseFloat(slider_outflow.value);
     fracTruck=parseFloat(slider_fracTruck.value); // !! otherwise string
     fracBike=parseFloat(slider_fracBike.value);  // frac+frac=e.g.0.20.2!!
+    tauLatOVM=parseFloat(slider_tauLatOVM.value);
+    sensDvy=parseFloat(slider_sensDvy.value);
+    pushLong=parseFloat(slider_pushLong.value);
+    pushLat=parseFloat(slider_pushLat.value);
+
     if(slider_speedmax !== null){
-      if(Math.abs(parseFloat(slider_speedmax.value)-speedMax)>1e-6){
-	  speedMax=parseFloat(slider_speedmax.value);
-	  longModelCar.speedmax=speedMax;  // passed by model ref to all cars!
-	  longModelTruck.speedmax=speedMax;
-	  longModelBike.speedmax=speedMax;
-      }
+	speedMax=parseFloat(slider_speedmax.value);
+	longModelCar.speedmax=speedMax;  // passed by model ref to all cars!
+	longModelTruck.speedmax=speedMax;
+	longModelBike.speedmax=speedMax;
     }
 
-    relOutflow=parseFloat(slider_outflow.value);
-
-    if(Math.abs(parseFloat(slider_tauLatOVM.value)-tauLatOVM)>1e-6){
-	tauLatOVM=parseFloat(slider_tauLatOVM.value);
+    if(true){
 	mixedModelCar.tauLatOVM=tauLatOVM; // passed by model ref to all cars!
 	mixedModelTruck.tauLatOVM=tauLatOVM;
 	mixedModelBike.tauLatOVM=tauLatOVM;
     }
-    if(Math.abs(parseFloat(slider_sensDvy.value)-sensDvy)>1e-6){
-	sensDvy=parseFloat(slider_sensDvy.value);
+
+    if(true){
 	mixedModelCar.sensDvy=sensDvy; // passed by model ref to all cars!
 	mixedModelTruck.sensDvy=sensDvy;
 	mixedModelBike.sensDvy=sensDvy;
     }
 
-    politeness=slider_politeness.value;
-    mainroad.politeness=slider_politeness.value;
-
+ 
 
     //console.log("2:"); mainroad.writeVehicles();
 
@@ -687,7 +689,6 @@ function showLogicalCoords(xMouse,yMouse){
 //##################################################
 
 function main_loop() {
-    dt=parseFloat(sliderTimewarp.value)/fps;
     if(dt>0.5*tauLatOVM){
 	console.log("Warning: dt=",parseFloat(dt).toFixed(2),
 		    " due to timewarp ",

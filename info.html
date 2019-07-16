@@ -44,9 +44,9 @@ the right, and loading a custom initial configuration
 
 <ul>
   <li> <i>Timewarp</i> controls the time-lapse factor simulated time
-    progression/real time progression</li>
+    progression <i>vs.</i> real time progression</li><p>
     
-  <li> <i>Inflow</i> controls the traffic demand</li>
+  <li> <i>Inflow</i> controls the traffic demand</li><p>
     
   <li><i>MaxOutflow</i> installs a bottleneck at the outflow and thus
     controls the maximum outflow. By controlling the Inflow and Max
@@ -54,38 +54,57 @@ the right, and loading a custom initial configuration
       created (lower right insert diagram).
       <ul>
 	<li> The free branch is
-	  controlled by the inflow with MaxOutflow set to 100%</li>
+	  controlled by the inflow with MaxOutflow set to 100%</li><p>
 	  <li> The congested branch is controlled by MaxOutflow with
-	    the Inflow set to the maximum</li>
+	    the Inflow set to the maximum</li><p>
       </ul>
   </li>
 
   <li> The sliders <i>FracTruck</i> and  <i>FracBike</i> control the
   traffic composition of the respective vehicle types with the
   remaining percentage (if any) consisting of 
-    cars</li>
+    cars</li><p>
 
   <li> The last three sliders control selected model parameters,
     see <a href="https://arxiv.org/abs/1805.05076">the paper</a>:
     <ul>
-      <li>The <i>politeness factor p</i> determines to which extent
-      back vehicles are taken into account when moving
-      laterally. For </i>p=0</i>, the followers are exclusively
-      responsible for avoiding crashs and the leaders do not look
-      behind (not yet in the paper)</li>
 
       <li> <i>&tau;<sub>lat,OVM</sub></i> is the time constant for the
-      lateral Optimal Velocity Model (see Chapter 10 of <a href="http://www.springer.com/physics/complexity/book/978-3-642-32459-8"><i>Traffic
-    Flow Dynamics</i></a>)
+	lateral Optimal Velocity Model (see Chapter 10 of
+	<a href=
+    "http://www.springer.com/physics/complexity/book/978-3-642-32459-8"><i>
+    Traffic  Flow Dynamics</i></a>)
  controlling the lateral 
       motion. The lower <i>&tau;<sub>lat,OVM</sub></i>, the faster
-	lateral movements are adapted to the desired ones (often zero)</li>
+	lateral movements are adapted to the desired ones (often zero)
+      </li><p>
 
       <li> <i>sens<sub>dvy</sub></i> is a new experimental parameter
       introducing relative speeds to the OVM-like lateral
 	dynamics. This avoids lateral crashes for
-      larger <i>&tau;<sub>lat,OVM</sub></i> values (approx &gt; 1 s) </li>
-  </ul>
+	larger <i>&tau;<sub>lat,OVM</sub></i> values (approx &gt; 1 s)
+      </li><p>
+
+     <li>The <i>push<sub>lat</sub></i> factor p</i> determines to
+      which extent 
+      back vehicles are taken into account when moving
+      laterally. For <i>push<sub>lat</sub>=0</i>,
+      the followers are exclusively
+      responsible for avoiding crashs and the leaders do not look
+      behind (not yet in the paper). For <i>push<sub>lat</sub>=1</i>, the
+      followers "push" the leaders aside to the same amount as
+      the leaders the followers (<i>actio=reactio</i>) </li><p>
+
+     <li>The <i>push<sub>long</sub></i> factor p</i> acts similarly
+      for the longitudinal dynamics. For <i>push<sub>long</sub>=0</i>,
+      we have car-following, and for <i>push<sub>long</sub>=1</i>
+      pure <i>actio=reactio</i>. Notice that, as in the backwards
+      longitudinal interaction from the leader, only the
+      follower with the strongest forward interaction is selected. 
+      Notice that there is no longer a "normal" fundamental diagram
+      for <i>push<sub>long</sub>=1</i> and, instead, the flow
+      increases always with the density.</li><p>
+</ul>
 </ul>
 
 
@@ -185,8 +204,10 @@ configurations:
 <li> <a href="IC_overtakingBetweenTrucks.txt">A car and a bike
   overtaking some slower trucks in the middle</a>. This is more effective
   with lanes since, otherwise, the space between the trucks is quite
-  narrow. Without lanes, it is only possible if the politeness is
-  above about <i>p=0.1</i> since, otherwise, the trucks in front do
+  narrow. Without lanes, it is only possible if the lateral pushing
+  factor  is
+  above about <i>push<sub>lat</sub>=0.1</i> since, otherwise, the
+  trucks in front do 
   not care and the initial space is too low.</li>
     
 <li> <a href="IC_zipper2.txt">A very strong road narrowing down to one
