@@ -680,6 +680,7 @@ road.prototype.updateSpeedPositions=function(dt){
 
         //(i) restrict change of angle to road axis
 
+      /*
 	var dvdu=this.veh[i].speedLat/(Math.max(this.veh[i].speed,0.0001));
 	var sign_dvdu=(dvdu-this.veh[i].dvdu>0) ? 1 : -1;
 	if(Math.abs(dvdu-this.veh[i].dvdu)>dt*dotdvdumax){
@@ -688,7 +689,7 @@ road.prototype.updateSpeedPositions=function(dt){
 	}
 	this.veh[i].dvdu=this.veh[i].speedLat // save for next restriction
 	    /(Math.max(this.veh[i].speed,0.0001));
-
+*/
 
         // (ii) restrict angle itself and value of speedLat
 
