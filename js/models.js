@@ -428,8 +428,9 @@ MTM.prototype.calcAccLatInt=function(dx,dy,vx,vxl,vy,vyl,axl,
     // tests (set stochasticity noiseAcc in this.longModel.calcAcc=0 
     // for comparisons !!)
 
-    if(logging){
-    //if(true){
+    //if(logging){
+    if(true){
+    //if(vx>0)
 	console.log(
 	    " MTM.calcAccLatInt: ",
 	    " this.tauLatOVM=",this.tauLatOVM,

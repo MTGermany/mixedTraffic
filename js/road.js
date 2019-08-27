@@ -521,20 +521,23 @@ road.prototype.calcAccelerationsOfVehicle=function(i){
 	if(accLongLeader<accLongTraffic){accLongTraffic=accLongLeader;}
     }
 
-    //(1a) experimental: Longitudinal push from behind
+    //(1a) experimental !!! : Longitudinal push from behind
     //  just chose the single LEADER
     //  with strongest interaction 
     //  initialize with no interaction (nLeaders=0)
 
-    var gammax=1; //!!!corresponds to pushing/repuslive ratio gamma_x in Papa
+  if(true){ // pushLong. -lat external slider
+    var gammax=1; //!!! only info purposes; corresponds to pushing/repuslive ratio gamma_x in Papa
     var accLongPush=0;
     for(var ifollow=0; ifollow<nFollowers; ifollow++){
-	var j=iFollowers[ifollow];
-	accLongPush=Math.max(-this.veh[j].calcAccLongInt(this.veh[i]),
-			     accLongPush); // i <-> j, + <-> -
+      var j=iFollowers[ifollow];
+      accLongPush=Math.max(-this.veh[j].calcAccLongInt(this.veh[i]),
+			   accLongPush); // i <-> j, + <-> -
     }
     accLongTraffic += pushLong*accLongPush;
-    console.log("pushLong=",pushLong);
+    //console.log("pushLong=",pushLong);
+  }
+  
     //(2) lateral accelerations due to other vehicles ("traffic"):
     //  include ALL leaders and followers, also leading obstacles
     //  leaders with weight 1, followers with weight pushLat
@@ -598,8 +601,9 @@ road.prototype.calcAccelerationsOfVehicle=function(i){
     // debug logging calcAccelerationsOfVehicle
     //################################
 
-    if(false){
-    //if(true){
+    //if(false){
+  //if(true){
+  if(this.veh[i].type != "obstacle"){
     //if((!isNumeric(this.veh[i].accLong))||(!isNumeric(this.veh[i].accLat))){
 	console.log("\nroad.calcAccelerationsOfVehicle: id=",this.veh[i].id);
 	//console.log(" (x,y)=(",parseFloat(this.veh[i].u).toFixed(2),",",
@@ -614,7 +618,7 @@ road.prototype.calcAccelerationsOfVehicle=function(i){
 		    " accy=",accBoundaries[1]);
 	console.log(" acc:            accx=",this.veh[i].accLong,
 		    " accy=",this.veh[i].accLat);
-	clearInterval(myRun); //!!!
+    //console.log("exiting..."); clearInterval(myRun); //!!!
 
 	if(false){
 	  console.log("\n nLeaders=",nLeaders);
@@ -705,10 +709,15 @@ road.prototype.updateSpeedPositions=function(dt){
 
         // debug
 
-        if(false){
-            console.log("updateSpeedPositions: veh ID ",this.veh[i].id,
-		  " accy=",this.veh[i].accLat,
-		  " vy=",this.veh[i].speedLat);
+        if(this.veh[i].type!="obstacle"){
+          console.log("updateSpeedPositions: t=",parseFloat(time).toFixed(2),
+		      " veh ID ",this.veh[i].id,
+		      "  x=",parseFloat(this.veh[i].u).toFixed(2),
+		      " vx=",parseFloat(this.veh[i].speed).toFixed(3),
+		      " accx=",parseFloat(this.veh[i].accLong).toFixed(3),
+		      "  y=",parseFloat(this.veh[i].v).toFixed(2),
+		      " vy=",parseFloat(this.veh[i].speedLat).toFixed(3),
+		      " accy=",parseFloat(this.veh[i].accLat).toFixed(3));
 	}
     }
 

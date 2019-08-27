@@ -80,7 +80,7 @@ var s0y=0.15;       // lat. attenuation scale [m] for long veh-veh interact
 var s0yLat=0.30;    // lat. attenuation scale [m] for lat veh-veh interact
 var s0yB=0.15;  // long. attenuation scale [m] for lat wall-veh interact
 var s0yLatB=0.20;   // lat. attenuation scale [m] for lat wall-veh interact
-var sensLat=0.4;    // sensitivity (desired lat speed)/(long accel) [s]
+var sensLat=1.4;    // sensitivity (desired lat speed)/(long accel) [s]
 
 // slider params
 
