@@ -2,7 +2,7 @@
 
 *.swp
 *.zip
-README_*
+#README_*
 
 ## Core latex/pdflatex auxiliary files:
 *.aux

@@ -1,0 +1,12 @@
+
+(2019-08-30)
+Sowohl varying BC als auch obstacles werden nun gut umfahren, aber
+Fz fahren manchmal ueber Gras, v.A. 
+ - wenn lateral pushes aktiviert
+ - hohe geschw
+ - Hindernis schnell aufhoert: Sollte eigentl durch max-Bed abgefangen
+ werden 
+
+(2019-08-30)
+alle Konstanten uebersichtlich ordnen an einer Stelle (sim-straight.js)
+ 

@@ -28,7 +28,7 @@ function road(roadID, isRing, roadLen, widthLeft, widthRight,
 	      densInit, speedInit, fracTruckInit, fracBikeInit, 
 	      v0max,dvdumax){
 
-    console.log("road: in road cstr: roadID=",roadID," roadLen=",roadLen);
+  console.log("road: in road cstr: roadID=",roadID," roadLen=",roadLen);
     this.roadID=roadID;
     this.isRing=isRing;
     this.roadLen=roadLen;
@@ -685,22 +685,20 @@ road.prototype.updateSpeedPositions=function(dt){
         // restrict speedLat
 
         //(i) restrict change of angle to road axis
-//!!!
-      /*
+        // local dvdu: new; this.veh[i].dvdu: old+saved
+
 	var dvdu=this.veh[i].speedLat/(Math.max(this.veh[i].speed,0.0001));
 	var sign_dvdu=(dvdu-this.veh[i].dvdu>0) ? 1 : -1;
 	if(Math.abs(dvdu-this.veh[i].dvdu)>dt*dotdvdumax){
-	    this.veh[i].speedLat=(this.veh[i].dvdu+sign_dvdu*dotdvdumax*dt)
-		*this.veh[i].speed;
+	  this.veh[i].dvdu +=sign_dvdu*dotdvdumax*dt;
 	}
-	this.veh[i].dvdu=this.veh[i].speedLat // save for next restriction
-	    /(Math.max(this.veh[i].speed,0.0001));
-*/
 
       // (ii) restrict angle itself and value of speedLat
       // speedLatMax, speedLatStuck always >0
       
-      var speedLatMax=Math.min(speedLatStuck,dvdumax*this.veh[i].speed);
+      this.veh[i].dvdu=Math.max(-dvdumax, Math.min(dvdumax,this.veh[i].dvdu));
+      var speedLatMax=Math.max(speedLatStuck,
+			       Math.abs(this.veh[i].dvdu*this.veh[i].speed));
       this.veh[i].speedLat
 	=Math.max(-speedLatMax,Math.min(speedLatMax,this.veh[i].speedLat));
 
@@ -710,21 +708,23 @@ road.prototype.updateSpeedPositions=function(dt){
 	    this.veh[i].u -= this.roadLen;
 	}
 
-        // debug
+        // debug (dvdumax, speedLatStuck etc in top-level sim-straight.js)
 
         if(false){
         //if(this.veh[i].type!="obstacle"){
-          console.log("road.updateSpeedPositions: t=",
-		      parseFloat(time).toFixed(2),
+          console.log("road.updateSpeedPositions: t=",formd(time),
 		      " veh ID ",this.veh[i].id,
+		      " dvdu=",formd(dvdu),
+		      " this.veh[i].dvdu=",formd(this.veh[i].dvdu),
+		      " sign_dvdu=",sign_dvdu,
 		      "  x=",parseFloat(this.veh[i].u).toFixed(2),
 		      " vx=",parseFloat(this.veh[i].speed).toFixed(3),
 		      " accx=",parseFloat(this.veh[i].accLong).toFixed(3),
 		      "  y=",parseFloat(this.veh[i].v).toFixed(2),
 		      " vy=",parseFloat(this.veh[i].speedLat).toFixed(3),
+		      " accy=",parseFloat(this.veh[i].accLat).toFixed(3),
 		      " speedLatMax=",formd(speedLatMax),
 		      " speedLatStuck=",formd(speedLatStuck),
-		      " accy=",parseFloat(this.veh[i].accLat).toFixed(3),
 		     "");
 	}
     }

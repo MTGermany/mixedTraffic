@@ -207,18 +207,18 @@ ACC.prototype.calcAccInt=function(s,v,vl,al){
 
     if(false){
         console.log("ACC.calcAcc:"
-		    +" s="+parseFloat(s).toFixed(2)
-		    +" v="+parseFloat(v).toFixed(2)
-		    +" vl="+parseFloat(vl).toFixed(2)
-		   // +" al="+parseFloat(al).toFixed(2)
-		    +" accFree="+parseFloat(accFree).toFixed(2)
-		    +" accIDM="+parseFloat(accIDM).toFixed(2)
-		    +" accCAH="+parseFloat(accCAH).toFixed(2)
-		    +" tanarg=",parseFloat((accIDM-accCAH)/this.b).toFixed(2)
-		    +" myTanh=",parseFloat(myTanh((accIDM-accCAH)/this.b)).toFixed(2)
-		    +" accMix="+parseFloat(accMix).toFixed(2)
-		    +" accACC="+parseFloat(accACC).toFixed(2)
-		    +" accInt="+parseFloat(accInt).toFixed(2)
+		    +" s="+parseFloat(s)
+		    +" v="+parseFloat(v)
+		    +" vl="+parseFloat(vl)
+		   // +" al="+parseFloat(al)
+		    +" accFree="+parseFloat(accFree)
+		    +" accIDM="+parseFloat(accIDM)
+		    +" accCAH="+parseFloat(accCAH)
+		    +" tanarg=",parseFloat((accIDM-accCAH)/this.b)
+		    +" myTanh=",parseFloat(myTanh((accIDM-accCAH)/this.b))
+		    +" accMix="+parseFloat(accMix)
+		    +" accACC="+parseFloat(accACC)
+		    +" accInt="+parseFloat(accInt)
 		   )
     }
     return accInt;
@@ -437,27 +437,29 @@ MTM.prototype.calcAccLatInt=function(dx,dy,vx,vxl,vy,vyl,axl,
 
     // tests (set stochasticity noiseAcc in this.longModel.calcAcc=0 
     // for comparisons !!)
+    // possibly switch on also logging in road.updateSpeedPositions
+    // for complete accLat that are not accessible here (multi-veh etc)
 
     //if(logging){
-  if(true){
+  if(false){
     //if(vx>0)
 	console.log(
 	  " MTM.calcAccLatInt single pair: ",
 	   // " this.tauLatOVM=",this.tauLatOVM,
 	   // " this.sensDvy=",this.sensDvy,
-	    " dy=",parseFloat(dy).toFixed(2),
-	    " sx=",parseFloat(sx).toFixed(2),
-	    " sy=",parseFloat(sy).toFixed(2),
-	    " vx=",parseFloat(vx).toFixed(2),
-	    " vy=",parseFloat(vy).toFixed(2),
-	    //" vxl=",parseFloat(vxl).toFixed(2),
-	    //" vyl=",parseFloat(vyl).toFixed(2),
-	    //" axl=",parseFloat(axl).toFixed(2),
-	    //" accCFint=",parseFloat(accCFint).toFixed(2),
-	    //" alpha=",parseFloat(alpha).toFixed(2),
-	  " v0LatInt=",parseFloat(v0LatInt).toFixed(2),
-	  " mult_dv_factor=",mult_dv_factor,
-	  " accLatInt=",parseFloat(accLatInt).toFixed(2),
+	    " dy=",formd(dy),
+	    " sx=",formd(sx),
+	    " sy=",formd(sy),
+	    " vx=",formd(vx),
+	    " vy=",formd(vy),
+	    //" vxl=",formd(vxl),
+	    //" vyl=",formd(vyl),
+	    //" axl=",formd(axl),
+	    //" accCFint=",formd(accCFint),
+	    //" alpha=",formd(alpha),
+	  " v0LatInt=",formd(v0LatInt),
+	  " mult_dv_factor=",formd(mult_dv_factor),
+	  " accLatInt=",formd(accLatInt),
 	  " accLatFree=",formd(this.calcAccLatFree(vy)),
 	    "");
     }
@@ -661,14 +663,14 @@ MTM.prototype.calcTable_dxvx=function(dy,vxl,vy,vyl,axl,Lveh,Ll,Wavg){
     var vxmin=0;
     var vxmax=30;
 
-    var str_dy=parseFloat(dy).toFixed(2);
-    var str_vxl=parseFloat(vxl).toFixed(2);
-    var str_vy=parseFloat(vy).toFixed(2);
-    var str_vyl=parseFloat(vyl).toFixed(2);
-    var str_axl=parseFloat(axl).toFixed(2);
-    var str_Lveh=parseFloat(Lveh).toFixed(2);
-    var str_Ll=parseFloat(Ll).toFixed(2);
-    var str_Wavg=parseFloat(Wavg).toFixed(2);
+    var str_dy=formd(dy);
+    var str_vxl=formd(vxl);
+    var str_vy=formd(vy);
+    var str_vyl=formd(vyl);
+    var str_axl=formd(axl);
+    var str_Lveh=formd(Lveh);
+    var str_Ll=formd(Ll);
+    var str_Wavg=formd(Wavg);
 
     console.log("\n\n#output of MTM.calcAccTable1_dxvx");
     console.log("#Lveh=",str_Lveh," Ll=",str_Ll," Wavg=",str_Wavg);
@@ -679,10 +681,10 @@ MTM.prototype.calcTable_dxvx=function(dy,vxl,vy,vyl,axl,Lveh,Ll,Wavg){
 	console.log("MTM.calcAccTable1_dxvx: n_dx and n_vx must be >=2");}
     else for(var i=0; i<n_dx; i++){
 	var dx=dxmin+i*(dxmax-dxmin)/(n_dx-1);
-	var str_dx=parseFloat(dx).toFixed(2);
+	var str_dx=formd(dx);
 	for(var j=0; j<n_vx; j++){
 	    var vx=vxmin+j*(vxmax-vxmin)/(n_vx-1);
-	    var str_vx=parseFloat(vx).toFixed(2);
+	    var str_vx=formd(vx);
 
 	    var ax=this.calcAccLong(dx,dy,vx,vxl,axl,Ll,Wavg);
 	    var ay=this.calcAccLatInt(dx,dy,vx,vxl,vy,vyl,axl,Lveh,Ll,Wavg,false)
@@ -691,8 +693,8 @@ MTM.prototype.calcTable_dxvx=function(dy,vxl,vy,vyl,axl,Lveh,Ll,Wavg){
 			"\t",str_dy,
 			"\t",str_vx,
 			"\t",str_vy,
-			"\t",parseFloat(ax).toFixed(2),
-			"\t",parseFloat(ay).toFixed(2)
+			"\t",formd(ax),
+			"\t",formd(ay)
 		       );
 	}
     }
@@ -723,9 +725,9 @@ ACC.prototype.calcTable_dxvx=function(vxl,axl,Ll){
     var vxmin=0;
     var vxmax=30;
 
-    var str_vxl=parseFloat(vxl).toFixed(2);
-    var str_axl=parseFloat(axl).toFixed(2);
-    var str_Ll=parseFloat(Ll).toFixed(2);
+    var str_vxl=formd(vxl);
+    var str_axl=formd(axl);
+    var str_Ll=formd(Ll);
 
     console.log("\n\n#output of ACC.calcAccTable1_dxvx");
     console.log("#vxl=",str_vxl," axl=",str_axl," Ll=",str_Ll);
@@ -736,15 +738,15 @@ ACC.prototype.calcTable_dxvx=function(vxl,axl,Ll){
 	console.log("ACC.calcAccTable1_dxvx: n_dx and n_vx must be >=2");}
     else for(var i=0; i<n_dx; i++){
 	var dx=dxmin+i*(dxmax-dxmin)/(n_dx-1);
-	var str_dx=parseFloat(dx).toFixed(2);
+	var str_dx=formd(dx);
 	for(var j=0; j<n_vx; j++){
 	    var vx=vxmin+j*(vxmax-vxmin)/(n_vx-1);
-	    var str_vx=parseFloat(vx).toFixed(2);
+	    var str_vx=formd(vx);
 
 	    var ax=this.calcAcc(dx-Ll,vx,vxl,axl);
 	    console.log(str_dx,
 			"\t",str_vx,
-			"\t",parseFloat(ax).toFixed(2)
+			"\t",formd(ax)
 		       );
 	}
     }

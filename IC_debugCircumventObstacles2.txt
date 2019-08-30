@@ -1,0 +1,4 @@
+#test interaction with obstacles
+#type     length   width  u	v	speedLong	speedLat
+car	  5.0	   2.0	  15	-8	2		0
+obstacle  7	   10	  32	-10	0		0

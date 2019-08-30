@@ -101,7 +101,7 @@ var dvdumax=0.3;       // tan of maximum angle with respect to road axis
                        // if long speed is very small/zero)
 var dotdvdumax=0.3;    // max change rate of angle to road axis
 var phiVehRelMax=0.15; // only drawing: maximum visual angle to road axis
-var speedLatStuck=4.2;   // max lateral speed if long speed low!!DOS!!!
+var speedLatStuck=1.2;   // max lateral speed if long speed low!!DOS!!!
 
 
 var mixedModelCar=new MTM(longModelCar,s0y,s0yLat,s0yB,s0yLatB,
