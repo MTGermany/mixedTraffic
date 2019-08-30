@@ -1,3 +1,7 @@
+
+function formd(x){return parseFloat(x).toFixed(2);}
+
+
 //#################################
 // longitudinal models
 //#################################
@@ -404,48 +408,57 @@ MTM lateral interaction acceleration effected by one vehicle
 
 MTM.prototype.calcAccLatInt=function(dx,dy,vx,vxl,vy,vyl,axl,
 				      Lveh,Ll,Wavg,logging){
-    var sx=Math.max(0,dx-Ll);
-    var sy=Math.abs(dy)-Wavg;
-    var sign_dy=(dy<0) ? -1 : 1;
-    var accFree=this.longModel.calcAccFree(vx); 
-    var accCFint=this.longModel.calcAccInt(sx,vx,vxl,axl); // possibly reuse
-    var alpha=(sy<0) // sy=-Wavg ... infty; Math.abs(dy)/Wavg=1+sy/Wavg
+  var sx=Math.max(0,dx-Ll);
+  var sy=Math.abs(dy)-Wavg;
+  var sign_dy=(dy<0) ? -1 : 1;
+  var sign_sy=(sy<0) ? -1 : 1;
+  var accFree=this.longModel.calcAccFree(vx); 
+  var accCFint=this.longModel.calcAccInt(sx,vx,vxl,axl); // possibly reuse
+  var alpha=(sy<0) // sy=-Wavg ... infty; Math.abs(dy)/Wavg=1+sy/Wavg
 	? 1+sy/Wavg : Math.exp(-sy/this.s0yLat); //sy<0 => lin increase
-    var v0LatInt=+sensLat*sign_dy*alpha*accCFint; // accCFint<0!! 
+  var v0LatInt=+sensLat*sign_dy*alpha*accCFint; // accCFint<0!! 
 
-    // add multiplicative (sic!) FVDM-like effect on lat speed difference
+  var accLatInt=v0LatInt/this.tauLatOVM;
+  
+    // add multiplicative FVDM-like effect on lat speed difference
     // 1/sensDvy=lateral speed difference where accLatInt=doubled or zeroed
 
-    var accLatInt=v0LatInt/this.tauLatOVM
-         *(Math.max(0., 1.-sign_dy*(vyl-vy)*this.sensDvy));
+  var mult_dv_factor=(sy<0)
+      ? 1 : Math.max(0., 1.-sign_dy*(vyl-vy)*this.sensDvy);
+  accLatInt *=mult_dv_factor;
+
 
     // restrict to +/- accLatIntMax
 
-    accLatInt=Math.max(-this.accLatIntMax, 
-		       Math.min(this.accLatIntMax,accLatInt));
+  accLatInt=Math.max(-this.accLatIntMax, 
+                     Math.min(this.accLatIntMax,accLatInt));
+
 
 
     // tests (set stochasticity noiseAcc in this.longModel.calcAcc=0 
     // for comparisons !!)
 
     //if(logging){
-    if(true){
+  if(true){
     //if(vx>0)
 	console.log(
-	    " MTM.calcAccLatInt: ",
-	    " this.tauLatOVM=",this.tauLatOVM,
-	    " this.sensDvy=",this.sensDvy,
-	    " sx=",parseFloat(sx).toFixed(2),
+	  " MTM.calcAccLatInt single pair: ",
+	   // " this.tauLatOVM=",this.tauLatOVM,
+	   // " this.sensDvy=",this.sensDvy,
 	    " dy=",parseFloat(dy).toFixed(2),
+	    " sx=",parseFloat(sx).toFixed(2),
+	    " sy=",parseFloat(sy).toFixed(2),
 	    " vx=",parseFloat(vx).toFixed(2),
 	    " vy=",parseFloat(vy).toFixed(2),
-	    " vxl=",parseFloat(vxl).toFixed(2),
-	    " vyl=",parseFloat(vyl).toFixed(2),
-	    " axl=",parseFloat(axl).toFixed(2),
-	    " accCFint=",parseFloat(accCFint).toFixed(2),
-	    " alpha=",parseFloat(alpha).toFixed(2),
-	    " v0LatInt=",parseFloat(v0LatInt).toFixed(2),
-	    " accLatInt (w/restr)=",parseFloat(accLatInt).toFixed(2),
+	    //" vxl=",parseFloat(vxl).toFixed(2),
+	    //" vyl=",parseFloat(vyl).toFixed(2),
+	    //" axl=",parseFloat(axl).toFixed(2),
+	    //" accCFint=",parseFloat(accCFint).toFixed(2),
+	    //" alpha=",parseFloat(alpha).toFixed(2),
+	  " v0LatInt=",parseFloat(v0LatInt).toFixed(2),
+	  " mult_dv_factor=",mult_dv_factor,
+	  " accLatInt=",parseFloat(accLatInt).toFixed(2),
+	  " accLatFree=",formd(this.calcAccLatFree(vy)),
 	    "");
     }
     return accLatInt;
@@ -516,94 +529,104 @@ MTM.prototype.alphaLatBfun=function(sy){
 
 MTM.prototype.calcAccB=function(widthLeft,widthRight,x,y,vx,vy,Wveh){
 
+
+
+  //var log=true; MT 2019-08
+  var log=false;
+  
     // !! vx can be =0; this.longModel.s0/vx heineous error!
+  var Tantic=this.anticFactorB*(this.longModel.T);//+this.longModel.s0/vx);
+  var dTantic=2*Tantic/this.nj; // sampling width (weight=0 ... exp(-2))
+  //var denom=1./(1-Math.exp(-dTantic/Tantic)); // geom series 1/(1-q)
 
-    var Tantic=this.anticFactorB*(this.longModel.T);//+this.longModel.s0/vx);
-    var dTantic=2*Tantic/this.nj; // sampling width (weight=0 ... exp(-2))
-    var denom=1./(1-Math.exp(-dTantic/Tantic)); // geom series 1/(1-q)
-
-    var alphaLongLeftMax=0; // multiplication alpha(sy)*alpha(sx)
-    var alphaLongRightMax=0;
-    var alphaLatLeftMax=0; // multiplication alpha(sy)*alpha(sx)
-    var alphaLatRightMax=0;
+  var alphaLongLeftMax=0; // multiplication alpha(sy)*alpha(sx)
+  var alphaLongRightMax=0;
+  var alphaLatLeftMax=0; // multiplication alpha(sy)*alpha(sx)
+  var alphaLatRightMax=0;
  
-    var v0yBleft=0;  // check if road boundaries induce lat desired vel comp
-    var v0yBright=0;
+  var v0yBleft=0;  // check if road boundaries induce lat desired vel comp
+  var v0yBright=0;
 
-    for(var j=0; j<this.nj; j++){
-	var TTC=j*dTantic;
-	var weight=Math.exp(-TTC/Tantic)/denom;
-	var syLeft =widthLeft(x+vx*TTC) +y-0.5*Wveh;
-	var syRight=widthRight(x+vx*TTC)-y-0.5*Wveh;
-	if(j>1){
-	    v0yBleft=Math.max(v0yBleft, -syLeft/TTC);
-	    v0yBright=Math.min(v0yBright, -(-syRight/TTC));
-	}
-	var alphaLongLeft =this.alphaLongBfun(syLeft)*weight;
-	var alphaLongRight=this.alphaLongBfun(syRight)*weight;
-	var alphaLatLeft  =this.alphaLatBfun(syLeft)*weight;
-	var alphaLatRight =this.alphaLatBfun(syRight)*weight;
+  if(log){
+    console.log("MTM.calcAccB:",
+		" x=",formd(x)," y=",formd(y),
+		" vx=",formd(vx)," vy=",formd(vy));
+    console.log("\nFind maximum interaction at anticipated longPos:");
+  }
+  
+  // loop over spatial anticipations dx_antic=x+vx*TTC: find max interaction
+  
+  for(var j=0; j<this.nj; j++){
+    var TTC=j*dTantic;
+    var weight=Math.exp(-TTC/Tantic);
+    var syLeft =widthLeft(x+vx*TTC) +y-0.5*Wveh;
+    var syRight=widthRight(x+vx*TTC)-y-0.5*Wveh;
 
-	alphaLongLeftMax=Math.max(alphaLongLeft,alphaLongLeftMax);
-	alphaLongRightMax=Math.max(alphaLongRight,alphaLongRightMax);
-	alphaLatLeftMax=Math.max(alphaLatLeft,alphaLatLeftMax);
-	alphaLatRightMax=Math.max(alphaLatRight,alphaLatRightMax);
+    // calculate locally implied v0yB to avoid B-collisions
+    // only active if syLeft<0 => v0yB>0 or syRight<0 => v0yB<0
+    
+    if(j>0){
+      v0yBleft=Math.max(v0yBleft, -syLeft/TTC);
+      v0yBright=Math.min(v0yBright, -(-syRight/TTC));
+    }
+    var alphaLongLeft =this.alphaLongBfun(syLeft)*weight;
+    var alphaLongRight=this.alphaLongBfun(syRight)*weight;
+    var alphaLatLeft  =this.alphaLatBfun(syLeft)*weight;
+    var alphaLatRight =this.alphaLatBfun(syRight)*weight;
+
+    alphaLongLeftMax=Math.max(alphaLongLeft,alphaLongLeftMax);
+    alphaLongRightMax=Math.max(alphaLongRight,alphaLongRightMax);
+    alphaLatLeftMax=Math.max(alphaLatLeft,alphaLatLeftMax);
+    alphaLatRightMax=Math.max(alphaLatRight,alphaLatRightMax);
+
+    if(false&&log){
+      console.log(" j=",j," TTC=",formd(TTC)," dx_antic=",formd(vx*TTC),
+		  " weight=",formd(weight));
+      console.log("  syLeft=",formd(syLeft)," syRight=",formd(syRight));
+      if(j>0){
+        console.log("  -syLeft/TTC=",formd(-syLeft/TTC),
+		    " v0yBleft=",v0yBleft,
+		    " syRight/TTC=",formd(syRight/TTC),
+		    " v0yBright=",v0yBright);
+      }
+      console.log("  alphaLongLeft=",formd(alphaLongLeft),
+		  " alphaLongRight=",formd(alphaLongRight));
+      console.log("  alphaLatLeft=",formd(alphaLatLeft),
+		  " alphaLatRight=",formd(alphaLatRight));
     }
 
-    var v0y=(Math.abs(v0yBleft)>Math.abs(v0yBright)) ? v0yBleft : v0yBright;
-    var accLongB =this.accLongBRef*( - alphaLongLeftMax - alphaLongRightMax);
-    var accLatB  =this.accLatBRef *( + alphaLatLeftMax  - alphaLatRightMax);
+  }
 
-    // add OVM like effect
-    // active if boundaries induce lateral component of desired velocity 
+  var v0y=(Math.abs(v0yBleft)>Math.abs(v0yBright)) ? v0yBleft : v0yBright;
+  var accLongB =this.accLongBRef*( - alphaLongLeftMax - alphaLongRightMax);
+  var accLatB0  =this.accLatBRef *( + alphaLatLeftMax  - alphaLatRightMax);
 
-    accLatB +=(v0y-vy)/this.tauLatOVM;  
-
-
-
-    //var accLatInt=v0LatInt/this.tauLatOVM
-     //    *(Math.max(0., 1.-sign_dy*(vyl-vy)*this.sensDvy));
+  // add OVM like effect
+  // active if boundaries induce lateral component of desired velocity 
+  // ! no -vy/tauLatOVM since already taken care of at accFree
+  
+  accLatB =accLatB0+v0y/this.tauLatOVM;  
 
 
+  // apply restrictions (rarely in effect)
 
-    // apply restrictions (rarely in effect)
-
-    var accLatBrestr=Math.max(-this.accLatBMax, 
+  var accLatBrestr=Math.max(-this.accLatBMax, 
 			      Math.min(this.accLatBMax,accLatB));
-   // test output
 
-    if(false){
-    //if((!isNumeric(accLongB))||(!isNumeric(accLatB))){
-    //if( (alphaLatLeftMax>0.1) || (alphaLatRightMax>0.1) ){
-	console.log("MTM.calcAccB:");
-	console.log("  x=",x,"  y=",y);
-	console.log(" vx=",vx," vy=",vy," v0y=",v0y);
-        console.log(" accLongB=",accLongB," accLatB=", accLatBrestr);
-	console.log("\norigin: ");
-        for(var j=0; j<this.nj; j++){
-	    var TTC=j*dTantic;
-	    var weight=Math.exp(-TTC/Tantic)/denom;
-	    var syLeft =widthLeft(x+vx*TTC) +y-0.5*Wveh;
-	    var syRight=widthRight(x+vx*TTC)-y-0.5*Wveh;
-	    if(j>1){
-	      v0yBleft=Math.max(v0yBleft, -syLeft/TTC);
-	      v0yBright=Math.min(v0yBright, -(-syRight/TTC));
-	    }
-	    var alphaLongLeft =this.alphaLongBfun(syLeft)*weight;
-	    var alphaLongRight=this.alphaLongBfun(syRight)*weight;
-	    var alphaLatLeft  =this.alphaLatBfun(syLeft)*weight;
-	    var alphaLatRight =this.alphaLatBfun(syRight)*weight;
-	    console.log(" j=",j," TTC=",TTC," weight=",weight);
-	    console.log("  syLeft=",syLeft," syRight=",syRight);
-	    console.log("  alphaLongLeft=",alphaLongLeft);
-	    console.log("  alphaLatLeft=",alphaLatLeft);
-	}
- 
-	clearInterval(myRun); //!!!
-    }
+  if(log){
+    console.log("v0yBleft=",formd(v0yBleft),
+		    " v0yBright=",formd(v0yBright));
+    console.log("alphaLatLeftMax=",formd(alphaLatLeftMax),
+		" alphaLatRightMax=",formd(alphaLatRightMax));
+    console.log("accLatB_vy0=",formd(accLatB0));
+    console.log("accLatB=",formd(accLatB));
+    console.log("accLatBrestr=",formd(accLatBrestr));
+
+    //clearInterval(myRun);//!!! then stepwise with go button!
+  }
 
 
-    return [accLongB,accLatBrestr];
+  return [accLongB,accLatBrestr];
 
 }//MTM.prototype.calcAccB
 

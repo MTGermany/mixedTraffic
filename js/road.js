@@ -601,23 +601,25 @@ road.prototype.calcAccelerationsOfVehicle=function(i){
     // debug logging calcAccelerationsOfVehicle
     //################################
 
-    //if(false){
+  if(false){
   //if(true){
-  if(this.veh[i].type != "obstacle"){
+  //if(this.veh[i].type != "obstacle"){
     //if((!isNumeric(this.veh[i].accLong))||(!isNumeric(this.veh[i].accLat))){
-	console.log("\nroad.calcAccelerationsOfVehicle: id=",this.veh[i].id);
-	//console.log(" (x,y)=(",parseFloat(this.veh[i].u).toFixed(2),",",
-	//	    parseFloat(this.veh[i].v).toFixed(2),")");
-	console.log(" position:       posx=",this.veh[i].u,
-		    " posy=",this.veh[i].v);
-	console.log(" velocity:         vx=",this.veh[i].speed,
-		    " vy=  ",this.veh[i].speedLat);
-	console.log(" acc traffic:    accx=",accLongTraffic,
-		    " accy=",accLatTraffic);
-	console.log(" acc boundaries: accx=",accBoundaries[0],
-		    " accy=",accBoundaries[1]);
-	console.log(" acc:            accx=",this.veh[i].accLong,
-		    " accy=",this.veh[i].accLat);
+    console.log("\nroad.calcAccelerationsOfVehicle: id=",this.veh[i].id);
+    console.log(" position:       posx=",parseFloat(this.veh[i].u).toFixed(2),
+		" posy=",parseFloat(this.veh[i].v).toFixed(2));
+    console.log(" velocity:         vx=",
+		parseFloat(this.veh[i].speed).toFixed(2),
+		" vy=  ",parseFloat(this.veh[i].speedLat).toFixed(2));
+    console.log(" acc traffic:    accx=",
+		parseFloat(accLongTraffic).toFixed(2),
+		" accy=",parseFloat(accLatTraffic).toFixed(2));
+    console.log(" acc boundaries: accx=",
+		parseFloat(accBoundaries[0]).toFixed(2),
+		" accy=",parseFloat(accBoundaries[1]).toFixed(2));
+    console.log(" acc:            accx=",
+		parseFloat(this.veh[i].accLong).toFixed(2),
+		" accy=",parseFloat(this.veh[i].accLat).toFixed(2));
     //console.log("exiting..."); clearInterval(myRun); //!!!
 
 	if(false){
@@ -683,7 +685,7 @@ road.prototype.updateSpeedPositions=function(dt){
         // restrict speedLat
 
         //(i) restrict change of angle to road axis
-
+//!!!
       /*
 	var dvdu=this.veh[i].speedLat/(Math.max(this.veh[i].speed,0.0001));
 	var sign_dvdu=(dvdu-this.veh[i].dvdu>0) ? 1 : -1;
@@ -695,11 +697,12 @@ road.prototype.updateSpeedPositions=function(dt){
 	    /(Math.max(this.veh[i].speed,0.0001));
 */
 
-        // (ii) restrict angle itself and value of speedLat
-
-        var speedLatMax=Math.max(speedLatStuck,dvdumax*this.veh[i].speed);
-        this.veh[i].speedLat
-	  =Math.max(-speedLatMax,Math.min(speedLatMax,this.veh[i].speedLat));
+      // (ii) restrict angle itself and value of speedLat
+      // speedLatMax, speedLatStuck always >0
+      
+      var speedLatMax=Math.min(speedLatStuck,dvdumax*this.veh[i].speed);
+      this.veh[i].speedLat
+	=Math.max(-speedLatMax,Math.min(speedLatMax,this.veh[i].speedLat));
 
         // close ring if isRing
 
@@ -709,15 +712,20 @@ road.prototype.updateSpeedPositions=function(dt){
 
         // debug
 
-        if(this.veh[i].type!="obstacle"){
-          console.log("updateSpeedPositions: t=",parseFloat(time).toFixed(2),
+        if(false){
+        //if(this.veh[i].type!="obstacle"){
+          console.log("road.updateSpeedPositions: t=",
+		      parseFloat(time).toFixed(2),
 		      " veh ID ",this.veh[i].id,
 		      "  x=",parseFloat(this.veh[i].u).toFixed(2),
 		      " vx=",parseFloat(this.veh[i].speed).toFixed(3),
 		      " accx=",parseFloat(this.veh[i].accLong).toFixed(3),
 		      "  y=",parseFloat(this.veh[i].v).toFixed(2),
 		      " vy=",parseFloat(this.veh[i].speedLat).toFixed(3),
-		      " accy=",parseFloat(this.veh[i].accLat).toFixed(3));
+		      " speedLatMax=",formd(speedLatMax),
+		      " speedLatStuck=",formd(speedLatStuck),
+		      " accy=",parseFloat(this.veh[i].accLat).toFixed(3),
+		     "");
 	}
     }
 

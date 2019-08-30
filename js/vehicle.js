@@ -1,4 +1,6 @@
 
+function formd(x){return parseFloat(x).toFixed(2);}
+
 // type = "bike", "car", "truck", or "obstacle"
 // speed=longitudinal speed (lat speed=0 initially)
 
@@ -136,7 +138,6 @@ vehicle.prototype.calcAccLatInt=function(leadveh,logging){
 					 this.speedLat,vyl,accl,
 					  this.len,Ll,Wavg,logging);
  }
-
 
 
 /** 
