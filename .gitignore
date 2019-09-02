@@ -3,6 +3,8 @@
 *.swp
 *.zip
 #README_*
+README_js_demo
+README_link
 
 ## Core latex/pdflatex auxiliary files:
 *.aux

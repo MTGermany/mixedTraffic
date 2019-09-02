@@ -1,3 +1,56 @@
+debugtools
+features TODO
+bugs
+
+
+debugtools
+==========
+
+(eigene test Konsole mit ctrl-shift-j)
+(Konsole im selben Browserfenster  ctrl-shift-k)
+
+features TODO (sep2019)
+======================
+
+listed top-down:
+
+0. GUI (low prio)
+------------------
+
+add/remove sliders by javascript  as a response of other actions
+(e.g. displayForces=true, displayStleForces=0)
+programatically add/remove from html info:
+http://www.w3schools.com/jsref/met_table_insertrow.asp
+(lines below do not harm (firefox) if slider not in html) 
+
+
+1. Simulation and road network
+------------------------------
+
+(i) (2019-08-30)
+alle Konstanten uebersichtlich ordnen an einer Stelle (sim-straight.js)
+
+(ii) more scenarios, e.g., onramp => road link network as directed graph as
+in traffic-simulation.de
+
+
+2. Vehicle population
+---------------------
+
+(i) distributied params: Keep referencing to a few standard models as
+  now in  sim_straight
+  but generalize model accel function to include 
+  alpha=[alpha_v0, alpha_T, alpha_a] 
+  with alpha set individually by the vehicles
+
+3. Model
+-------
+
+=> see bugs
+
+
+Bugs
+====
 
 (2019-08-30)
 Sowohl varying BC als auch obstacles werden nun gut umfahren, aber
@@ -7,6 +60,4 @@ Fz fahren manchmal ueber Gras, v.A.
  - Hindernis schnell aufhoert: Sollte eigentl durch max-Bed abgefangen
  werden 
 
-(2019-08-30)
-alle Konstanten uebersichtlich ordnen an einer Stelle (sim-straight.js)
  
