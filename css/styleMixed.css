@@ -43,7 +43,7 @@ body{
 }
 
 
-/* not used in index, only in info.html */
+/* not used in index, only in info.html, impressum.html */
 
  h1{
      font-size: 4vmin;
@@ -59,8 +59,6 @@ body{
      color: #556;
      padding-top:0px;
  }
-
-/* not used at present */
 
  h3{ 
      font-family: sans-serif;
@@ -136,7 +134,7 @@ table.infoTable td {
 
 input[type=range]{
   width: 10vw;
-  height: 1.2vw;
+  height: 1.2vw;  /*DOS below about 1.2 vw */
   background: #bbbbc5;
 
 }
@@ -391,90 +389,20 @@ TR{
 }
 
 
-/* (6) most important sliders: demand variables such as Qin percTruck 
-/* and most important model parameters and action variables (speedlimit)*/
+/* (6) slider field */
 
 #sliders1{ /* table elements relevant for font size */
   position: absolute;
-  top: 38vh;
-  height: 30vh;
+  top: 35vh;
+  height: 34vh;
   left: 48vmin;  /* calc( 24vw - 23vmin);*/
   width: 28vw;
   background-color: rgba(255,255,255,0.4);
   z-index: 2; /* the higher the integer, the more on top */
 }
 
-/* (7) less important sliders; potentially dropped */
-
-#sliders2{ 
-  position: absolute;
-  top: 50vmin;
-  height: 13vmin;
-  left: 40vmin;
-  width:  49vmin;
-  background-color: rgba(255,255,255,0.4);
-  z-index: 2;
-
-}
 
 
-
-/* (8)-(10): define white space below sim in portrait mode */
-/* cover simulation "grass" if needed */
-
-
-#footWhiteSpace{
-  position: absolute;
-  top: 0vw;
-  height: 0vh;
-  left: 0vw;
-  width: 0vw;
-  background-color: white;
-  z-index: 1;
-}
-
-
-
-/* (9)-(11): image layout for "text arts" title images */ 
-
-img.infoBlock{
-    /*max-width: 90%;*/
-    max-width: 16vw;
-    max-height: 3vh;
-}
-
-
-/* (9) former model navigation frame  */
-
-#infoModels{
-  position: absolute;
-  top:   8vmin;
-  height:  20vmin;
-  left:   85vw;
-  width:  13vw;
-  z-index: 2;
-}
-
-/* (9) position of the block describing the scenarios */
-
-#infoScenarios{
-  position: absolute;
-  top:   34vmin;
-  height:  30vmin;
-  left:   85vw;
-  width:  13vw;
-  /*background-color: #AAFFAA;*/
-}
-
-/* (10) position of the general link fields (often outside main area) */
- 
-#infoLinks{
-  position: absolute;
-  top:   85vmin;
-  height:  30vmin;
-  left:   85vw;
-  width:  13vw;
-}
 
 
 } /* end @media filter landscape normal*/

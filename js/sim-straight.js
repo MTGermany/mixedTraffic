@@ -4,19 +4,51 @@
 // Gloal var definitions and initial settings
 //#############################################################
 
-
-// sim control settings 
+// (1) running the simulation
 
 var fps=30;  // frames per second (unchanged during runtime)
-var dt;
-      // depends on timewarp value -> (init: html; update: gui.js
 var time=0;  // only initialization
 var itime=0; // only initialization
 var isStopped=false; // only initialization; simulation starts (not) running
+var dt=parseFloat(sliderTimewarp.value)/fps;
+var floorField=false; // initializes floor-field toggle
+
+// (2) graphical elements
+
+var car_srcFile='figs/blackCarCropped.gif';
+var truck_srcFile='figs/truck1Small.png';
+var bike_srcFile='figs/bikeCropped.gif';
+var roadLanes_srcFile='figs/roadSegmentLanesFig.png';
+var roadNoLanes_srcFile='figs/tarmac.jpg';
+var obstacle_srcFile='figs/obstacleImg.png';
+var background_srcFile='figs/backgroundGrass.jpg'; 
 
 
+var displayForcefield=true; // can be changed interactively -> gui.js
+var displayForceStyle=2;  // 0: with probe, 1: arrow field arround veh,
+                          // 2: moving arrows at veh
+var drawBackground=true;
+var drawRoad=true;
+
+var canvas; // defined in init() by canvas = document.getElementById("...");
+var ctx;  // graphics context
+
+
+// (3) display logical (u,v) coords of mouse position (x,y)
+// get mouse positions from gui.activateCoordDisplay which is called
+// if html.onmousemover=true (only true if over client area AND moving)
+// start showMouseCoords=false  since otherw NaN if mouse initially outside
+
+var showMouseCoords=false; 
+var xMouse; // get from activateCoordDisplay event if html.onmousemove=true
+var yMouse;
+
+
+
+//#############################################################
 // specification of vehicle types and dimensions [SI units]
 // (the actual vehicles are constructed in the road cstr)
+//#############################################################
 
 var car_length=5; 
 var car_width=2.2;
@@ -29,7 +61,7 @@ var obstacle_width=1.5;
 
 
 //#############################################################
-// specification and (initial) parameterisation of underlying longmodels
+// (initial) parameterisation and creation of underlying longmodels
 //#############################################################
 
 var v0=25;
@@ -54,6 +86,10 @@ var v0Obstacle=0;
 var v0max=Math.max(v0,v0Truck,v0Bike); // to define max dist range of neigbors
 
 
+var speedmap_min=0; // min speed for speed colormap (drawn in red)
+var speedmap_max=Math.max(v0, v0Truck, v0Bike); // max speed (fixed in sim)
+
+
 
 //var longModelCar=new IDM(v0,Tgap,s0,amax,bcomf);
 //var longModelTruck=new IDM(v0Truck,TgapTruck,s0Truck,amaxTruck,bcomfTruck);
@@ -66,43 +102,47 @@ var longModelBike=new ACC(v0Bike,TgapBike,s0Bike,amaxBike,bcomfBike);
 
 
 //#############################################################
-// specification of the mixed traffic models (MTM) for the veh types
+// (initial) parameterisation and creation of the
+// mixed traffic models (MTM)
 //#############################################################
 
-//!! later: to allow for gui ctrl and distributied params, 
-// keep referencing to a few standard models defined here but
-// generalize model accel function to include 
-// alpha=[alpha_v0, alpha_T, alpha_a] 
-// with alpha set individually by the vehicles
+// (1) model constants (behavioural and graphical)
 
-
-var s0y=0.15;       // lat. attenuation scale [m] for long veh-veh interact
-var s0yLat=0.30;    // lat. attenuation scale [m] for lat veh-veh interact
-var s0yB=0.15;  // long. attenuation scale [m] for lat wall-veh interact
-var s0yLatB=0.20;   // lat. attenuation scale [m] for lat wall-veh interact
-var sensLat=1.4;    // sensitivity (desired lat speed)/(long accel) [s]
-
-// slider params
-
-var tauLatOVM=parseFloat(slider_tauLatOVM.value);  // time constant[s] 
-                    // lateral OVM (sensLat/tauLatOVM=maxAccRatio)=>slider
-var sensDvy=parseFloat(slider_sensDvy.value); // FVDM-like inclusion of
-                    // rel lateral speed, but multiplicative=>slider
-var pushLong=parseFloat(slider_pushLong.value);
-var pushLat=parseFloat(slider_pushLat.value);
-
-
-
-// behavioural and graphical driver-vehicle constants
-// for boundary repulsion, see also models.js->"fixed boundary parameters"
+// lateral kinematics restrictions
 
 var dvdumax=0.3;       // tan of maximum angle with respect to road axis
                        // (overridden by MTM.v0LatEvadeObstacles
                        // if long speed is very small/zero)
 var dotdvdumax=0.3;    // max change rate of angle to road axis
-var phiVehRelMax=0.15; // only drawing: maximum visual angle to road axis
+var phiVehRelMax=0.10; // only drawing: maximum visual angle to road axis
 var speedLatStuck=1.2;   // max lateral speed if long speed low!!DOS!!!
 
+// lateral force constants
+
+var s0y=0.15;       // lat. attenuation scale [m] for long veh-veh interact
+var s0yLat=0.30;    // lat. attenuation scale [m] for lat veh-veh interact
+var sensLat=1.4;    // sensitivity (desired lat speed)/(long accel) [s]
+
+// boundaries
+
+var glob_accLatBMax=20;   //max boundary lat accel, of the order of bmax
+var glob_accLatBRef=15;    //lateral acceleration if veh touches boundary
+var glob_accLongBRef=0.2; //longitudinal acceleration if veh touches boundary
+var glob_anticFactorB=2;  //antic time for boundary response (multiples of T)
+var s0yB=0.15;            // long. attenuation scale [m] wall-veh interact
+var s0yLatB=0.20;         // lat. attenuation scale [m] wall-veh interact
+
+
+// (2) variable slider params
+
+var tauLatOVM=parseFloat(slider_tauLatOVM.value); // lat OVM relax time
+var sensDvy=parseFloat(slider_sensDvy.value);     // FVDM-like inclusion of
+                    // rel lateral speed, but multiplicative=>slider
+var pushLong=parseFloat(slider_pushLong.value); // in [0,1]; 1=Galilei-inv.
+var pushLat=parseFloat(slider_pushLat.value);   // in [0,1]; push by back vehs
+
+
+// (3) creation of the standard models
 
 var mixedModelCar=new MTM(longModelCar,s0y,s0yLat,s0yB,s0yLatB,
 			  sensLat,tauLatOVM,sensDvy);
@@ -114,32 +154,23 @@ var mixedModelObstacle=new ModelObstacle();
 
 
 
-
 //#############################################################
 // initial traffic flow and composition settings ctrl by sliders
 //#############################################################
 
-// (timewarp slider separately; 
-// speedProb slider value directly if applicable)
-var dt=parseFloat(sliderTimewarp.value)/fps;
 
 var qIn=parseFloat(slider_inflow.value);
 var fracTruck=parseFloat(slider_fracTruck.value); // !! otherwise string
 var fracBike=parseFloat(slider_fracBike.value);  // frac+frac=e.g.0.20.2!!
-var speedMax=20; // later controlled by slider if not commented out in html
-
-// initial outflow restriction in terms of rel max outflow=(1-relBottleStrength)
-
-var relOutflow=1.;  // overridden by slider_outflowVal if it exists
+var speedMax=20;    // overridden by slider_speedmax if it exists => html
+var relOutflow=1.;  // outflow/maxflow,
+                    //overridden by slider_outflowVal if it exists
 
 // initial values not controlled by sliders
 
 var speedInit=20;
 var densityInit=0.0; 
 
-// initialize floor-field toggle
-
-var floorField=false;
 
 
 //#############################################################
@@ -151,7 +182,7 @@ var floorField=false;
 // and the axis_x(u), axis_y(u), widthLeft(u), and widthRight(u)
 // function pointers
 // (as pointers they are automatically updated if arcRadius
-// etc changes due to the responsive design )
+// etc changes due to responsive design )
  
 var roadID=1;
 var roadLen=300;
@@ -177,7 +208,6 @@ function axis_y(u){ // physical coordinates
 	return center_yPhys+dyPhysFromCenter;
 }
 
-//
 function widthLeft(u){ // width left boundary - road axis
     if((!varWidthLeft)&&(relOutflow>=0.9999)){return 0.5*roadWidthRef;}
     var u1_1=0.20*roadLen; // begin narrowing Bottl 1
@@ -210,7 +240,6 @@ function widthLeft(u){ // width left boundary - road axis
 	: wNarrow3;
 }
 
-//!!
 function widthRight(u){ // width road axis - right boundary
     if((!varWidthRight)&&(relOutflow>=0.9999)){return 0.5*roadWidthRef;}
     var u1_1=0.45*roadLen; // begin narrowing Bottl 1
@@ -241,50 +270,6 @@ var mainroad=new road(roadID, isRing, roadLen, widthLeft, widthRight,
 
 
 
-
-// graphical: speedmap to visualize speeds
-
-var speedmap_min=0; // min speed for speed colormap (drawn in red)
-var speedmap_max=Math.max(v0, v0Truck, v0Bike); // max speed (fixed in sim)
-
-
-// graphical: forcefield to visualize accelerations
-
-var displayForcefield=true; // can be changed interactively -> gui.js
-var displayForceStyle=2;  // 0: with probe, 1: arrow field arround veh,
-                     // 2: moving arrows at veh
- 
-
-// graphical: display logical (u,v) coords of mouse position
-// get mouse positions from gui.activateCoordDisplay which is called
-// if html.onmousemove=true (only true if over client area AND moving)
-
-var xMouse; // get from activateCoordDisplay event if html.onmousemove=true
-var yMouse;
-var showMouseCoords=false; // start with false 
-                           // since otherw NaN if mouse initially outside
-
-
-// graphical: whether to draw road and grass/other background image
-
-var drawBackground=true;
-var drawRoad=true;
-
-// graphical: vehicle and background images
-
-var car_srcFile='figs/blackCarCropped.gif';
-var truck_srcFile='figs/truck1Small.png';
-var bike_srcFile='figs/bikeCropped.gif';
-var roadLanes_srcFile='figs/roadSegmentLanesFig.png';
-var roadNoLanes_srcFile='figs/tarmac.jpg';
-var obstacle_srcFile='figs/obstacleImg.png';
-var background_srcFile='figs/backgroundGrass.jpg'; 
-
-
-// graphical: the actual canvas
-
-var canvas; // defined in init() by canvas = document.getElementById("...");
-var ctx;  // graphics context
  
 // data for evaluation
 
@@ -377,36 +362,14 @@ function updateSim(dt){    // called here by main_loop()
     }
 
  
-
-    //console.log("2:"); mainroad.writeVehicles();
-
-
-    // do central simulation update of vehicles
-    //checked: mainroad.sortVehicles() not necessary
-
-
     mainroad.calcAccelerations();  
-    //console.log("3:"); mainroad.writeVehicles();
     mainroad.updateSpeedPositions(dt);
-    //console.log("4:"); mainroad.writeVehicles();
     mainroad.updateBCdown();
     mainroad.updateBCup(qIn,fracTruck,fracBike,dt); 
-     // later: array vehCompos[] instead of *Frac*
+     // !! later: array vehCompos[] instead of *Frac*
 
 
     if(itime<2){mainroad.writeVehicles();}
-
-//!!! Clean up with road.prototype.updateSpeedStatistics,
-// road.prototype.updateTravelTimes
-// improve statistics procedure to average over time interval dt*ndtSample as well!!!:
-// void mainroad.updateStatistics(umin,umax) 
-// called in every timestep
-// adds to road's speed array (only new element needed!
-
-// array[] mainroad.calcMacroProperties(umin,umax,nt) doing the time averaging over nt time steps:
-// outputs rho=n/(L*nt), n=speedArray.length, L=umax-umin
-// Q=rho*Vavg, V=Vavg, 5 quantiles
-// probably increase nt=ndtSample
 
     mainroad.updateSpeedStatistics(umin,umax);
     if(itime%ndtSample==0){

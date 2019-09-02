@@ -268,14 +268,15 @@ function MTM(longModel,s0y,s0yLat,s0yB,s0yLatB,sensLat,tauLatOVM,sensDvy){
     this.longParReductFactor=0.0; // !!! reduce longInt if parallel (dx<Ll)
                                   //  and no collision (sy>0)
 
-    // !! fixed boundary parameters (only needed for variable road widths)
-
-    this.accLatBMax=10;     //max boundary lat accel; can set =bmax
-    this.accLatBRef=3*this.longModel.b; //defines lat accel if veh touches bd
-    this.accLongBRef=0.1*this.longModel.a; //defines long accel "
-    this.anticFactorB=2; // B-anticipation TTC in multiples of longModel.T
-    this.nj=8; // number of discr. steps; 
-              // max antic length approx 2*relLongAttenLen*sStop
+  // fixed boundary parameters (see sim_straight.js for explanation)
+  
+  this.accLatBMax=glob_accLatBMax;     
+  this.accLatBRef=glob_accLatBRef;
+  this.accLongBRef=glob_accLongBRef;
+  this.anticFactorB=glob_anticFactorB;
+  
+  this.nj=8; // number of discr. steps; 
+             // max antic length approx 2*relLongAttenLen*sStop
 
 
 }

@@ -27,7 +27,7 @@ http://www.w3schools.com/jsref/met_table_insertrow.asp
 1. Simulation and road network
 ------------------------------
 
-(i) (2019-08-30)
+(i) DONE (2019-09-02)
 alle Konstanten uebersichtlich ordnen an einer Stelle (sim-straight.js)
 
 (ii) more scenarios, e.g., onramp => road link network as directed graph as
@@ -42,6 +42,7 @@ in traffic-simulation.de
   but generalize model accel function to include 
   alpha=[alpha_v0, alpha_T, alpha_a] 
   with alpha set individually by the vehicles
+  => extend var longModelCar, -Truck, -Bike etc by alphas and stats
 
 3. Model
 -------
