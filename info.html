@@ -33,10 +33,25 @@ Physica A: Statistical Mechanics and its Applications 509, 1-11<br>
 </p>
 </div>
 
+At present, only landscape-like viewports are supported, so the
+width of the simulation screen should be greater than the height (3:2
+works well).<br><br>
 The simulation starts with little traffic on a homogeneous road (the
-U-bend is only there in order to display a longer road segment). There
-are two insert diagrams: speed-density scatter plot at the top, and
-flow-density scatter plot at the bottom. Furthermore, there
+U-bend is only there in order to display a longer road segment) with a
+small downstream bottleneck realized by a road narrowing.
+<br><br>
+There
+are two insert diagrams: a speed-density box-whisker plot at the top,
+and a
+flow-density scatter plot at the bottom. After each aggregation
+interval (presently, set to 3 s), an additional box-whisker element and
+data point is added to each plot, respectively. The plots give the
+global picture over the whole simulation area, i.e., the
+flow-densitry data approximate a macroscopic fundamental diagram and
+the boxes of the speed-density plot are longest for phase-segregated
+traffic, i.e., jammed in one portion and free in another.   <br><br>
+
+Furthermore, there
 are three possibilities for interaction: The sliders, the buttons to
 the right, and loading a custom initial configuration
 
@@ -50,8 +65,8 @@ the right, and loading a custom initial configuration
     
   <li><i>MaxOutflow</i> installs a bottleneck at the outflow and thus
     controls the maximum outflow. By controlling the Inflow and Max
-    Outflow sliders, the simulated flow-density scatter plot can be
-      created (lower right insert diagram).
+    Outflow sliders, a complete simulated flow-density scatter plot can be
+      created in the lower right insert diagram:
       <ul>
 	<li> The free branch is
 	  controlled by the inflow with MaxOutflow set to 100%</li><p>
@@ -65,7 +80,7 @@ the right, and loading a custom initial configuration
   remaining percentage (if any) consisting of 
     cars</li><p>
 
-  <li> The last three sliders control selected model parameters,
+  <li> The last four sliders control selected model parameters,
     see <a href="https://arxiv.org/abs/1805.05076">the paper</a>:
     <ul>
 
@@ -73,16 +88,20 @@ the right, and loading a custom initial configuration
 	lateral Optimal Velocity Model (see Chapter 10 of
 	<a href=
     "http://www.springer.com/physics/complexity/book/978-3-642-32459-8"><i>
-    Traffic  Flow Dynamics</i></a>)
+    Traffic  Flow Dynamics</i></a> for the normal OVM)
  controlling the lateral 
       motion. The lower <i>&tau;<sub>lat,OVM</sub></i>, the faster
-	lateral movements are adapted to the desired ones (often zero)
+	lateral movements are adapted to the desired ones (which are
+    often zero) 
       </li><p>
 
       <li> <i>sens<sub>dvy</sub></i> is a new experimental parameter
       introducing relative speeds to the OVM-like lateral
 	dynamics. This avoids lateral crashes for
-	larger <i>&tau;<sub>lat,OVM</sub></i> values (approx &gt; 1 s)
+	larger <i>&tau;<sub>lat,OVM</sub></i> values (approx &gt; 1
+      s). For simulating the original model
+      in <a href="https://arxiv.org/abs/1805.05076">the paper</a>,
+      set <i>sens<sub>dvy</sub></i>=0. 
       </li><p>
 
      <li>The <i>push<sub>lat</sub></i> factor p</i> determines to
@@ -93,7 +112,11 @@ the right, and loading a custom initial configuration
       responsible for avoiding crashs and the leaders do not look
       behind (not yet in the paper). For <i>push<sub>lat</sub>=1</i>, the
       followers "push" the leaders aside to the same amount as
-      the leaders the followers (<i>actio=reactio</i>) </li><p>
+      the leaders the followers (<i>actio=reactio</i>)
+      For simulating the original model
+      in <a href="https://arxiv.org/abs/1805.05076">the paper</a>,
+      set <i>push<sub>lat</sub></i>=0.
+</li><p>
 
      <li>The <i>push<sub>long</sub></i> factor p</i> acts similarly
       for the longitudinal dynamics. For <i>push<sub>long</sub>=0</i>,
@@ -103,12 +126,18 @@ the right, and loading a custom initial configuration
       follower with the strongest forward interaction is selected. 
       Notice that there is no longer a "normal" fundamental diagram
       for <i>push<sub>long</sub>=1</i> and, instead, the flow
-      increases always with the density.</li><p>
+      increases always with the density.
+      Increasing  <i>push<sub>long</sub></i> increases the capacity. For
+      simulating the original model 
+      in <a href="https://arxiv.org/abs/1805.05076">the paper</a>,
+      set <i>push<sub>long</sub></i>=0.
+
+</li><p>
 </ul>
 </ul>
 
 
-<h2> The buttons</h2>
+<h2> The buttons/switch areas</h2>
 
 <ul>
   <li> The <i>Display Forces</i> toggle indicates, if on,
@@ -117,7 +146,7 @@ the right, and loading a custom initial configuration
     to see the effect of this button)
     
   <li> The <i> Var. Width Left</i> and  <i> Var. Width Right</i>
-  toggles introduce bottlenecks as road narrowings at the right and
+  toggles introduce bottlenecks as predefined road narrowings at the right and
   left sides, 
   respectively. Activating both bottlenecks simultaneously takes the model to its limits
     
@@ -146,17 +175,16 @@ the right, and loading a custom initial configuration
 
 <h2> Custom initial conditions (micro ICs)</h2>
 
-The simulation can be initialized by micro initial conditions
+The simulation can be customized by prescribing arbitrary microscopic initial
+conditions and road-blocking bottlenecks as specified in text
+files 
 prescribing the type, initial longitudinal and lateral position
 (u,v),  and initial velocity
 (speedLong,speedLat)  of any
 object. Pressing the button "IC from file" opens a file selector for
 user-supplied files. Once selecting one, the simulation is cleared and
-re-run (the bottlenecks are retained from the previous setting) with
-the user-supplied vehicle configuration (examples can be downloaded
-from
-the <a href="https://github.com/MTGermany/mixedTraffic/blob/master/README.md">GitHub
-  link </a> or from the links further below). The
+re-run with
+the user-supplied vehicle configuration (the geometric bottlenecks are retained from the previous setting). The
 file format is as follows:
 <pre>
  # type     length   width  u     v       speedLong  speedLat
@@ -166,9 +194,12 @@ file format is as follows:
  obstacle   80       2      300   9.5     0          0
  ...        ...      ...    ...   ...     ...        ...
 </pre>
-Besides the three moving types <tt>car</tt>, <tt>truck</tt>,
+Examples can be downloaded
+at
+the <a href="https://github.com/MTGermany/mixedTraffic/blob/master/README.md">GitHub 
+  link </a> or from the links further below. Besides the three moving types <tt>car</tt>, <tt>truck</tt>,
 and <tt>bike</tt>, there is also a 
-type <tt>obstacle</tt> which can be used to implement various
+type <tt>obstacle</tt> which can be used to implement various road-blocking
 bottlenecks. <br>
 
 Micro ICs are useful when analyzing certain model aspects with
