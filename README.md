@@ -74,13 +74,13 @@ one time step, and to interact with the other vehicles and the road
 boundaries.
 
 In contrast to the js code at
-[www.mtreiber.de/mixedTraffic](http://www.mtreiber.de/mixedTraffic),
+[traffic-simulation.de](https://www.traffic-simulation.de),
 the road of the mixed-traffic simulation is not intended to be part
 (link) of a network, for reasons of simplicity. Furthermore, the road
 surface is fully twodimensional instead of consisting of several
 onedimensional lanes.
 
-It also provides methods to draw the road and the vehicles and obstacles
+_road.js_ also provides methods to draw the road and the vehicles and obstacles
 on it, and optionally vehicle IDs and the actual acceleration
 vectors for each vehicle. These drawing methods depend on the road geometry functions
 _axis\_x_ and _axis\_y_ defining the road axis in physical x-y
