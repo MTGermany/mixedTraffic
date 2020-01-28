@@ -24,7 +24,7 @@ mkdir $targetDir/figs
 # (2) upload files to targetdir and set permissions
 #############################################
 
-cp *.html $targetDir
+cp *.html IC*.txt $targetDir
 cp js/*.js $targetDir/js
 cp css/*.css $targetDir/css
 cp figs/*.jpg figs/*.png figs/*.gif $targetDir/figs 
