@@ -385,10 +385,11 @@ function myFloorFieldToggle(){
 // html5 sliders initialized in html file by "value" field of html5 input tag
 // oninput fires whenever value changed
 // onchange fires whenever value changed and mouse drag button released
-// slider*.value gives actual value (e.g. for use in html and sim js)
+// slider*.value gives actual value (e.g. for init/use in html and sim js)
 
 
-// timewarp slider
+// timewarp slider (variable parseFloat(slider
+// sim-straight: var dt=parseFloat(sliderTimewarp.value)/fps;
 
 var sliderTimewarp = document.getElementById('sliderTimewarp');
 var sliderTimewarpVal = document.getElementById("sliderTimewarpVal");
@@ -400,11 +401,11 @@ sliderTimewarp.oninput = function() {
 
 sliderTimewarpVal.innerHTML=sliderTimewarp.value+" times";
 
-// speedmax slider
+// speedmax slider (actually not in use)
 
 var slider_speedmax;
 slider_speedmax = document.getElementById('slider_speedmax');
-if(slider_speedmax!== null){ // not !== undefined since assignemnt with '='
+if(slider_speedmax!== null){ // not !== undefined since assignment with '='
 
     var slider_speedmaxVal = document.getElementById("slider_speedmaxVal");
     slider_speedmax.oninput = function() {
@@ -413,6 +414,23 @@ if(slider_speedmax!== null){ // not !== undefined since assignemnt with '='
         slider_speedmaxVal.innerHTML = this.value+" m/s";
     }
     slider_speedmaxVal.innerHTML=slider_speedmax.value+" m/s";
+}
+
+
+// roadWidth slider
+// sim-straight: var roadWidthRef=parseFloat(slider_roadWidth.value);
+
+var slider_roadWidth;
+slider_roadWidth = document.getElementById('slider_roadWidth');
+if(slider_roadWidth!== null){ // not !== undefined since assignment with '='
+
+    var slider_roadWidthVal = document.getElementById("slider_roadWidthVal");
+    slider_roadWidth.oninput = function() {
+        console.log("in slider_roadWidth.oninput: this.value="
+		    + slider_roadWidth.value);
+        slider_roadWidthVal.innerHTML = this.value+" m";
+    }
+    slider_roadWidthVal.innerHTML=slider_roadWidth.value+" m";
 }
 
 

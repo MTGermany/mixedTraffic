@@ -248,25 +248,24 @@ politeness and dvdumax: higher-level: road.js
                   (sensLat/tauLatOVM=maximum ratio lat/long accelerations)
 @param sensDvy:   FVDM-like but multiplicative dependence [s/m] 
                   of lat rel speed
-
 @return      MTM instance (constructor)
 */
 
 function MTM(longModel,s0y,s0yLat,s0yB,s0yLatB,sensLat,tauLatOVM,sensDvy){
-    this.longModel=longModel;
-    this.s0y=s0y;
-    this.s0yB=s0yB;
-    this.s0yLat=s0yLat;
-    this.s0yLatB=s0yLatB;
-    this.sensLat=sensLat;
-    this.tauLatOVM=tauLatOVM;
-    this.sensDvy=sensDvy;
+  this.longModel=longModel;
+  this.s0y=s0y;
+  this.s0yB=s0yB;
+  this.s0yLat=s0yLat;
+  this.s0yLatB=s0yLatB;
+  this.sensLat=sensLat;
+  this.tauLatOVM=tauLatOVM;
+  this.sensDvy=sensDvy;
 
-    // fixed values within MTM (acc noise at longModels, v0LatMax at road!)
+  // fixed values within MTM (acc noise at longModels, v0LatMax at road!)
 
-    this.accLatIntMax=2*longModel.b; // max lat interact accel = x*comf decel 
-    this.longParReductFactor=0.0; // !!! reduce longInt if parallel (dx<Ll)
-                                  //  and no collision (sy>0)
+  this.accLatIntMax=2*longModel.b; // max lat interact accel = x*comf decel 
+  this.longParReductFactor=0.0;    // !!! reduce longInt if parallel (dx<Ll)
+                                   //  and no collision (sy>0)
 
   // fixed boundary parameters (see sim_straight.js for explanation)
   
@@ -288,7 +287,7 @@ function MTM(longModel,s0y,s0yLat,s0yB,s0yLatB,sensLat,tauLatOVM,sensDvy){
 /**
 ###########################################################################
 NEW nov17
-calculate strength of interaction as CF acceleration (<=0) 
+calculate strength of longitudinal interaction as CF acceleration (<=0) 
 times lateral attenuation with scale=max(model.s0y, model.s0yLat)
 only nonzero if partner is leader (dx>=0)
 need to calculate accCFint as difference total-free 
@@ -363,7 +362,7 @@ MTM.prototype.calcAccLong=function(dx,dy,vx,vxl,axl,Ll,Wavg){
     }
 
     return accFree+alpha*accCFint;
-}//MTM.prototype.calcAccLong
+}//MTM.calcAccLong
 
 
 /**
@@ -407,34 +406,41 @@ MTM lateral interaction acceleration effected by one vehicle
    less flexible to accLong with multiple leaders=> forget it
 */
 
-MTM.prototype.calcAccLatInt=function(dx,dy,vx,vxl,vy,vyl,axl,
-				      Lveh,Ll,Wavg,logging){
-  var sx=Math.max(0,dx-Ll);
-  var sy=Math.abs(dy)-Wavg;
-  var sign_dy=(dy<0) ? -1 : 1;
-  var sign_sy=(sy<0) ? -1 : 1;
-  var accFree=this.longModel.calcAccFree(vx); 
-  var accCFint=this.longModel.calcAccInt(sx,vx,vxl,axl); // possibly reuse
-  var alpha=(sy<0) // sy=-Wavg ... infty; Math.abs(dy)/Wavg=1+sy/Wavg
-	? 1+sy/Wavg : Math.exp(-sy/this.s0yLat); //sy<0 => lin increase
-  var v0LatInt=+sensLat*sign_dy*alpha*accCFint; // accCFint<0!! 
+// logging useful to filter debug output for vehID etc in road.js
 
-  var accLatInt=v0LatInt/this.tauLatOVM;
-  
-    // add multiplicative FVDM-like effect on lat speed difference
+MTM.prototype.calcAccLatInt=function(dx,dy,vx,vxl,vy,vyl,axl,
+				     Lveh,Ll,Wavg,logging){
+  var sx=Math.max(0,dx-Ll);
+  //var sy=Math.abs(dy)-Wavg;
+  var sign_dy=(dy<0) ? -1 : 1;
+  //var sign_sy=(sy<0) ? -1 : 1;
+  var accCFint=this.longModel.calcAccInt(sx,vx,vxl,axl); // possibly reuse
+
+  var alpha=-sign_dy*((Math.abs(dy)<Wavg) // sqrt decrease if |dy|<Wavg
+		      ? Math.sqrt(Math.abs(dy)/Wavg)
+		      : Math.exp(-(Math.abs(dy)-Wavg)/this.s0yLat));
+  if(logging){console.log("     sign_dy=",sign_dy," alpha=",alpha);}
+  //var alpha=(Math.abs(dy)<Wavg) // lin decrease if |dy|<Wavg
+     // ? -dy/Wavg : -sign_dy*Math.exp(-(Math.abs(dy)-Wavg)/this.s0yLat);
+
+  var v0LatInt=-sensLat*alpha*accCFint; //accCFint<0; no cone restr as in gnuplot 
+
+    // multiplicative FVDM-like effect on lat speed difference
     // 1/sensDvy=lateral speed difference where accLatInt=doubled or zeroed
 
-  var mult_dv_factor=(sy<0)
-      ? 1 : Math.max(0., 1.-sign_dy*(vyl-vy)*this.sensDvy);
-  accLatInt *=mult_dv_factor;
+  var mult_dv_factor=(Math.abs(dy)<Wavg)
+      ? 1 : Math.max(0., 1.-this.sensDvy*sign_dy*(vyl-vy));
+
+  var accLatInt=v0LatInt/this.tauLatOVM*mult_dv_factor;
 
   // add lateral accel noise to break some symmetry artifacts
 
   var noiseAcc=0.3; // sig_speedFluct=noiseAcc*sqrt(t*dt/12)  //0.3
   var accRnd=noiseAcc*(Math.random()-0.5);
 
+  
 
-    // restrict to +/- accLatIntMax
+    // restrict to +/- accLatIntMax (floorfield and bias outside at road)
 
   accLatInt=Math.max(-this.accLatIntMax, 
                      Math.min(this.accLatIntMax,accLatInt+accRnd));
@@ -446,23 +452,21 @@ MTM.prototype.calcAccLatInt=function(dx,dy,vx,vxl,vy,vyl,axl,
     // possibly switch on also logging in road.updateSpeedPositions
     // for complete accLat that are not accessible here (multi-veh etc)
 
-    //if(logging){
-  if(false){
+  if(logging){ // needed to select according to vehID in caller in road.js
     //if(vx>0)
 	console.log(
 	  " MTM.calcAccLatInt single pair: ",
 	   // " this.tauLatOVM=",this.tauLatOVM,
 	   // " this.sensDvy=",this.sensDvy,
+	    " dx=",formd(dx),
 	    " dy=",formd(dy),
-	    " sx=",formd(sx),
-	    " sy=",formd(sy),
 	    " vx=",formd(vx),
 	    " vy=",formd(vy),
 	    //" vxl=",formd(vxl),
 	    //" vyl=",formd(vyl),
 	    //" axl=",formd(axl),
-	    //" accCFint=",formd(accCFint),
-	    //" alpha=",formd(alpha),
+	  " accCFint=",formd(accCFint),
+	  " alpha=",formd(alpha),
 	  " v0LatInt=",formd(v0LatInt),
 	  " mult_dv_factor=",formd(mult_dv_factor),
 	  " accLatInt=",formd(accLatInt),
@@ -472,7 +476,7 @@ MTM.prototype.calcAccLatInt=function(dx,dy,vx,vxl,vy,vyl,axl,
   
   return accLatInt;
 
-}//MTM.prototype.calcAccLatInt
+}//MTM.calcAccLatInt
 
 
 
@@ -529,7 +533,7 @@ MTM.prototype.alphaLongBfun=function(sy){
     return (sy>0) ? Math.exp(-sy/this.s0yB) : 1;
 }
 
-// increasing lateral restoring force if boundary exceeded
+// linearly increasing lateral restoring force if boundary exceeded
 
 MTM.prototype.alphaLatBfun=function(sy){
     return (sy>0) ? Math.exp(-sy/this.s0yLatB) : 1-sy/this.s0yLatB;
@@ -543,8 +547,7 @@ MTM.prototype.calcAccB=function(widthLeft,widthRight,x,y,vx,vy,Wveh){
   //var log=true; MT 2019-08
   var log=false;
   
-    // !! vx can be =0; this.longModel.s0/vx heineous error!
-  var Tantic=this.anticFactorB*(this.longModel.T);//+this.longModel.s0/vx);
+  var Tantic=this.anticFactorB*(this.longModel.T);
   var dTantic=2*Tantic/this.nj; // sampling width (weight=0 ... exp(-2))
   //var denom=1./(1-Math.exp(-dTantic/Tantic)); // geom series 1/(1-q)
 
@@ -576,7 +579,7 @@ MTM.prototype.calcAccB=function(widthLeft,widthRight,x,y,vx,vy,Wveh){
     
     if(j>0){
       v0yBleft=Math.max(v0yBleft, -syLeft/TTC);
-      v0yBright=Math.min(v0yBright, -(-syRight/TTC));
+      v0yBright=Math.min(v0yBright, +syRight/TTC);
     }
     var alphaLongLeft =this.alphaLongBfun(syLeft)*weight;
     var alphaLongRight=this.alphaLongBfun(syRight)*weight;

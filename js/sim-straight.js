@@ -11,7 +11,7 @@ var time=0;  // only initialization
 var itime=0; // only initialization
 var isStopped=false; // only initialization; simulation starts (not) running
 var dt=parseFloat(sliderTimewarp.value)/fps;
-var floorField=false; // initializes floor-field toggle
+var floorField=true; // initializes floor-field toggle (consol. with index.html)
 
 // (2) graphical elements
 
@@ -130,6 +130,10 @@ var s0y=0.15;       // lat. attenuation scale [m] for long veh-veh interact
 var s0yLat=0.30;    // lat. attenuation scale [m] for lat veh-veh interact
 var sensLat=1.4;    // sensitivity (desired lat speed)/(long accel) [s]
 
+var accBiasRightTruck=0.8;  //MT 2021-11 
+var accBiasRightOthers=0;
+var accFloorMax=0.5;        //MT 2021-11 reduced from 6.5
+
 // boundaries
 
 var glob_accLatBMax=20;   //max boundary lat accel, of the order of bmax
@@ -193,9 +197,15 @@ var densityInit=0.0;
  
 var roadID=1;
 var roadLen=600; //300
-var roadWidthRef=12; //20 MT 2021 !!! BUG floorfield only uneven number
-var wLane=4;
+
+//20 MT 2021 !!! BUG floorfield only uneven number
+
+var wLane=3.5;
+var roadWidthRef=parseFloat(slider_roadWidth.value);
+var nLanes=Math.round(roadWidthRef/wLane);
+
 // if isRing, inflow automatically ignored and road geom not implemented
+
 var isRing=false; 
 
 var varWidthLeft=false;
@@ -342,6 +352,7 @@ function updateSim(dt){    // called here by main_loop()
     // implement slider changes 
 
     dt=parseFloat(sliderTimewarp.value)/fps;
+    roadWidthRef=parseFloat(slider_roadWidth.value);
     qIn=parseFloat(slider_inflow.value);
     relOutflow=parseFloat(slider_outflow.value);
     fracTruck=parseFloat(slider_fracTruck.value); // !! otherwise string
@@ -351,7 +362,12 @@ function updateSim(dt){    // called here by main_loop()
     pushLong=parseFloat(slider_pushLong.value);
     pushLat=parseFloat(slider_pushLat.value);
 
-    if(slider_speedmax !== null){
+
+  nLanes=Math.round(roadWidthRef/wLane);
+  roadImgLanes.src=roadLanes_srcFileArr[nLanes-1]; //MT 2021
+
+
+  if(slider_speedmax !== null){
 	speedMax=parseFloat(slider_speedmax.value);
 	longModelCar.speedmax=speedMax;  // passed by model ref to all cars!
 	longModelTruck.speedmax=speedMax;
@@ -470,7 +486,10 @@ function drawSim() {
     var roadImg=(floorField) ? roadImgLanes : roadImgNoLanes
     mainroad.draw(roadImg,scale,axis_x,axis_y,changedGeometry);
 
+  // (3a) draw boundaries of detection region [umin:umax] for
+  // scatter plot  MT 2021
 
+  mainroad.drawScatterPlotBoundaries(scale,axis_x,axis_y,umin,umax);
  
     // (4) draw vehicles (obstacleImg here empty, only needed for interface)
 
@@ -565,9 +584,11 @@ function drawSim() {
 	var xPixLeft=canvas.width*xCenterRel-0.5*refSizePix*wRel;
 	var yPixTop=canvas.height*yCenterRel-0.5*refSizePix*hRel;
 
-        // determine axes specifications [colx, xmult,xmax,xlabel]
+      // determine axes specifications [colx, xmult,xmax,xlabel]
+      // and optional boxplot specifications: each point gets
+      // vertical candlestick [col_ymin, col_25th, col_50th, 75, ymax]
 
-	var rhoSpec=[0,1000,200,"Density [veh/km]"];
+        var rhoSpec=[0,1000,200,"Density [veh/km]"];
 	var QSpec=[1,3600,3600,"Flow [veh/h]"];
 	var VSpec=[2,3.6,50,"Speed [km/h]"];
 	var boxSpec=[3,4,5,6,7];
@@ -692,9 +713,8 @@ function init() {
 
   roadImgLanes = new Image();
   console.log("mainroad=",mainroad);
-  console.log("mainroad.nLanes=",mainroad.nLanes);
-  console.log("roadLanes_srcFileArr[mainroad.nLanes-1]=",roadLanes_srcFileArr[mainroad.nLanes-1]);
-  roadImgLanes.src=roadLanes_srcFileArr[mainroad.nLanes-1]; //MT 2021
+  console.log("roadLanes_srcFileArr[nLanes-1]=",roadLanes_srcFileArr[nLanes-1]);
+  roadImgLanes.src=roadLanes_srcFileArr[nLanes-1]; //MT 2021
     roadImgNoLanes = new Image();
     roadImgNoLanes.src=roadNoLanes_srcFile;
     //roadImgNoLanes.src='figs/tarmacOrig.jpg';

@@ -38,8 +38,8 @@ function road(roadID, isRing, roadLen, widthLeft, widthRight,
 
   // MT 2021-11 assume roadWidthRef is multiple of wLane
   // wLane top-level var
-  this.nLanes=Math.round((this.widthLeft(0)+this.widthRight(0))/wLane);
-  console.log("road cstr: wLane=",wLane," this.widthLeft=",this.widthLeft," this.nLanes=",this.nLanes);
+
+  console.log("road cstr: wLane=",wLane," this.widthLeft=",this.widthLeft);
 
     // network related properties
 
@@ -193,7 +193,7 @@ road.prototype.updateSpeedStatistics= function(umin,umax) {
 
 // ###########################################################
 // calculates macroscopic statistics out of the array this.speed
-// [TODO and this.travTimes]
+// [TODO: and this.travTimes]
 // at the end of the aggregation time interval = nt time steps
 // this.speed is obtained previously by nt calls of road.updateSpeedStatistics
 // scanning the road section from umin to umax
@@ -551,11 +551,13 @@ road.prototype.calcAccelerationsOfVehicle=function(i){
 
     // leaders
 
-    for(var ilead=0; ilead<nLeaders; ilead++){
+  var logging=(this.veh[i].id==9364); // need fixed random seed for this
+ 
+  for(var ilead=0; ilead<nLeaders; ilead++){
 	var j=iLeaders[ilead];
 	accLatTraffic 
-	    += this.veh[i].calcAccLatInt(this.veh[j],false);
-    }
+	    += this.veh[i].calcAccLatInt(this.veh[j],logging);
+  }
 
     // followers (actio=reactio => "-=" instead of "+=" !)
     // of course, do not consider back obstacles
@@ -583,22 +585,27 @@ road.prototype.calcAccelerationsOfVehicle=function(i){
     this.veh[i].accLat=accLatTraffic+accBoundaries[1];
 
  
-   // (5) add floor fields (inited in sim-straight, controlled by gui)
-   //  wide vehs in lane center
-   //  bikes between lanes
+  // (5) add floor fields (inited in sim-straight, controlled by gui)
+  //  normal vehs in lane center
+  //  bikes between lanes
+  //  vPhase0: first potential minimum of vehs 0.6*wLane from right (+) boundary
 
-    if(floorField){
-	var accFloorMax=1.0; //MT 2021-11 reduced from 6.5
-
-	var phase=2*Math.PI*this.veh[i].v/wLane; // phase=0: center of lane
-	var accFloor=((this.veh[i].type=="car")||(this.veh[i].type=="truck"))
-	? -accFloorMax*Math.sin(phase)      
+  if(floorField){
+    var vPhase0=0.5*roadWidthRef-0.6*wLane; 
+    var phase=2*Math.PI*(this.veh[i].v-vPhase0)/wLane; // phase=0: center of lane
+    var accFloor=((this.veh[i].type=="car")||(this.veh[i].type=="truck"))
+	? -accFloorMax*Math.sin(phase)   
 	: (this.veh[i].type=="bike")
 	? + accFloorMax*Math.sin(phase) : 0;
 	this.veh[i].accLat += accFloor;
-    }
+  }
 
+  // (6) add bias acceleration to the right
 
+  var accBiasRight=(this.veh[i].type==="truck")
+      ? accBiasRightTruck : accBiasRightOthers;
+  this.veh[i].accLat += accBiasRight;
+  
 
     //################################
     // debug logging calcAccelerationsOfVehicle
@@ -1024,6 +1031,31 @@ road.prototype.drawVehicles=function(carImg, truckImg, bikeImg, obstacleImg,
       }
   }
 } // road.prototype.drawVehicles
+
+
+
+road.prototype.drawScatterPlotBoundaries=function(scale,axis_x,axis_y,umin,umax){
+  var bLen=2; // graphical boundary width [m] = length of graphical virt vehicle
+  var bLenPix=scale*bLen;
+  var ub=[umin,umax];
+  for(var i=0; i<ub.length; i++){
+
+    // widthLeft(u), widthRight(u) road geom functions
+    var u=ub[i];
+    var bWidthPix=scale*(this.widthLeft(u)+this.widthRight(u));
+    var phiRoad=this.get_phi(axis_x, axis_y, u);
+    var cphiRoad=Math.cos(phiRoad);
+    var sphiRoad=Math.sin(phiRoad);
+    var xCenterPix=scale*axis_x(u);
+    var yCenterPix=-scale*axis_y(u);
+
+    ctx.setTransform(cphiRoad, -sphiRoad, +sphiRoad, 
+		     cphiRoad, xCenterPix, yCenterPix);
+    ctx.fillStyle="rgb(255,255,255)";
+    ctx.fillRect(-0.5*bLenPix,-scale*this.widthLeft(u),bLenPix,bWidthPix);
+  }
+} // road.prototype.drawScatterPlotBoundaries
+
 
 
 
