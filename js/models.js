@@ -174,7 +174,7 @@ ACC.prototype.calcAccInt=function(s,v,vl,al){
 
     // noise to avoid some artifacts
 
-    var noiseAcc=0.; // sig_speedFluct=noiseAcc*sqrt(t*dt/12)  //0.3
+    var noiseAcc=0.3; // sig_speedFluct=noiseAcc*sqrt(t*dt/12)  //0.3
     var accRnd=noiseAcc*(Math.random()-0.5); //if acceleration noise
 
     // determine valid local v0
@@ -428,11 +428,16 @@ MTM.prototype.calcAccLatInt=function(dx,dy,vx,vxl,vy,vyl,axl,
       ? 1 : Math.max(0., 1.-sign_dy*(vyl-vy)*this.sensDvy);
   accLatInt *=mult_dv_factor;
 
+  // add lateral accel noise to break some symmetry artifacts
+
+  var noiseAcc=0.3; // sig_speedFluct=noiseAcc*sqrt(t*dt/12)  //0.3
+  var accRnd=noiseAcc*(Math.random()-0.5);
+
 
     // restrict to +/- accLatIntMax
 
   accLatInt=Math.max(-this.accLatIntMax, 
-                     Math.min(this.accLatIntMax,accLatInt));
+                     Math.min(this.accLatIntMax,accLatInt+accRnd));
 
 
 
@@ -463,8 +468,9 @@ MTM.prototype.calcAccLatInt=function(dx,dy,vx,vxl,vy,vyl,axl,
 	  " accLatInt=",formd(accLatInt),
 	  " accLatFree=",formd(this.calcAccLatFree(vy)),
 	    "");
-    }
-    return accLatInt;
+  }
+  
+  return accLatInt;
 
 }//MTM.prototype.calcAccLatInt
 

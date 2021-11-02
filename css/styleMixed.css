@@ -402,6 +402,13 @@ TR{
 }
 
 
+#downloadDiv{
+  position: absolute;
+  top:   85%;
+  left:   1vmin;
+  width:  8vmin; /* no height */
+  z-index: 2;
+}
 
 
 
@@ -412,3 +419,5 @@ TR{
 /*#########################################################*/
 /* addl settings hendheld-type devices with small screen */
 /*#########################################################*/
+
+/* not implemented any other media queries; just nmormal landscape

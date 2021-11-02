@@ -1,7 +1,6 @@
 
 
 
-
 //####################################################################
 // control displaying of logical coordinates at actual mouse position
 // if inside window (html->onmousemove=true)
@@ -188,7 +187,6 @@ function readTextFile(filePath){
         };//end onload()
 
         reader.readAsText(filePath.files[0]);
-	console.log("after reader.readAsText(..)");
     }
 
 
@@ -208,10 +206,13 @@ function readTextFile(filePath){
 
     // reset restricted outflow
     
-    slider_outflow.value=1;
-    slider_outflowVal.innerHTML=parseInt(100*slider_outflow.value)+" %";
-    document.getElementById("microICalt").value = ""; //success!!
-    return true;
+  slider_outflow.value=1;
+  slider_outflowVal.innerHTML=parseInt(100*slider_outflow.value)+" %";
+  document.getElementById("microICalt").value = ""; //success!!
+  document.getElementById("startStop").src="figs/buttonStop3_small.png";
+  console.log("end of function readTextFile (f... garbled time order; this NOT executed last");
+
+  return true;
 }
 
 
@@ -545,3 +546,95 @@ slider_speedProbe.oninput = function() {
 
 slider_speedProbeVal.innerHTML=slider_speedProbe.value;
 */
+
+
+
+
+//################################################################
+// Start/Finish Download button callback and performDownload
+// see also ~/versionedProjects/demo_js/writeFileDemo.html, .js
+// and ~/versionedProjects/trafficSimulation/js/control_gui.js
+//#################################################################
+
+var downloadActive=false; // initialisation
+var dt_export=1;          // every dt_export seconds stored in exportString
+
+function downloadCallback(){ // MT 2021-11
+  if(downloadActive){
+    performDownload();
+    downloadActive=false;
+    document.getElementById("download").src="figs/iconDownloadStart_small.png";
+  }
+  
+  else{
+    mainroad.exportString
+        ="#time\tid\ttype\tlen[m]\tw[m]\tx[m]\ty[m]\tvx[m/s]\tvy[m/s]\tax[ms2]\tay[ms2]";
+    downloadActive=true;
+    document.getElementById("download").src="figs/iconDownloadFinish_small.png";
+  }
+}
+
+
+function performDownload(){
+  var present=new Date();
+  var day=("0" + present.getDate()).slice(-2);// prepend 0 if single-digit day
+  var month=("0" + (present.getMonth()+1)).slice(-2);// months start with 0
+  var hours=("0" + (present.getHours()+0)).slice(-2);
+  var minutes=("0" + (present.getMinutes()+0)).slice(-2);
+  var seconds=("0" + (present.getSeconds()+0)).slice(-2);
+  var filename="mixedTrafficRecord_"
+      +present.getFullYear()+"-"
+      +month+"-"
+      +day+"_"
+      +hours+"h"  // for some strange reason, colons : are transformed into _
+      +minutes+"m"
+      +seconds+"s"
+    +".txt";
+  var msg="wrote file "+filename+" to default folder (Downloads)";
+  mainroad.writeVehiclesToFile(filename);
+  downloadActive=false;
+  console.log("filename=",filename);
+  alert(msg);
+}
+
+
+//######################################################################
+// write (JSON or normal) string to file (automatically in download folder)
+// see also ~/versionedProjects/demo_js/writeFileDemo.html, .js
+// and ~/versionedProjects/trafficSimulation/js/control_gui.js
+//######################################################################
+  
+function download(data, filename) {
+    // data is the string type, that contains the contents of the file.
+    // filename is the default file name, some browsers allow the user to change this during the save dialog.
+
+    // Note that we use octet/stream as the mimetype
+    // this is to prevent some browsers from displaying the 
+    // contents in another browser tab instead of downloading the file
+    var blob = new Blob([data], {type:'octet/stream'});
+
+    //IE 10+
+    if (window.navigator.msSaveBlob) {
+        window.navigator.msSaveBlob(blob, filename);
+    }
+    else {
+        //Everything else
+        var url = window.URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        document.body.appendChild(a);
+        a.href = url;
+        a.download = filename;
+      console.log("a.download=",a.download);
+        setTimeout(() => {
+            //setTimeout hack is required for older versions of Safari
+
+            a.click();
+
+            //Cleanup
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+        }, 1);
+    }
+}
+
+

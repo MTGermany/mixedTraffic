@@ -18,7 +18,14 @@ var floorField=false; // initializes floor-field toggle
 var car_srcFile='figs/blackCarCropped.gif';
 var truck_srcFile='figs/truck1Small.png';
 var bike_srcFile='figs/bikeCropped.gif';
-var roadLanes_srcFile='figs/roadSegmentLanesFig.png';
+var roadLanes_srcFileArr=['figs/roadSegment1lane.png', // MT 2021-11
+			  'figs/roadSegment2lanes.png',
+			  'figs/roadSegment3lanes.png',
+			  'figs/roadSegment4lanes.png',
+			  'figs/roadSegment5lanes.png',
+			  'figs/roadSegment6lanes.png',
+			  'figs/roadSegment7lanes.png'];
+var roadLanes_srcFile=roadLanes_srcFileArr[4]; // will be overridden
 var roadNoLanes_srcFile='figs/tarmac.jpg';
 var obstacle_srcFile='figs/obstacleImg.png';
 var background_srcFile='figs/backgroundGrass.jpg'; 
@@ -174,7 +181,7 @@ var densityInit=0.0;
 
 
 //#############################################################
-// create road or road network geometry
+// road or road network geometry
 //#############################################################
 
 
@@ -185,9 +192,11 @@ var densityInit=0.0;
 // etc changes due to responsive design )
  
 var roadID=1;
-var roadLen=300;
-var roadWidthRef=20;
-var isRing=false;
+var roadLen=600; //300
+var roadWidthRef=12; //20 MT 2021 !!! BUG floorfield only uneven number
+var wLane=4;
+// if isRing, inflow automatically ignored and road geom not implemented
+var isRing=false; 
 
 var varWidthLeft=false;
 var varWidthRight=false;
@@ -681,8 +690,11 @@ function init() {
     background = new Image();
     background.src =background_srcFile;
 
-    roadImgLanes = new Image();
-    roadImgLanes.src=roadLanes_srcFile;
+  roadImgLanes = new Image();
+  console.log("mainroad=",mainroad);
+  console.log("mainroad.nLanes=",mainroad.nLanes);
+  console.log("roadLanes_srcFileArr[mainroad.nLanes-1]=",roadLanes_srcFileArr[mainroad.nLanes-1]);
+  roadImgLanes.src=roadLanes_srcFileArr[mainroad.nLanes-1]; //MT 2021
     roadImgNoLanes = new Image();
     roadImgNoLanes.src=roadNoLanes_srcFile;
     //roadImgNoLanes.src='figs/tarmacOrig.jpg';

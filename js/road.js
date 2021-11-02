@@ -23,6 +23,7 @@ with road geometry functions (u,v)->(x,y) to be provided by the main program
 
 
 // constructor
+// widthLeft(u), widthRight(u) is a function which is passed!!
 
 function road(roadID, isRing, roadLen, widthLeft, widthRight, 
 	      densInit, speedInit, fracTruckInit, fracBikeInit, 
@@ -32,10 +33,13 @@ function road(roadID, isRing, roadLen, widthLeft, widthRight,
     this.roadID=roadID;
     this.isRing=isRing;
     this.roadLen=roadLen;
-    this.widthLeft=widthLeft;
-    this.widthRight=widthRight;
+    this.widthLeft=widthLeft;   // half width as f(u) from road axis
+    this.widthRight=widthRight; // half width as f(u) to the right
 
- 
+  // MT 2021-11 assume roadWidthRef is multiple of wLane
+  // wLane top-level var
+  this.nLanes=Math.round((this.widthLeft(0)+this.widthRight(0))/wLane);
+  console.log("road cstr: wLane=",wLane," this.widthLeft=",this.widthLeft," this.nLanes=",this.nLanes);
 
     // network related properties
 
@@ -584,8 +588,7 @@ road.prototype.calcAccelerationsOfVehicle=function(i){
    //  bikes between lanes
 
     if(floorField){
-	var wLane=4;
-	var accFloorMax=6.5;
+	var accFloorMax=1.0; //MT 2021-11 reduced from 6.5
 
 	var phase=2*Math.PI*this.veh[i].v/wLane; // phase=0: center of lane
 	var accFloor=((this.veh[i].type=="car")||(this.veh[i].type=="truck"))
@@ -729,7 +732,9 @@ road.prototype.updateSpeedPositions=function(dt){
 	}
     }
 
-    this.sortVehicles(); // positional update may have disturbed sorting
+  this.sortVehicles(); // positional update may have disturbed sorting
+  if(downloadActive){this.updateExportString();} // MT 2021-11
+
 }
 
 
@@ -1355,3 +1360,51 @@ road.prototype.drawVehIDs=function(scale,axis_x,axis_y,fontHeight){
 	ctx.fillText(this.veh[i].id,-0.45*wPix,+0.40*hPix);
     }
 }
+
+
+
+//######################################################################
+// simple write vehicle info to file
+//######################################################################
+
+
+
+road.prototype.writeVehiclesToFile= function(filename) {
+
+  console.log("\nin road.writeVehiclesToFile(): roadID=",this.roadID,
+	      " filename=",filename);
+
+  // function download in gui.js
+  //console.log("road.exportString=\n",this.exportString);
+  download(this.exportString, filename); 
+  
+}
+
+//######################################################################
+// update export string for writing vehicle data to file
+// called in road.prototype.updateSpeedPositions
+//######################################################################
+
+road.prototype.updateExportString=function(){
+
+  var rest=time/dt_export-Math.floor((time+0.0001)/dt_export);
+  
+  if(rest<dt-0.0001){
+    for(var i=0; i<this.veh.length; i++){
+      this.exportString=this.exportString+"\n"+time.toFixed(2)
+        + "\t"+this.veh[i].id
+        + "\t"+this.veh[i].type
+        + "\t"+this.veh[i].len.toFixed(2)
+        + "\t"+this.veh[i].width.toFixed(2)
+        + "\t"+this.veh[i].u.toFixed(2)
+        + "\t"+this.veh[i].v.toFixed(2)
+        + "\t"+this.veh[i].speed.toFixed(2)
+        + "\t"+this.veh[i].speedLat.toFixed(2)
+        + "\t"+this.veh[i].accLong.toFixed(2)
+        + "\t"+this.veh[i].accLat.toFixed(2)
+        +"";
+    }
+  }
+}
+ 
+

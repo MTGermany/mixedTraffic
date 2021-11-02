@@ -15,11 +15,6 @@
 <body>
 
 
-<!-- ############################################## -->
-<!-- outer container                                -->
-<!-- ############################################## -->
-
-<div id="container"> 
 
 
 <!-- ############################################## -->
@@ -128,14 +123,14 @@
 <tr>
   <td> Inflow </td>
   <td> <input id="slider_inflow" type="range" 
-              min="0" max="2" step="0.01" value="1.5"></td> <!--1.8-->
+              min="0" max="2" step="0.01" value="0.0"></td> <!--1.8-->
   <td> <div id="slider_inflowVal"></div></td>
 </tr>
 
 <tr>
   <td> MaxOutflow </td>
   <td> <input id="slider_outflow" type="range" 
-              min="0" max="1" step="0.01" value="0.7"></td>
+              min="0" max="1" step="0.01" value="1.0"></td> <!--0.7-->
   <td> <div id="slider_outflowVal"></div></td>
 </tr>
 
@@ -159,14 +154,14 @@
 <tr>
   <td> fracBike </td>
   <td> <input id="slider_fracBike" type="range" 
-              min="0" max="1" step="0.01" value="0.2"></td>
+              min="0" max="1" step="0.01" value="0.0"></td> <!--0.2-->
   <td> <div id="slider_fracBikeVal"></div></td>
 </tr>
 
 <tr>
   <td> tau<sub>latOVM</sub> </td>
   <td> <input id="slider_tauLatOVM" type="range" 
-              min="0.2" max="3" step="0.1" value="0.8"></td>
+              min="0.2" max="3" step="0.1" value="0.5"></td> <!--0.8-->
   <td> <div id="slider_tauLatOVMVal"></div></td>
 </tr>
 
@@ -225,11 +220,14 @@
   &copy; Martin Treiber</a></div>
 
 <!-- ############################################## -->
-<!-- end former navigation*.html frame   -->
+<!-- Download
 <!-- ############################################## -->
 
+<div id="downloadDiv">
+  <img id="download" src="figs/iconDownloadStart_small.png" width="100%"
+       onclick="downloadCallback()"/>
+</div>
 
-</div> <!-- end outer container -->
 
 
 <!-- ########################################################## -->
