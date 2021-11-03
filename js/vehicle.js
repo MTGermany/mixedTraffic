@@ -133,8 +133,8 @@ vehicle.prototype.calcAccLatInt=function(leadveh,logging){
     var vyl=leadveh.speedLat;
     var accl=leadveh.accLong;
     var Ll=leadveh.len;
-    var Wavg=0.5*(this.width+leadveh.width);
-    return this.mixedModel.calcAccLatInt(dx,dy,this.speed,vxl,
+  var Wavg=0.5*(this.width+leadveh.width);
+  return this.mixedModel.calcAccLatInt(this.v,roadWidthRef,dx,dy,this.speed,vxl,
 					 this.speedLat,vyl,accl,
 					  this.len,Ll,Wavg,logging);
  }

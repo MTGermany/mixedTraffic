@@ -1,0 +1,8 @@
+# test interaction with BC 4 lanes, 14 m
+#type     length   width  u	v	speedLong	speedLat
+car	  5	   2	  20.0	0	20.		0.
+truck	  10	   3	  60.0	5.25	10.		0.
+truck	  10	   3	  60.0	1.75	10.		0.
+truck	  10	   3	  60.0	-1.75	10.		0.
+truck	  10	   3	  60.0	-5.25	10.		0.
+

@@ -1,9 +1,0 @@
-# test interaction with BC
-#type     length   width  u	v	speedLong	speedLat
-car	  5	   2	  20.0	8	20.		0.
-truck	  10	   3	  60.0	7	10.		0.
-truck	  10	   3	  60.0	2	10.		0.
-truck	  10	   3	  60.0	-2	10.		0.
-truck	  10	   3	  60.0	-5.5	10.		0.
-truck	  10	   3	  60.0	-8.5	10.		0.
-

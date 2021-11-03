@@ -1,0 +1,7 @@
+# car trapped behind truck if not width virtually increased
+# 3 lanes, 10.5 m
+#
+#type     length   width  u	v	speedLong	speedLat
+car	  5.0	   2.0	  40	3.6	15		0  
+truck	  10.0	   3.0	  60	3.5	15		0  
+

@@ -1,5 +1,0 @@
-#test zipper-like merging (take vehicles of one type as input)
-#type     length   width  u	v	speedLong	speedLat
-car	  5.0	   2.0	  50	-3	15		0
-obstacle  100	   20	  300	0	0		0
-

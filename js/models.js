@@ -410,8 +410,12 @@ restrictions, and noise in higher-level road.js
 */
 
 // logging useful to filter debug output for vehID etc in road.js
+// need abs coord y,wRoad for virtually changing dy and Wavg
+// if leader near boundary (such that leader virtually
+// widens in the direction of the road boundary)
+// assuming road boundaries y=+/- 05 wRoad
 
-MTM.prototype.calcAccLatInt=function(dx,dy,vx,vxl,vy,vyl,axl,
+MTM.prototype.calcAccLatInt=function(y,wRoad,dx,dy,vx,vxl,vy,vyl,axl,
 				     Lveh,Ll,Wavg,logging){
   var sx=Math.max(0,dx-Ll);
   //var sy=Math.abs(dy)-Wavg;
@@ -704,7 +708,10 @@ MTM.prototype.calcTable_dxvx=function(dy,vxl,vy,vyl,axl,Lveh,Ll,Wavg){
 	    var vx=vxmin+j*(vxmax-vxmin)/(n_vx-1);
 	    var str_vx=formd(vx);
 
-	    var ax=this.calcAccLong(dx,dy,vx,vxl,axl,Ll,Wavg);
+	  // assume leader sufficiently far away from boundary such that no
+	  // boundary effects (y=0, wRoad=10*wAvg
+	  
+	  var ax=this.calcAccLong(0,10*Wavg,dx,dy,vx,vxl,axl,Ll,Wavg);
 	    var ay=this.calcAccLatInt(dx,dy,vx,vxl,vy,vyl,axl,Lveh,Ll,Wavg,false)
 		+ this.calcAccLatFree(vy);
 	    console.log(str_dx,

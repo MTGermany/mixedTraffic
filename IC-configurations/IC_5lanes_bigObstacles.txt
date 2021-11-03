@@ -1,0 +1,29 @@
+# test interaction with obstacles, 5 lanes, 17.5 m
+# make obstacles go beyond road boundary to avoid trap of following
+# cars between obstacle and road boundary (vector pointing towards boundary)
+#
+#type     length   width  u	v	speedLong	speedLat
+car	  5.0	   2.0	  20	7	15		0
+#
+obstacle  2	   5	  120	-9.5	0		0
+obstacle  2	   12	  120	9.5	0		0
+#
+obstacle  2	   28	  155	-8.75	0		0
+#
+obstacle  5	   14	  210	-8.75	0		0
+obstacle  5	   12	  215	-8.75	0		0
+obstacle  5	   10	  220	-8.75	0		0
+obstacle  5	   8	  225	-8.75	0		0
+obstacle  5	   6	  230	-8.75	0		0
+obstacle  5	   4	  235	-8.75	0		0
+obstacle  5	   2	  240	-8.75	0		0
+#obstacle  6	   27	  250	8.75	0		0
+obstacle  6	   24	  255	8.75	0		0
+obstacle  6	   21	  260	8.75	0		0
+obstacle  6	   18	  265	8.75	0		0
+obstacle  6	   15	  270	8.75	0		0
+obstacle  6	   12	  275	8.75	0		0
+obstacle  6	   9	  280	8.75	0		0
+obstacle  6	   6	  285	8.75	0		0
+obstacle  6	   3	  290	8.75	0		0
+
