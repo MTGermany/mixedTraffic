@@ -15,6 +15,7 @@ var floorField=true; // initializes floor-field toggle (consol. with index.html)
 
 // (2) graphical elements
 
+var hasChanged=false; // window dimensions or road width have changed
 var car_srcFile='figs/blackCarCropped.gif';
 var truck_srcFile='figs/truck1Small.png';
 var bike_srcFile='figs/bikeCropped.gif';
@@ -200,7 +201,7 @@ var roadLen=600; //300
 
 //20 MT 2021 !!! BUG floorfield only uneven number
 
-var wLane=3.5;
+var wLane=3.5;  // lane width if floorField is on
 var roadWidthRef=parseFloat(slider_roadWidth.value);
 var nLanes=Math.round(roadWidthRef/wLane);
 
@@ -351,21 +352,22 @@ function updateSim(dt){    // called here by main_loop()
 
     // implement slider changes 
 
-    dt=parseFloat(sliderTimewarp.value)/fps;
-    roadWidthRef=parseFloat(slider_roadWidth.value);
-    qIn=parseFloat(slider_inflow.value);
-    relOutflow=parseFloat(slider_outflow.value);
-    fracTruck=parseFloat(slider_fracTruck.value); // !! otherwise string
-    fracBike=parseFloat(slider_fracBike.value);  // frac+frac=e.g.0.20.2!!
-    tauLatOVM=parseFloat(slider_tauLatOVM.value);
-    sensDvy=parseFloat(slider_sensDvy.value);
-    pushLong=parseFloat(slider_pushLong.value);
-    pushLat=parseFloat(slider_pushLat.value);
+  dt=parseFloat(sliderTimewarp.value)/fps;
+  roadWidthOld=roadWidthRef;
+  roadWidthRef=parseFloat(slider_roadWidth.value);
+  qIn=parseFloat(slider_inflow.value);
+  relOutflow=parseFloat(slider_outflow.value);
+  fracTruck=parseFloat(slider_fracTruck.value); // !! otherwise string
+  fracBike=parseFloat(slider_fracBike.value);  // frac+frac=e.g.0.20.2!!
+  tauLatOVM=parseFloat(slider_tauLatOVM.value);
+  sensDvy=parseFloat(slider_sensDvy.value);
+  pushLong=parseFloat(slider_pushLong.value);
+  pushLat=parseFloat(slider_pushLat.value);
 
 
   nLanes=Math.round(roadWidthRef/wLane);
-  roadImgLanes.src=roadLanes_srcFileArr[nLanes-1]; //MT 2021
-
+  roadImgLanes.src=roadLanes_srcFileArr[nLanes-1]; // MT 2021
+  hasChanged=(roadWidthOld!=roadWidthRef); // redef scale and r to fit window
 
   if(slider_speedmax !== null){
 	speedMax=parseFloat(slider_speedmax.value);
@@ -418,7 +420,6 @@ function drawSim() {
     // responsive design if canvas has been resized 
 
     var critAspectRatio=1.8; // U covers full height if aspectRatio>crit
-    var hasChanged=false; // window dimensions have changed
     var simWindow=document.getElementById("contents");
 
     if (canvas.width!=simWindow.clientWidth){

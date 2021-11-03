@@ -225,7 +225,7 @@ input[type=range]:focus::-webkit-slider-runnable-track {
   top: 1vmin;
   left: 55vw;
   width: 25vmin; /* needed for reference of width in img: */
-  height: 7vmin; /* needed for reference of width in img: */
+  height: 4vmin; /* needed for reference of width in img: */
   font-size: 2.5vmin;
   font-weight:bold;
   background-color: rgba(255,255,255,0.5);
