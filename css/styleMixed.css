@@ -197,13 +197,13 @@ input[type=range]:focus::-webkit-slider-runnable-track {
 /*#############################################################*/
 
 
-/* (1) the title */
+/* (1) header and associated buttons in the top white space */
 
 #header{
   position: absolute;
-  top: 0vmin;
+  top: 0.5vmin;
   height: 4vh;
-  left: calc( 5vw + 15vmin);
+  left: calc( 3vw + 15vmin);
   width: 40vw; /* needed for reference of width: */
   font-size: 3.8vmin;
   font-weight:bold;
@@ -212,8 +212,28 @@ input[type=range]:focus::-webkit-slider-runnable-track {
 
 #infoLink{
   position: absolute;
-  top: 0vmin;
-  left: 85vw;
+  top: 0.2vmin;
+  left: 90vw;
+  width: 6vmin; /* needed for reference of width in img: */
+  font-size: 3.0vmin;
+  font-weight:bold;
+  z-index: 2;  /* higher -> more on the top layer */
+}
+
+#restartDiv{
+  position: absolute;
+  top: 0.2vmin;
+  left: 84vw;
+  width: 6vmin; /* needed for reference of width in img: */
+  font-size: 3.0vmin;
+  font-weight:bold;
+  z-index: 2;  /* above simulation canvas in rare chances of overlapping */
+}
+
+#startStopDiv{
+  position: absolute;
+  top: 0.2vmin;
+  left: 78vw;
   width: 6vmin; /* needed for reference of width in img: */
   font-size: 3.0vmin;
   font-weight:bold;
@@ -223,7 +243,7 @@ input[type=range]:focus::-webkit-slider-runnable-track {
 #githubLink{
   position: absolute;
   top: 1vmin;
-  left: 55vw;
+  left: 52vw;
   width: 25vmin; /* needed for reference of width in img: */
   height: 4vmin; /* needed for reference of width in img: */
   font-size: 2.5vmin;
@@ -254,22 +274,6 @@ input[type=range]:focus::-webkit-slider-runnable-track {
   z-index: 4;  /* the higher, the more on the top */
 }
 
-#infotext{
-  position: absolute;
-  left: 2vw;
-  width: 75vw;
-  font-family: 'helvetica', sans-serif;
-                 /*font-size: 14px;*/
-  font-size: 2.4vmin;
-  color: #404050;   /* text color */
-  background-color: #FFFFFF;
-}
-
-/* title image */
-
-img.title{
-  max-height: 8vh;
-}
 
 
 /* (2) the simulation canvas */
@@ -286,18 +290,9 @@ img.title{
 }
 
 
-/* (3) the buttons for start/stop and selecting the scenarios */
+/* (3) scenarios: wether display force field, use floorField etc */
 
-#startStopDiv{
-  position: absolute;
-  left: calc(99vw - 10vmin);
-  top:     32vmin;
-  height: 8vmin;
-  width: 8vmin;
-  z-index: 2; /* the higher the integer, the more on top */
-}
-
-#scenarios{
+#scenarios{  /* wether display force field, use floorField etc */
   position: absolute;
   left: calc(99vw - 14vmin);
   top:     40vmin;
@@ -395,8 +390,8 @@ TR{
   position: absolute;
   top: 35vh;
   height: 34vh;
-  left: 48vmin;  /* calc( 24vw - 23vmin);*/
-  width: 28vw;
+  left: 30vmin; 
+  width: 30vw;
   background-color: rgba(255,255,255,0.4);
   z-index: 2; /* the higher the integer, the more on top */
 }

@@ -5,7 +5,8 @@ function plotxy(wPix,hPix,xPixLeft,yPixTop){
     this.hPix=hPix;
     this.xPixLeft=xPixLeft;
     this.yPixTop=yPixTop;
-    this.sizePix=Math.min(this.wPix,this.hPix);
+    this.sizePix=this.wPix;
+    //this.sizePix=Math.min(this.wPix,this.hPix);
     this.yPixBot=this.yPixTop+this.hPix;
     this.rPix=0.02*this.sizePix; // radius of scatter-plot bullets
 

@@ -18,7 +18,7 @@
 
 
 <!-- ############################################## -->
-<!-- header: title image loaded as background image via css -->
+<!-- header and associated buttons
 <!-- ############################################## -->
 
 <div id="header"> 
@@ -30,20 +30,21 @@
  <a href="info.html"> <img src="figs/infoBlue.png" width="100%"/></a>
 </div> 
 
+<div id="startStopDiv"><img id="startStop" width="100%" 
+     src="figs/buttonStop3_small.png" onclick="myStartStopFunction()"/>
+</div>
+
+<div id="restartDiv"><img id="restart" width="100%" 
+     src="figs/buttonRestart_small.png" onclick="myRestartFunction()"/>
+</div>
+
+
 <div id="githubLink">
   <a href="https://github.com/MTGermany/mixedTraffic/blob/master/README.md">
     Sources from GitHub </a>
 </div>
 
-<!-- ############################################## -->
-<!-- Buttons                                        -->
-<!-- ############################################## -->
 
-<!-- if startStop as image button -->
-
-<div id="startStopDiv"><img id="startStop" width="100%" 
-     src="figs/buttonStop3_small.png" onclick="myStartStopFunction()"/>
-</div>
 
 <div id="scenarios">
 
@@ -52,19 +53,36 @@
   <button id="forcefieldToggle" 
           onclick="myForcefieldToggle()">Display Forces</button>
 
+
+  
   <button id="varWidthLeftToggle" 
           onclick="myVarWidthLeftToggle()">Var. width left</button>
+  <script> var varWidthLeft=false; </script>
 
   <button id="varWidthRightToggle" 
           onclick="myVarWidthRightToggle()">Var. width right</button>
+  <script> var varWidthRight=false; </script>
 
-  <!-- Floor field off <=> sim-straight: var floorField=true -->
-  <!--<button id="floorFieldToggle"
-         <!-- onclick="myFloorFieldToggle()">Floor field</button>-->
   <button id="floorFieldToggle"
           onclick="myFloorFieldToggle()">Floor field off</button>
+  <script> var floorField=true; </script>
+
+<!--  
+  <button id="varWidthLeftToggle" 
+          onclick="myVarWidthLeftToggle()">Var. width left off</button>
+  <script> var varWidthLeft=true; </script>
+
+  <button id="varWidthRightToggle" 
+          onclick="myVarWidthRightToggle()">Var. width right off</button>
+  <script> var varWidthRight=true; </script>
+
+  <button id="floorFieldToggle"
+         onclick="myFloorFieldToggle()">Floor field</button>
+  <script> var floorField=false; </script>
+  -->
 
 
+  
   <!-- interactively read new initial conditions from file -->
   <!-- label "for" forwards action/focus to hidden input=file button-->
   <!--BUG: DOS of label width -->

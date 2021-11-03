@@ -579,7 +579,7 @@ road.prototype.calcAccelerationsOfVehicle=function(i){
    //console.log("accBoundaries=",accBoundaries);
 
 
-    // (4) calculate final result w/o floor fields
+    // (4) calculate final result of model w/o floor fields
 
     this.veh[i].accLong=accLongTraffic+accBoundaries[0];
     this.veh[i].accLat=accLatTraffic+accBoundaries[1];
@@ -605,6 +605,14 @@ road.prototype.calcAccelerationsOfVehicle=function(i){
   var accBiasRight=(this.veh[i].type==="truck")
       ? accBiasRightTruck : accBiasRightOthers;
   this.veh[i].accLat += accBiasRight;
+
+
+  // (7) add lateral accel noise to break some symmetry artifacts
+
+  var accNoiseAmpl=0.3; // sig_speedFluct=noiseAcc*sqrt(t*dt/12)  //0.3
+  var accRnd=accNoiseAmpl*(Math.random()-0.5);
+  this.veh[i].accLat += accRnd;
+
   
 
     //################################
@@ -895,21 +903,20 @@ road.prototype.get_yPix=function(axis_x,axis_y,u,v,scale){
 @param scale:      scale of map (x,y) -> (xPix,yPix) in pixels/m
 @param axis_x(u):  x coord (East) of road axis as function of the arc length
 @param axis_y(u):  y coord (North) of road axis as function of the arc length
-@param isRescaled: true at beginning or if a resize event took place
+@param hasChanged: true at beginning or if a resize event took place
 
 @return:           draw into graphics context ctx (def. in calling routine)
 */
 
-road.prototype.draw=function(roadImg,scale,axis_x,axis_y,isRescaled){
+road.prototype.draw=function(roadImg,scale,axis_x,axis_y,hasChanged){
 
     var lSegm=this.roadLen/this.draw_nSegm;
-
 
     // actual drawing routine
 
     for (var iSegm=0; iSegm<this.draw_nSegm; iSegm++){
 	var u=this.roadLen*(iSegm+0.5)/this.draw_nSegm;
-	if(isRescaled){ // lookup table only at beginning or after rescaling
+      if((itime==0)||hasChanged){ // lookup table only at beginning or after rescaling
 	    this.draw_x[iSegm]=axis_x(u); 
 	    this.draw_y[iSegm]=axis_y(u);
 	    this.draw_phi[iSegm]=this.get_phi(axis_x, axis_y, u);

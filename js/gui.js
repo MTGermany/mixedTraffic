@@ -78,6 +78,31 @@ function myStartStopFunction(){
     
 } // end Start/Stop button callback as images
 
+
+
+function myRestartFunction(){ 
+  time=0;
+  itime=0;
+  hasChanged=true;
+  macroProperties=[]; // to reset data for the scatterplot commands
+  mainroad=new road(roadID, isRing, roadLen, widthLeft, widthRight,
+		    densityInit, speedInit, fracTruck, fracBike,
+		    v0max, dvdumax);
+  //plot1=new plotxy(wPix,hPix,xPixLeft,yPixTop);
+  //plot2=new plotxy(wPix,hPix,xPixLeft,yPixTop-hPix-vertSpacePix);
+
+  // activate thread if stopped
+
+  if(isStopped){
+    isStopped=false;
+    document.getElementById("startStop").src="figs/buttonStop3_small.png";
+    myRun=init();
+  }
+
+}
+
+
+
 /*
 //################################################################
 // Start/Stop button callback as text

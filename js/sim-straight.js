@@ -11,11 +11,10 @@ var time=0;  // only initialization
 var itime=0; // only initialization
 var isStopped=false; // only initialization; simulation starts (not) running
 var dt=parseFloat(sliderTimewarp.value)/fps;
-var floorField=true; // initializes floor-field toggle (consol. with index.html)
 
 // (2) graphical elements
 
-var hasChanged=false; // window dimensions or road width have changed
+var hasChanged=false; // restart or window dim or road width have changed
 var car_srcFile='figs/blackCarCropped.gif';
 var truck_srcFile='figs/truck1Small.png';
 var bike_srcFile='figs/bikeCropped.gif';
@@ -125,6 +124,7 @@ var dotdvdumax=0.3;    // max change rate of angle to road axis
 var phiVehRelMax=0.10; // only drawing: maximum visual angle to road axis
 var speedLatStuck=1.2;   // max lateral speed if long speed low!!DOS!!!
 
+
 // lateral force constants
 
 var s0y=0.15;       // lat. attenuation scale [m] for long veh-veh interact
@@ -134,6 +134,8 @@ var sensLat=1.4;    // sensitivity (desired lat speed)/(long accel) [s]
 var accBiasRightTruck=0.8;  //MT 2021-11 
 var accBiasRightOthers=0;
 var accFloorMax=0.5;        //MT 2021-11 reduced from 6.5
+//  sensDvy in sliders; default 1s/m
+
 
 // boundaries
 
@@ -208,9 +210,9 @@ var nLanes=Math.round(roadWidthRef/wLane);
 // if isRing, inflow automatically ignored and road geom not implemented
 
 var isRing=false; 
-
-var varWidthLeft=false;
-var varWidthRight=false;
+//var varWidthLeft=false;  // as <script>.../script> in html
+//var varWidthRight=false; // as <script>.../script> in html
+//var floorField=true;     // as <script>.../script> in html
 
 function axis_x(u){ // physical coordinates
         var dxPhysFromCenter= // center=origin of half-circle element
@@ -573,34 +575,38 @@ function drawSim() {
 
         // determine overall rel dimensions 
 
-	var xCenterRel=0.77;
-	var yCenterRel=0.60; // 0: top, 1: bottom of canvas
-	var wRel=0.35;
-	var hRel=0.20;
+	var xCenterRel=0.71;
+	var yCenterRel=0.50; // horiz boundary of diags: (0=top, 1=bottom)
+	var wRel=0.25;
+	var hRel=0.15;
 
         // determine arguments for plotxy
 
-	var wPix=refSizePix*wRel;
-	var hPix=refSizePix*hRel;
-	var xPixLeft=canvas.width*xCenterRel-0.5*refSizePix*wRel;
-	var yPixTop=canvas.height*yCenterRel-0.5*refSizePix*hRel;
+	//var wPix=refSizePix*wRel;
+	//var hPix=refSizePix*hRel;
+      var wPix=canvas.width*wRel;
+      var hPix=wPix*hRel/wRel;
+      var vertSpacePix=0.05*hPix;
+      var xPixLeft=canvas.width*xCenterRel-0.5*wPix;
+      var yPixTop=canvas.height*yCenterRel+0.05*vertSpacePix; // lower diagr
+
 
       // determine axes specifications [colx, xmult,xmax,xlabel]
       // and optional boxplot specifications: each point gets
       // vertical candlestick [col_ymin, col_25th, col_50th, 75, ymax]
 
-        var rhoSpec=[0,1000,200,"Density [veh/km]"];
-	var QSpec=[1,3600,3600,"Flow [veh/h]"];
-	var VSpec=[2,3.6,50,"Speed [km/h]"];
-	var boxSpec=[3,4,5,6,7];
+      var rhoSpec=[0,1000,200,"Density [veh/km]"];
+      var QSpec=[1,3600,3600,"Flow [veh/h]"];
+      var VSpec=[2,3.6,50,"Speed [km/h]"];
+      var boxSpec=[3,4,5,6,7];
 
-        // define plot instance and do the plotting
+        // define plot instance and do the plotting (new necessary!)
 
-	var plot1=new plotxy(wPix,hPix,xPixLeft,yPixTop); // new necessary!
-	plot1.scatterplot(ctx,macroProperties,rhoSpec,QSpec);
+      var plot1=new plotxy(wPix,hPix,xPixLeft,yPixTop); // lower diagr
+      plot1.scatterplot(ctx,macroProperties,rhoSpec,QSpec); // lower
 
-	var plot2=new plotxy(wPix,hPix,xPixLeft,yPixTop-1.05*hPix);
-	plot2.scatterplot(ctx,macroProperties,rhoSpec,VSpec,boxSpec);
+      var plot2=new plotxy(wPix,hPix,xPixLeft,yPixTop-hPix-vertSpacePix);
+      plot2.scatterplot(ctx,macroProperties,rhoSpec,VSpec,boxSpec);//upper
 
     } // do xy plots [ if (itime%ndtSample==0) ]
 

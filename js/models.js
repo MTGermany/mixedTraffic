@@ -263,7 +263,7 @@ function MTM(longModel,s0y,s0yLat,s0yB,s0yLatB,sensLat,tauLatOVM,sensDvy){
 
   // fixed values within MTM (acc noise at longModels, v0LatMax at road!)
 
-  this.accLatIntMax=2*longModel.b; // max lat interact accel = x*comf decel 
+  this.accLatIntMax=4*longModel.b; // max lat interact accel = x*comf decel 
   this.longParReductFactor=0.0;    // !!! reduce longInt if parallel (dx<Ll)
                                    //  and no collision (sy>0)
 
@@ -404,6 +404,9 @@ MTM lateral interaction acceleration effected by one vehicle
    and to the function param list but more obscure information flow 
    (I have checked it!)  and
    less flexible to accLong with multiple leaders=> forget it
+
+Notice: addition of accLatInt for several vehs, floorFields, 
+restrictions, and noise in higher-level road.js
 */
 
 // logging useful to filter debug output for vehID etc in road.js
@@ -419,9 +422,10 @@ MTM.prototype.calcAccLatInt=function(dx,dy,vx,vxl,vy,vyl,axl,
   var alpha=-sign_dy*((Math.abs(dy)<Wavg) // sqrt decrease if |dy|<Wavg
 		      ? Math.sqrt(Math.abs(dy)/Wavg)
 		      : Math.exp(-(Math.abs(dy)-Wavg)/this.s0yLat));
-  if(logging){console.log("     sign_dy=",sign_dy," alpha=",alpha);}
   //var alpha=(Math.abs(dy)<Wavg) // lin decrease if |dy|<Wavg
      // ? -dy/Wavg : -sign_dy*Math.exp(-(Math.abs(dy)-Wavg)/this.s0yLat);
+
+  //if(logging){console.log("     sign_dy=",sign_dy," alpha=",alpha);}
 
   var v0LatInt=-sensLat*alpha*accCFint; //accCFint<0; no cone restr as in gnuplot 
 
@@ -435,22 +439,26 @@ MTM.prototype.calcAccLatInt=function(dx,dy,vx,vxl,vy,vyl,axl,
 
   // add lateral accel noise to break some symmetry artifacts
 
-  var noiseAcc=0.3; // sig_speedFluct=noiseAcc*sqrt(t*dt/12)  //0.3
-  var accRnd=noiseAcc*(Math.random()-0.5);
+  //var noiseAcc=0.3; // sig_speedFluct=noiseAcc*sqrt(t*dt/12)  //0.3
+  //var accRnd=noiseAcc*(Math.random()-0.5);
 
   
 
     // restrict to +/- accLatIntMax (floorfield and bias outside at road)
 
   accLatInt=Math.max(-this.accLatIntMax, 
-                     Math.min(this.accLatIntMax,accLatInt+accRnd));
+                     Math.min(this.accLatIntMax,accLatInt));
 
 
+  // notice: sim or road effects such as
+  // - addition of accLatInt from several vehs
+  // - floor fields
+  // - final restrictions
+  // - acceleration noise
+  // in road.js
 
-    // tests (set stochasticity noiseAcc in this.longModel.calcAcc=0 
-    // for comparisons !!)
-    // possibly switch on also logging in road.updateSpeedPositions
-    // for complete accLat that are not accessible here (multi-veh etc)
+  // possibly switch on also logging in road.updateSpeedPositions
+  // for complete accLat that are not accessible here (multi-veh etc)
 
   if(logging){ // needed to select according to vehID in caller in road.js
     //if(vx>0)
