@@ -41,7 +41,7 @@ function vehicle(type, len, width, u, v, speedLong, speedLat, mixedModel){
 /** 
 ######################################################################
 NEW nov17
-calculate strength of interaction as CF acceleration (<=0) 
+calculate strength of longitudinal interaction as CF acceleration (<=0) 
 times lateral attenuation with scale=max(model.s0y, model.s0yLat)
 //######################################################################
 

@@ -482,7 +482,8 @@ road.prototype.calcAccelerationsOfVehicle=function(i){
 
     var bIntCrit=0.1; //!!
 
-    // leaders
+  // leaders
+  // accInt=longitud interaction=accCFint*min(1,exp(-sy/s0ymax))
 
     var iLeaders=[];
     var accInteractionLeaders=[];
@@ -497,15 +498,16 @@ road.prototype.calcAccelerationsOfVehicle=function(i){
 	}
     }
 
-    //followers 
+    //followers (consider only if interacting AND gap<s0)
 
     var iFollowers=[];
     var accInteractionFollowers=[];
     var nFollowers=0;
 
     for(var j=i+1; j<=imax; j++){
-	var accInt=this.veh[j].calcLeaderInteraction(this.veh[i]);
-	if(accInt<-bIntCrit){
+      var accInt=this.veh[j].calcLeaderInteraction(this.veh[i]);
+      if((accInt<-bIntCrit)
+	 &&(this.veh[i].u-this.veh[i].len-this.veh[j].u<s0)) {
 	    iFollowers[nFollowers]=j;
 	    accInteractionFollowers[nFollowers]=accInt;
 	    nFollowers++;
@@ -609,10 +611,14 @@ road.prototype.calcAccelerationsOfVehicle=function(i){
 
   // (7) add lateral accel noise to break some symmetry artifacts
 
-  var accNoiseAmpl=0.3; // sig_speedFluct=noiseAcc*sqrt(t*dt/12)  //0.3
-  var accRnd=accNoiseAmpl*(Math.random()-0.5);
-  this.veh[i].accLat += accRnd;
+  var accNoiseAmplLong=1.0; // sig_speedFluct=noiseAcc*sqrt(t*dt/12)  //0.3
+  var accNoiseAmplLat=0.3; // sig_speedFluct=noiseAcc*sqrt(t*dt/12)  //0.3
 
+  var accRnd=accNoiseAmplLong*(Math.random()-0.5);
+  this.veh[i].accLong += accRnd;
+
+  accRnd=accNoiseAmplLat*(Math.random()-0.5);
+  this.veh[i].accLat += accRnd;
   
 
     //################################
@@ -683,8 +689,14 @@ road.prototype.calcAccelerationsOfVehicle=function(i){
 */
 
 road.prototype.updateSpeedPositions=function(dt){
-    for(var i=0; i<this.veh.length; i++){
-        var accLong=this.veh[i].accLong;
+  for(var i=0; i<this.veh.length; i++){
+
+    //!!! check if vehicle models are per vehicle or by reference!
+    //=> they are by reference!
+    //if((i>5)&&(this.veh[i].type==="car")){this.veh[i].mixedModel.longModel.v0=2;}
+    // end check
+    
+    var accLong=this.veh[i].accLong;
 	var speedOld=this.veh[i].speed;
 
 	var du=speedOld*dt+0.5*accLong*dt*dt;

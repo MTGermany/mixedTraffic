@@ -235,6 +235,10 @@ function readTextFile(filePath){
   slider_outflowVal.innerHTML=parseInt(100*slider_outflow.value)+" %";
   document.getElementById("microICalt").value = ""; //success!!
   document.getElementById("startStop").src="figs/buttonStop3_small.png";
+  time=0; // HEINEOUS ERROR !! if define itime<1 as well, DOS in drawing cars!
+  // is, however, not needed since itime only controls def order at
+  // actual reload of whole sim
+
   console.log("end of function readTextFile (f... garbled time order; this NOT executed last");
 
   return true;

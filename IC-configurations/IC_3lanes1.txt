@@ -1,9 +1,9 @@
 #debug interaction with obstacles; set inflow=0, set floorfield or not
-#type     length   width  u	v	speedLong	speedLat
-car	  5.0	   2.0	  20	0.	15		0   # noiseLatBreaksSymm
-obstacle  10	   3	  120	0.	0		0
-car	  5.0	   2.0	  390	4.2	0		0   # trappedAtBound
-car	  5.0	   2.0	  390	-4.2	0		0
-obstacle  10	   3	  400	4	0		0
-obstacle  10	   3	  400	-4	0		0
+#type     length   width  u	v	speedLong speedLat
+car	  5.0	   2.0	  20	0.	15	  0   # noiseLatBreaksSymm
+obstacle  10	   4	  120	0.	0	  0
+car	  5.0	   2.0	  390	4.2	0	  0   # trappedAtBound
+car	  5.0	   2.0	  390	-4.2	0	  0
+obstacle  10	   4	  400	3.5	0	  0
+obstacle  10	   4	  400	-3.5	0	  0
 

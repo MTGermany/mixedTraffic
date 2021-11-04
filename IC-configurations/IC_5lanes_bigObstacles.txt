@@ -5,10 +5,10 @@
 #type     length   width  u	v	speedLong	speedLat
 car	  5.0	   2.0	  20	7	15		0
 #
-obstacle  2	   5	  120	-9.5	0		0
-obstacle  2	   12	  120	9.5	0		0
+obstacle  2	   3.5	  100	-7	0		0
+obstacle  2	   7	  100	5.25	0		0
 #
-obstacle  2	   28	  155	-8.75	0		0
+obstacle  2	   14	  155	-1.75	0		0
 #
 obstacle  5	   14	  210	-8.75	0		0
 obstacle  5	   12	  215	-8.75	0		0

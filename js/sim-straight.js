@@ -58,9 +58,9 @@ var yMouse;
 //#############################################################
 
 var car_length=5; 
-var car_width=2.2;
+var car_width=2.0;
 var truck_length=10;
-var truck_width=3.2; 
+var truck_width=2.5; 
 var bike_length=2; // bicycles or motorbikes, depending on parameterisation
 var bike_width=0.7;
 var obstacle_length=10;
@@ -126,10 +126,10 @@ var speedLatStuck=1.2;   // max lateral speed if long speed low!!DOS!!!
 
 
 // lateral force constants
-
-var s0y=0.15;       // lat. attenuation scale [m] for long veh-veh interact
-var s0yLat=0.30;    // lat. attenuation scale [m] for lat veh-veh interact
-var sensLat=1.4;    // sensitivity (desired lat speed)/(long accel) [s]
+// s0yLat: cars should be straight in lane in 
+var s0y=0.15;       // lat. attenuation scale [m] long veh-veh interact [0.15]
+var s0yLat=0.60;    // lat. attenuation scale [m] lat veh-veh interact  [0.3]
+var sensLat=1.0;    // sensitivity (max des lat speed)/(long accel) [s] [1.4]
 
 var accBiasRightTruck=0.8;  //MT 2021-11 
 var accBiasRightOthers=0;
@@ -330,8 +330,8 @@ function updateSim(dt){    // called here by main_loop()
     itime++;
     //console.log("\nbegin updateSim: itime=",itime);
     if(itime==1){ // initializeMicro(types, len, w, u, v,speed,speedLat)
-	mainroad.initializeMicro( ["car"], [truck_length],
-				  [truck_width], [150], [4], 
+	mainroad.initializeMicro( ["car"], [car_length],
+				  [car_width], [150], [0], 
 				 [20], [0]);
 	//mainroad.initializeMicro( ["obstacle"], [20], //!!! TEST pointer err
 	//			  [20], [120], [0], 

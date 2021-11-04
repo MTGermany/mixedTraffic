@@ -76,10 +76,6 @@ IDM acceleration function
 
 IDM.prototype.calcAccInt=function(s,v,vl,al){ 
 
-    //MT 2016: noise to avoid some artifacts
-
-    var noiseAcc=0.3; // sig_speedFluct=noiseAcc*sqrt(t*dt/12)
-    var accRnd=noiseAcc*(Math.random()-0.5); //if acceleration noise
 
     // actual acceleration model
 
@@ -90,14 +86,14 @@ IDM.prototype.calcAccInt=function(s,v,vl,al){
 
     // IDM
 
-    return Math.max(-this.bmax, accInt + accRnd);
+    return Math.max(-this.bmax, accInt);
 
     // IDM+
 
     //var accFree=this.calcAccFree(v);
     //var accIntRaw_IDMplus=accInt+this.a;
     //var accInt_IDMplus=Math.min(accFree, accIntRaw_IDMplus)-accFree;
-    //return Math.max(-this.bmax, accInt_IDMplus + accRnd);
+    //return Math.max(-this.bmax, accInt_IDMplus);
 
 }//IDM.prototype.calcAccInt
 
@@ -172,10 +168,6 @@ ACC.prototype.calcAccInt=function(s,v,vl,al){
     // better w/o this and max(s,s0) in denominator !!
     //if(s<0.0001){return -this.bmax;} 
 
-    // noise to avoid some artifacts
-
-    var noiseAcc=0.3; // sig_speedFluct=noiseAcc*sqrt(t*dt/12)  //0.3
-    var accRnd=noiseAcc*(Math.random()-0.5); //if acceleration noise
 
     // determine valid local v0
 
@@ -201,7 +193,7 @@ ACC.prototype.calcAccInt=function(s,v,vl,al){
  
     var accACC=this.cool*accMix +(1-this.cool)*accIDM;
 
-    var accInt= Math.max(-this.bmax, accACC + accRnd - accFree);
+    var accInt= Math.max(-this.bmax, accACC  - accFree);
 
     //if(this.alpha_v0<0.6){ // alpha not yet used
 
@@ -251,6 +243,7 @@ politeness and dvdumax: higher-level: road.js
 @return      MTM instance (constructor)
 */
 
+// standard: longModel: longModelCar, -Truck, -Bike=new ACC(..)
 function MTM(longModel,s0y,s0yLat,s0yB,s0yLatB,sensLat,tauLatOVM,sensDvy){
   this.longModel=longModel;
   this.s0y=s0y;
@@ -415,6 +408,10 @@ restrictions, and noise in higher-level road.js
 // widens in the direction of the road boundary)
 // assuming road boundaries y=+/- 05 wRoad
 
+// !!! Introduce a ban to move back to ending lanes if mandatory LC
+// need from road additional flag mandatory: 0=not, 1=toRight, -1=toLeft
+// test: IC_2lanes_zipper.txt
+
 MTM.prototype.calcAccLatInt=function(x,xl,y,yl,vx,vxl,vy,vyl,axl,
 				     Lveh,Ll,Wveh,Wl,Wroad,logging){
   var dx=xl-x;
@@ -446,17 +443,19 @@ MTM.prototype.calcAccLatInt=function(x,xl,y,yl,vx,vxl,vy,vyl,axl,
   // 1: tooNarrowLeft->positive force
   // -1: tooNarrowRight->positive force
   
-  var alphaB=0;
+  // var alphaB=0; // will be directly overwritten to alpha
 
-  var sylbRight=0.5*Wroad-yl-0.5*Wl; // right gap leader-road boundary
-  var sylbLeft=Wroad-sylbRight-Wl;   // left gap leader-road boundary
-  var tooNarrowRight=(sylbRight<Wveh+this.s0yLatB);
-  var tooNarrowLeft=(sylbLeft<Wveh+this.s0yLatB);
-
+  //if(false){ // test without
   if(overlap){
-    if(!(tooNarrowRight&&tooNarrowLeft)){ // no influence for too narrow road
-      alphaB=(tooNarrowRight) ? 1 : -1;
-      alpha=alphaB;  // could remove var alphaB; left it for better reading
+
+    var sylbRight=0.5*Wroad-yl-0.5*Wl; // right gap leader-road boundary
+    var sylbLeft=Wroad-sylbRight-Wl;   // left gap leader-road boundary
+    var tooNarrowRight=(sylbRight<Wveh+this.s0yLatB);
+    var tooNarrowLeft=(sylbLeft<Wveh+this.s0yLatB);
+
+    if(!(tooNarrowRight&&tooNarrowLeft)){    // no influence for too narrow road
+      if(tooNarrowRight&&(y>yl)){alpha=-1;}  // alpha=alphaB
+      if(tooNarrowLeft&&(y<yl)){alpha=1;}    // alpha=alphaB
     }
   }
   
@@ -471,11 +470,6 @@ MTM.prototype.calcAccLatInt=function(x,xl,y,yl,vx,vxl,vy,vyl,axl,
 	? 1 : Math.max(0., 1.-this.sensDvy*sign_dy*(vyl-vy));
 
   var accLatInt=v0LatInt/this.tauLatOVM*mult_dv_factor;
-
-  // add lateral accel noise to break some symmetry artifacts
-
-  //var noiseAcc=0.3; // sig_speedFluct=noiseAcc*sqrt(t*dt/12)  //0.3
-  //var accRnd=noiseAcc*(Math.random()-0.5);
 
   
 
@@ -496,12 +490,14 @@ MTM.prototype.calcAccLatInt=function(x,xl,y,yl,vx,vxl,vy,vyl,axl,
   // for complete accLat that are not accessible here (multi-veh etc)
 
   if(logging){ // needed to select according to vehID in caller in road.js
-    //if(vx>0)
+  //if(Lveh<8){
 	console.log(
-	  " MTM.calcAccLatInt single pair: ",
+	  " MTM.calcAccLatInt:",
 	   // " this.tauLatOVM=",this.tauLatOVM,
 	   // " this.sensDvy=",this.sensDvy,
+	    " x=",formd(x),
 	    " dx=",formd(dx),
+	    " y=",formd(y),
 	    " dy=",formd(dy),
 	    " vx=",formd(vx),
 	    " vy=",formd(vy),
@@ -509,11 +505,11 @@ MTM.prototype.calcAccLatInt=function(x,xl,y,yl,vx,vxl,vy,vyl,axl,
 	    //" vyl=",formd(vyl),
 	    //" axl=",formd(axl),
 	  " accCFint=",formd(accCFint),
-	  " alpha=",formd(alpha),
-	  " v0LatInt=",formd(v0LatInt),
+	  "\n                     alpha=",formd(alpha),
 	  " mult_dv_factor=",formd(mult_dv_factor),
+	  " v0LatInt=",formd(v0LatInt),
 	  " accLatInt=",formd(accLatInt),
-	  " accLatFree=",formd(this.calcAccLatFree(vy)),
+	  //" accLatFree=",formd(this.calcAccLatFree(vy)),
 	    "");
   }
   

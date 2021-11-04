@@ -1,0 +1,6 @@
+#test zipper-like merging (take vehicles of one type as input)
+# 2 lanes, width 7.5 m
+#type     length   width  u	v	speedLong	speedLat
+truck	  10.0	   2.5	  20	-1.75	12		0
+
+

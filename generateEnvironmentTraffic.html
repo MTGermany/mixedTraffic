@@ -8,7 +8,7 @@
     <meta http-equiv="content-type" content="text/html; charset=iso-8859-1">
     <link href="css/styleMixed.css" rel="stylesheet" type="text/css"/>
 
-    <title>Mixed Traffic Flow</title> 
+    <title>Background traffic for RL tests</title> 
 </head>
 
 
@@ -22,8 +22,7 @@
 <!-- ############################################## -->
 
 <div id="header"> 
- Mixed Traffic Flow 
-  <!--<img class="title" src="figs/Mixed_Traffic_Flow.png"  width="100%"/>-->
+ Generate background traffic
 </div> 
 
 <div id="infoLink">
@@ -54,7 +53,7 @@
           onclick="myForcefieldToggle()">Display Forces</button>
 
 
-<!--
+  
   <button id="varWidthLeftToggle" 
           onclick="myVarWidthLeftToggle()">Var. width left</button>
   <script> var varWidthLeft=false; </script>
@@ -66,10 +65,8 @@
   <button id="floorFieldToggle"
           onclick="myFloorFieldToggle()">Floor field off</button>
   <script> var floorField=true; </script>
-  -->
 
-  
- 
+<!--  
   <button id="varWidthLeftToggle" 
           onclick="myVarWidthLeftToggle()">Var. width left off</button>
   <script> var varWidthLeft=true; </script>
@@ -81,7 +78,7 @@
   <button id="floorFieldToggle"
          onclick="myFloorFieldToggle()">Floor field</button>
   <script> var floorField=false; </script>
- 
+  -->
 
 
   
@@ -142,14 +139,14 @@
 <tr>
   <td> RoadWidth </td>
   <td> <input id="slider_roadWidth" type="range" 
-              min="2.5" max="21" step="0.5" value="20.5"></td> <!--3*3.5-->
+              min="2.5" max="21" step="0.5" value="14.0"></td> <!--3*3.5-->
   <td> <div id="slider_roadWidthVal"></div></td>
 </tr>
 
 <tr>
   <td> Inflow </td>
   <td> <input id="slider_inflow" type="range" 
-              min="0" max="2" step="0.01" value="1.6"></td> <!--1.8-->
+              min="0" max="2" step="0.01" value="1.0"></td> <!--1.8-->
   <td> <div id="slider_inflowVal"></div></td>
 </tr>
 
@@ -180,7 +177,7 @@
 <tr>
   <td> fracBike </td>
   <td> <input id="slider_fracBike" type="range" 
-              min="0" max="1" step="0.01" value="0.2"></td> <!--0.2-->
+              min="0" max="1" step="0.01" value="0.0"></td> <!--0.2-->
   <td> <div id="slider_fracBikeVal"></div></td>
 </tr>
 
