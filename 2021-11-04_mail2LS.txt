@@ -1,0 +1,26 @@
+To:
+
+Subj: Simulates Multi-lane, multi-type background traffic and research ideas
+
+Attchm: ~/versionedProjects/mixedTraffic/IC-configurations.zip
+
+Dear all,
+
+In the last days, I did a major upgrade of my simulation of (lane-less) mix traffic flow at
+
+mtreiber.de/mixedTraffic
+
+Moreover, I have implemented the floor field to simulate lane-based traffic in a fully 2d microscopic model, i.e., integrated CF and lane-changing model, see the (yet not disclosed to the public) link
+
+mtreiber.de/mixedTraffic/generateEnvironmentTraffic.html
+
+I hope that both simulators (in fact, the latter one is only a frontend modification with changed settings in the html file) will lead to major insights. Particularly, the lane-free simulator can be used to reproduce recent experimental findings of traffic on wide bikepaths with obstacles such as the spontaneous formation of staggered following, then two-lanes if the path gets wider.
+
+As the name implies, the lane-based simulator can be used to generate multi-lane multi-type environmental traffic. Just tune the simulator to your liking (the top six sliders and the buttons and knobs should be self-explaining) and press the lightblue download button "start" at the bottom left. Once you have gathered enough data, press the same button (now displaying "finish") again and you get a self-explaining textfile in your default download folder (often it is called "$HOME/Downloads")
+
+There are also some initial configuration files which can be locally loaded into the simulator containing scenarios with cars, trucks, bikes, obstacles and road-width variations. These allow for reproducible simulations for testing purposes and papers and are contained in the attachment. The zip file expands to a directory "IC-configurations" which can be loaded via the button "IC from file" to the right.
+
+Best,
+
+Martin
+

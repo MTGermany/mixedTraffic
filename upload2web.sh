@@ -28,7 +28,7 @@ mkdir $targetDir/IC-configurations
 cp *.html $targetDir
 cp js/*.js $targetDir/js
 cp css/*.css $targetDir/css
-cp figs/*.jpg figs/*.png figs/*.gif $targetDir/figs
+cp figs/*.jpg figs/*.png figs/*.gif figs/*.ico $targetDir/figs
 cp IC-configurations/IC*.txt $targetDir/IC-configurations
 
 
