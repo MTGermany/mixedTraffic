@@ -810,15 +810,24 @@ road.prototype.updateBCup=function(Qin,fracTruck,fracBike,dt){
   	success=(s>smin) || (this.veh[iLast].speed>speedmin); 
     }
 
-      // actually insert new vehicle
+    // actually insert new vehicle (0=car,1=truck,2=bike)
+    // insert trucks only at positiv v (right part of the road)
 
     if(success){
       var roadWidthLoc=this.widthLeft(0)+this.widthRight(0); // roadwidth at u=0
+      // create array of possible entry positions (also lane based if mixed)
+      var vNewRel=[];
+      for(var k=0; k<nLanes; k++){vNewRel[k]=-0.5 + (0.5+k)/nLanes;}
       var rnd=Math.random();
       var iType=(rnd<fracTruck) ? 1 : (rnd<fracTruck+fracBike) ? 2 : 0;
-      var vNewRel=[-0.4,0.1,-0.2,0.3,-0.1,0.4];
-      var nParallel=vNewRel.length;
-      var vNew=roadWidthLoc*vNewRel[this.inVehCount%nParallel]; 
+      var index=this.inVehCount%nLanes;
+
+      // put trucks only at the right-hand side (odd indices)
+      if((iType==1)&&(index<0.5*nLanes-1.01)){
+	index=(this.inVehCount+Math.round(0.5*nLanes))%nLanes;
+      }
+      
+      var vNew=roadWidthLoc*vNewRel[index]; // not speed but lateral pos!
       var speedRef=1000; // js does not skip cond statement if false!
       if(this.veh.length>=2){speedRef=1.2*this.veh[iLast].speed;} 
       var speedNew=Math.min(this.vehModel[iType].longModel.v0, Math.max(speedRef,3));
