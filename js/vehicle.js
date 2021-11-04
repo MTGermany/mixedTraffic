@@ -124,19 +124,18 @@ vehicle.prototype.calcAccLatFree=function(){
 
 
 vehicle.prototype.calcAccLatInt=function(leadveh,logging){
-    if(this.type=="obstacle"){return 0;}
-    if(this==leadveh){return 0;}
+  if(this.type=="obstacle"){return 0;}
+  if(this==leadveh){return 0;}
 
-    var dx=leadveh.u-this.u;
-    var dy=leadveh.v-this.v;
-    var vxl=leadveh.speed;
-    var vyl=leadveh.speedLat;
-    var accl=leadveh.accLong;
-    var Ll=leadveh.len;
-  var Wavg=0.5*(this.width+leadveh.width);
-  return this.mixedModel.calcAccLatInt(this.v,roadWidthRef,dx,dy,this.speed,vxl,
-					 this.speedLat,vyl,accl,
-					  this.len,Ll,Wavg,logging);
+  var vxl=leadveh.speed;
+  var vyl=leadveh.speedLat;
+  var axl=leadveh.accLong;
+  var Ll=leadveh.len;
+  var Wl=leadveh.width;
+  return this.mixedModel.calcAccLatInt(this.u,leadveh.u,this.v,leadveh.v,
+				       this.speed,vxl,this.speedLat,vyl,axl,
+				       this.len,Ll,this.width,Wl,roadWidthRef,
+				       logging);
  }
 
 

@@ -415,20 +415,51 @@ restrictions, and noise in higher-level road.js
 // widens in the direction of the road boundary)
 // assuming road boundaries y=+/- 05 wRoad
 
-MTM.prototype.calcAccLatInt=function(y,wRoad,dx,dy,vx,vxl,vy,vyl,axl,
-				     Lveh,Ll,Wavg,logging){
+MTM.prototype.calcAccLatInt=function(x,xl,y,yl,vx,vxl,vy,vyl,axl,
+				     Lveh,Ll,Wveh,Wl,Wroad,logging){
+  var dx=xl-x;
   var sx=Math.max(0,dx-Ll);
-  //var sy=Math.abs(dy)-Wavg;
-  var sign_dy=(dy<0) ? -1 : 1;
-  //var sign_sy=(sy<0) ? -1 : 1;
   var accCFint=this.longModel.calcAccInt(sx,vx,vxl,axl); // possibly reuse
 
-  var alpha=-sign_dy*((Math.abs(dy)<Wavg) // sqrt decrease if |dy|<Wavg
+  var dy=yl-y;
+  var sign_dy=(dy<0) ? -1 : 1;
+  var Wavg=0.5*(Wveh+Wl);
+
+  var overlap=(Math.abs(dy)<Wavg);
+
+  // normalized lateral desire alpha in [-1,1]
+  
+  var alpha=-sign_dy*((overlap) // sqrt decrease if |dy|<Wavg
 		      ? Math.sqrt(Math.abs(dy)/Wavg)
 		      : Math.exp(-(Math.abs(dy)-Wavg)/this.s0yLat));
   //var alpha=(Math.abs(dy)<Wavg) // lin decrease if |dy|<Wavg
      // ? -dy/Wavg : -sign_dy*Math.exp(-(Math.abs(dy)-Wavg)/this.s0yLat);
 
+
+
+  // alphaB in {-1,0,1} replaces normalized lateral desire alpha if overlap with
+  // leaders that are too close to the boundaries to pass on that side
+  // introduced to avoid trapped cars behind slow vehs at boundaries
+
+  // 0: no overlap or leader sufficiently far away from boundaries
+  //    or very narrow road
+  // 1: tooNarrowLeft->positive force
+  // -1: tooNarrowRight->positive force
+  
+  var alphaB=0;
+
+  var sylbRight=0.5*Wroad-yl-0.5*Wl; // right gap leader-road boundary
+  var sylbLeft=Wroad-sylbRight-Wl;   // left gap leader-road boundary
+  var tooNarrowRight=(sylbRight<Wveh+this.s0yLatB);
+  var tooNarrowLeft=(sylbLeft<Wveh+this.s0yLatB);
+
+  if(overlap){
+    if(!(tooNarrowRight&&tooNarrowLeft)){ // no influence for too narrow road
+      alphaB=(tooNarrowRight) ? 1 : -1;
+      alpha=alphaB;  // could remove var alphaB; left it for better reading
+    }
+  }
+  
   //if(logging){console.log("     sign_dy=",sign_dy," alpha=",alpha);}
 
   var v0LatInt=-sensLat*alpha*accCFint; //accCFint<0; no cone restr as in gnuplot 
@@ -436,8 +467,8 @@ MTM.prototype.calcAccLatInt=function(y,wRoad,dx,dy,vx,vxl,vy,vyl,axl,
     // multiplicative FVDM-like effect on lat speed difference
     // 1/sensDvy=lateral speed difference where accLatInt=doubled or zeroed
 
-  var mult_dv_factor=(Math.abs(dy)<Wavg)
-      ? 1 : Math.max(0., 1.-this.sensDvy*sign_dy*(vyl-vy));
+  var mult_dv_factor=(overlap)
+	? 1 : Math.max(0., 1.-this.sensDvy*sign_dy*(vyl-vy));
 
   var accLatInt=v0LatInt/this.tauLatOVM*mult_dv_factor;
 
@@ -711,8 +742,9 @@ MTM.prototype.calcTable_dxvx=function(dy,vxl,vy,vyl,axl,Lveh,Ll,Wavg){
 	  // assume leader sufficiently far away from boundary such that no
 	  // boundary effects (y=0, wRoad=10*wAvg
 	  
-	  var ax=this.calcAccLong(0,10*Wavg,dx,dy,vx,vxl,axl,Ll,Wavg);
-	    var ay=this.calcAccLatInt(dx,dy,vx,vxl,vy,vyl,axl,Lveh,Ll,Wavg,false)
+	  var ax=this.calcAccLong(dx,dy,vx,vxl,axl,Ll,Wavg);
+	  var ay=this.calcAccLatInt(0,dx,0,dy,vx,vxl,axl,
+				    Lveh,Ll,Wveh,Wl,10*Wavg,false);
 		+ this.calcAccLatFree(vy);
 	    console.log(str_dx,
 			"\t",str_dy,
