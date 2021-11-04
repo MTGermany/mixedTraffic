@@ -19,15 +19,19 @@ fi
 mkdir $targetDir/js
 mkdir $targetDir/css
 mkdir $targetDir/figs
+mkdir $targetDir/IC-configurations
 
 #############################################
 # (2) upload files to targetdir and set permissions
 #############################################
 
-cp *.html IC*.txt $targetDir
+cp *.html $targetDir
 cp js/*.js $targetDir/js
 cp css/*.css $targetDir/css
-cp figs/*.jpg figs/*.png figs/*.gif $targetDir/figs 
+cp figs/*.jpg figs/*.png figs/*.gif $targetDir/figs
+cp IC-configurations/IC*.txt $targetDir/IC-configurations
+
+
 
 for dir in `find $targetDir -type d`; do chmod o+x $dir; done
 for file in `find $targetDir -type f`; do chmod o+r $file; done
@@ -36,7 +40,7 @@ echo "made directory $targetDir ready for upload"
 
 echo "hint: In the simplest case, just rm -r old dir, cp -r new to it and upload"
 echo "rm -r $HOME/public_html/professional/mixedTraffic"
-echo "cp -rp $targetDir $HOME/public_html/professional/mixedTraffic => use filezilla"
+echo "cp -rp $targetDir $HOME/public_html/professional/mixedTraffic"
 echo ""
 echo "Test: call www.mtreiber.de/mixedTraffic/index.html"
 echo "      !!!WARNING!!! chromium cache remembers elements in chromium"
