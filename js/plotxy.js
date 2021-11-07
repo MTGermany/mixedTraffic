@@ -175,6 +175,23 @@ plotxy.prototype.scatterplot=function(ctx, data, xSpec, ySpec, boxSpec){
 
 
 
+// helper functions for tick-mark intervals
+// as function of max value (max>1,min=0)
+
+function dTic(xmax){
+    var log10xmax=Math.log(xmax)/Math.log(10);
+    var orderMagn=Math.pow(10,Math.floor(log10xmax)); // log10xmax>0
+    var firstDigit=xmax/orderMagn;
+    //console.log("in dTic: xmax=",xmax,
+//		" log10xmax=",log10xmax,
+//		" Math.floor(log10xmax)=",Math.floor(log10xmax),
+//		" orderMagn=",orderMagn," firstDigit=",firstDigit);
+    return (firstDigit==1) ? 0.2*orderMagn :
+	    (firstDigit<5) ? 0.5*orderMagn :orderMagn;
+}
+
+
+// end general-purpose xy-plot functions
 
 
 

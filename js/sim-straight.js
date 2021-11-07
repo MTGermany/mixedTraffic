@@ -37,8 +37,8 @@ var displayForceStyle=2;  // 0: with probe, 1: arrow field arround veh,
 var drawBackground=true;
 var drawRoad=true;
 
-var canvas; // defined in init() by canvas = document.getElementById("...");
-var ctx;  // graphics context
+var canvas=document.getElementById("canvas_mixed");
+var ctx=canvas.getContext("2d"); // graphics context
 
 
 // (3) display logical (u,v) coords of mouse position (x,y)
@@ -301,22 +301,18 @@ var ndtSample=60; // every ndtSample timestep will be sampled for macroPropertie
 var umin=150;    // upstream boundary of sampled region [m];
 var umax=250;    // downstream boundary of sampled region [m];
 
-// helper functions for tick-mark intervals as function of max value (max>1,min=0)
 
-function dTic(xmax){
-    var log10xmax=Math.log(xmax)/Math.log(10);
-    var orderMagn=Math.pow(10,Math.floor(log10xmax)); // log10xmax>0
-    var firstDigit=xmax/orderMagn;
-    //console.log("in dTic: xmax=",xmax,
-//		" log10xmax=",log10xmax,
-//		" Math.floor(log10xmax)=",Math.floor(log10xmax),
-//		" orderMagn=",orderMagn," firstDigit=",firstDigit);
-    return (firstDigit==1) ? 0.2*orderMagn :
-	    (firstDigit<5) ? 0.5*orderMagn :orderMagn;
-}
+//############################################
+// traffic objects and traffic-light control editor
+//############################################
 
 
-// general-purpose xy-plot function
+// TrafficObjects(canvas,nTL,nLimit,xRelDepot,yRelDepot,nRow,nCol)
+var trafficObjs=new TrafficObjects(canvas,1,3,0.60,0.50,3,2);
+
+// also needed to just switch the traffic lights
+// (then args xRelEditor,yRelEditor not relevant)
+var trafficLightControl=new TrafficLightControlEditor(trafficObjs,0.5,0.5);
 
 
 
@@ -376,7 +372,7 @@ function updateSim(dt){    // called here by main_loop()
 	longModelCar.speedmax=speedMax;  // passed by model ref to all cars!
 	longModelTruck.speedmax=speedMax;
 	longModelBike.speedmax=speedMax;
-    }
+  }
 
     if(true){
 	mixedModelCar.tauLatOVM=tauLatOVM; // passed by model ref to all cars!
@@ -390,12 +386,12 @@ function updateSim(dt){    // called here by main_loop()
 	mixedModelBike.sensDvy=sensDvy;
     }
 
- 
-    mainroad.calcAccelerations();  
-    mainroad.updateSpeedPositions(dt);
-    mainroad.updateBCdown();
-    mainroad.updateBCup(qIn,fracTruck,fracBike,dt); 
-     // !! later: array vehCompos[] instead of *Frac*
+  //mainroad.updateSpeedlimits(trafficObjs); // !!! not yet impl. MT 2021-11
+  mainroad.calcAccelerations();  
+  mainroad.updateSpeedPositions(dt);
+  mainroad.updateBCdown();
+  mainroad.updateBCup(qIn,fracTruck,fracBike,dt); 
+  // !! later: array vehCompos[] instead of *frac*
 
 
     if(itime<2){mainroad.writeVehicles();}
@@ -452,6 +448,8 @@ function drawSim() {
       center_yPhys=-0.5*canvas.height/scale; 
       center_xPix=scale*center_xPhys;
       center_yPix=-scale*center_yPhys;
+
+     
       console.log("canvas size ",canvas.width,"X",canvas.height,
 		  " lenPix=",Math.round(lenPix),
 		  " scale=",scale,
@@ -473,13 +471,14 @@ function drawSim() {
     // (only needed if no explicit road drawn but "%10"-or condition"
     //  because some older firefoxes do not start up/draw properly)
 
-    ctx.setTransform(1,0,0,1,0,0); 
-    if(drawBackground){
+  ctx.setTransform(1,0,0,1,0,0);
+  if(drawBackground){
 	if(hasChanged||(itime<=1) || (itime%10==0) || false || (!drawRoad)){ 
           ctx.drawImage(background,0,0,canvas.width,canvas.height);
       }
-    }
-
+  }
+  
+ 
 
     // (3) draw mainroad
     // (always drawn; changedGeometry only triggers building a new lookup table)
@@ -515,7 +514,9 @@ function drawSim() {
 	mainroad.drawVehIDs(scale,axis_x,axis_y,0.015*canvas.height);
     }
 
-    
+
+
+  
     // (5) draw some running-time vars
 
 
@@ -610,6 +611,11 @@ function drawSim() {
 
     } // do xy plots [ if (itime%ndtSample==0) ]
 
+  // (9) draw trafficObjects
+
+  trafficObjs.calcDepotPositions(canvas);
+  trafficObjs.draw(scale);
+  trafficObjs.zoomBack(); // to bring dropped objects back to the depot
 
 } // drawSim
  
@@ -710,8 +716,6 @@ function main_loop() {
 
 function init() {
 
-    canvas = document.getElementById("canvas_mixed");
-    ctx = canvas.getContext("2d"); 
 
     // associate all images to image files
 
