@@ -1,30 +1,82 @@
 
+//####################################################################
+// mouse callbacks
+//####################################################################
+
+function handleMouseEnter(event){
+  console.log("mouse entered");
+  activateCoordDisplay(event);
+}
+
+function handleMouseMove(event){
+  console.log("mouse moved");
+  getMouseCoordinates(event); //=> xUser, yUser, xPixUser, yPixUser
+  // doDragging(xUser,yUser,xUserDown,yUserDown); etc
+  //drawSim(); // to be able to move objects during stopped simulation
+}
+
+function handleMouseDown(event){
+  console.log("mouse down");
+  mousedown=true;
+  getMouseCoordinates(event); //=> xUser, yUser, xPixUser, yPixUser
+  xUserDown=xUser; // memorize starting point of mouse drag
+  yUserDown=yUser;
+    //pickRoadOrObject(xUser,yUser);
+}
+
+function handleMouseUp(event){
+  console.log("mouse up");
+  getMouseCoordinates(event); // => xUser, yUser, xPixUser, yPixUser
+  //finishDistortOrDropObject(xUser, yUser);
+  // drawSim;
+}
+
+function handleClick(event){
+  console.log("mouse clicked");
+  getMouseCoordinates(event); //=> xPixUser, yPixUser, xUser, yUser;
+  //var didSpeedlManip=false; // only one action; change speedl, TL or slow veh
+  //var isDragged=(distDrag>distDragCrit);
+  // many actions
+}
+
+function handleMouseOut(event){
+  console.log("mouse out");
+  deactivateCoordDisplay(event);
+}
+
 
 
 //####################################################################
-// control displaying of logical coordinates at actual mouse position
-// if inside window (html->onmousemove=true)
+// functions called in the top-level mouse callbacks
 //####################################################################
 
 
+// get physical and pixel coordinates for all mouse events
+// for touch events: getTouchCoordinates(event)
 
-// called/updated in html file whenever onmousemove=true
-// sets showMouseCoords=true, so  sim-straight.showLogicalCoords 
-// is called in sim-straight in every timestep
+
+function getMouseCoordinates(event){
+
+  // always use canvas-related pixel and physical coordinates
+
+  var rect = canvas.getBoundingClientRect();
+  var xPixLeft=rect.left; // left-upper corner of the canvas 
+  var yPixTop=rect.top;   // in browser reference system
+  xPixUser= event.clientX-xPixLeft; //pixel coords in canvas reference
+  yPixUser= event.clientY-yPixTop; 
+  xUser=xPixUser/scale;   //scale from main js onramp.js etc
+  yUser=-yPixUser/scale;   //scale from main js onramp.js etc (! factor -1)
+
+  if(false){
+	console.log("getMouseCoordinates: xUser=",xUser," yUser=",yUser);
+  }
+}
+
+// activate display in simulator "log coords u= ..., v= ..."
 
 function activateCoordDisplay(event){
-
-    // mouse position in client window pixel coordinates
-
-    var rect = canvas.getBoundingClientRect();
-    var xPixLeft=rect.left;
-    var yPixTop=rect.top;
-    xMouse = event.clientX-xPixLeft; 
-    yMouse = event.clientY-yPixTop; 
-
-    // activate 
-
-    showMouseCoords=true; // initially set in sim-straight.js
+  getMouseCoordinates(event); // => xPixUser, xPixUser, xUser, yUser
+  showMouseCoords=true; // => sim-straight.showLogicalCoords
 }
 
 
@@ -33,6 +85,10 @@ function activateCoordDisplay(event){
 function deactivateCoordDisplay(event){
     showMouseCoords=false;
 }
+
+
+
+
 
 //################################################################
 // Start/Stop button action as images

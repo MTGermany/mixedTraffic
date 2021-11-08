@@ -47,8 +47,8 @@ var ctx=canvas.getContext("2d"); // graphics context
 // start showMouseCoords=false  since otherw NaN if mouse initially outside
 
 var showMouseCoords=false; 
-var xMouse; // get from activateCoordDisplay event if html.onmousemove=true
-var yMouse;
+var xPixUser; // get from activateCoordDisplay event if html.onmousemove=true
+var yPixUser;
 
 
 
@@ -566,7 +566,7 @@ function drawSim() {
     // (7) display the logical coordinates if mouse inside canvas
     // set/controlled in gui.js; sets ctx.setTransform(1,0,0,1,0,0) at end 
 
-    if(showMouseCoords){showLogicalCoords(xMouse,yMouse);}
+    if(showMouseCoords){showLogicalCoords(xPixUser,yPixUser);}
 
 
     // (8) draw flow-density data of selected region
@@ -622,13 +622,13 @@ function drawSim() {
 
 
 
-function showLogicalCoords(xMouse,yMouse){
+function showLogicalCoords(xPixUser,yPixUser){
 
 
    // get (x,y) physical coordinates of these pixel coordinates
 
-    var xPhys= xMouse/scale;
-    var yPhys=-yMouse/scale;
+    var xPhys= xPixUser/scale;
+    var yPhys=-yPixUser/scale;
 
     // get region of U: 1,3: first/last straight section; 2: arc segment
 
@@ -676,8 +676,8 @@ function showLogicalCoords(xMouse,yMouse){
 	console.log("sim-straight.showLogicalCoords:",
 		    " straightLen=",parseFloat(straightLen,6).toFixed(1),
 		" scale=",parseFloat(scale,6).toFixed(2),
-		" xMouse=",xMouse,
-		" yMouse=",yMouse,
+		" xPixUser=",xPixUser,
+		" yPixUser=",yPixUser,
 		" xPhys=",parseFloat(xPhys,6).toFixed(2),
 		" yPhys=",parseFloat(yPhys,6).toFixed(2),
 		" iRegion=",iRegion,

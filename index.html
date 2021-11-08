@@ -110,13 +110,14 @@
 
 <div id="contents"> 
   <canvas id="canvas_mixed" width="800" height="700"
-    onmousemove="activateCoordDisplay(event)"
-    onmouseout="deactivateCoordDisplay(event)">
-    <!-- on[cC]lick,onmousedown,onmousemove,onmouseover,onmousedragged-->
+     onmouseenter="handleMouseEnter(event)"
+     onmousemove="handleMouseMove(event)"
+     onmousedown="handleMouseDown(event)"
+     onmouseup="handleMouseUp(event)" 
+     onclick="handleClick(event)"
+     onmouseout="handleMouseOut(event)">
 
-    You are probably using a very ancient web browser (or an Internet Explorer) 
-    not supporting html5 canvas. Please switch to another browser for
-    running this simulation.
+    Your browser does not support the HTML5 canvas tag.
   </canvas>
 </div>
 
