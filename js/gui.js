@@ -1,3 +1,15 @@
+var xUser, yUser;       // physical coordinates 
+var xUserDown, yUserDown; // physical coordinates at mousedown/touchStart evt
+var mousedown=false; //true if onmousedown event fired, but not yet onmouseup
+
+var roadPicked=false; 
+var trafficObjPicked=false; 
+var trafficObjZoomBack=false; // =true after unsuccessful drop
+
+var specialRoadObject; // element road.veh[i]: obstacles, TL, user-driven vehs
+var distDragCrit=10;   // drag function if dragged more [m]; otherwise click
+var distDrag=0;        // physical distance[m] of the dragging
+
 
 //####################################################################
 // mouse callbacks
@@ -11,8 +23,8 @@ function handleMouseEnter(event){
 function handleMouseMove(event){
   console.log("mouse moved");
   getMouseCoordinates(event); //=> xUser, yUser, xPixUser, yPixUser
-  // doDragging(xUser,yUser,xUserDown,yUserDown); etc
-  //drawSim(); // to be able to move objects during stopped simulation
+  doDragging(xUser,yUser,xUserDown,yUserDown); 
+  drawSim(); // to be able to move objects during stopped simulation
 }
 
 function handleMouseDown(event){
@@ -85,6 +97,60 @@ function activateCoordDisplay(event){
 function deactivateCoordDisplay(event){
     showMouseCoords=false;
 }
+
+
+
+
+// do drag actions if onmousemove&&mousedown or if touchdown=true
+//which action(s) (booleans depotObjPicked, funnelObjPicked,roadPicked) 
+//is determined by onmousedown/touchStart  callback
+
+
+function doDragging(xUser,yUser,xUserDown,yUserDown){
+
+    if(mousedown){ 
+        redrawBackground=true; 
+
+	distDrag=Math.sqrt(Math.pow(xUser-xUserDown,2)
+			   + Math.pow(yUser-yUserDown,2));
+
+	if(true){
+	    console.log("mousemove && mousedown: roadPicked=",roadPicked,
+		    " depotObjPicked=",depotObjPicked,
+		    " funnelObjPicked=",funnelObjPicked,
+		    " xUser=",xUser,"xUserDown=",xUserDown,
+		    " distDrag=",distDrag,
+		    " distDragCrit=",distDragCrit);
+	}
+
+	if(distDrag>distDragCrit){ // !! do no dragging actions if only click
+	    if(trafficObjPicked){// dragged an object 
+	      if(trafficObject.isActive){
+		trafficObjs.deactivate(trafficObject); // detach obj from road
+	      }
+
+	      trafficObject.isDragged=true;
+	      trafficObject.xPix=xPixUser;
+	      trafficObject.yPix=yPixUser;
+	    }
+	}
+    }// mouse down
+
+
+    // reset dragged distance to zero if mouse is up
+
+    else{distDrag=0;} 
+}
+
+
+
+
+
+
+
+
+
+
 
 
 

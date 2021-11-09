@@ -14,7 +14,6 @@ var dt=parseFloat(sliderTimewarp.value)/fps;
 
 // (2) graphical elements
 
-var hasChanged=false; // restart or window dim or road width have changed
 var car_srcFile='figs/blackCarCropped.gif';
 var truck_srcFile='figs/truck1Small.png';
 var bike_srcFile='figs/bikeCropped.gif';
@@ -34,9 +33,8 @@ var background_srcFile='figs/backgroundGrass.jpg';
 var displayForcefield=true; // can be changed interactively -> gui.js
 var displayForceStyle=2;  // 0: with probe, 1: arrow field arround veh,
                           // 2: moving arrows at veh
-var drawBackground=true;
-var drawRoad=true;
-
+var redrawBackground=true; // if graphical elements over bg have changed
+var hasChanged=true; // physical dim have changed (e.g. by window resize)
 var canvas=document.getElementById("canvas_mixed");
 var ctx=canvas.getContext("2d"); // graphics context
 
@@ -402,6 +400,7 @@ function updateSim(dt){    // called here by main_loop()
 	macroProperties[iSample]=mainroad.calcMacroProperties(ndtSample);
     }
 
+  // activate at begin if needed
 }//updateSim
 
 
@@ -472,10 +471,8 @@ function drawSim() {
     //  because some older firefoxes do not start up/draw properly)
 
   ctx.setTransform(1,0,0,1,0,0);
-  if(drawBackground){
-	if(hasChanged||(itime<=1) || (itime%10==0) || false || (!drawRoad)){ 
+  if(hasChanged||(itime<=1) || (itime%10==0) ){ 
           ctx.drawImage(background,0,0,canvas.width,canvas.height);
-      }
   }
   
  
@@ -617,6 +614,7 @@ function drawSim() {
   trafficObjs.draw(scale);
   trafficObjs.zoomBack(); // to bring dropped objects back to the depot
 
+  redrawBackground=false; // activate at begin of drawsim if needed
 } // drawSim
  
 

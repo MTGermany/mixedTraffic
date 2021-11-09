@@ -583,73 +583,49 @@ TrafficObjects.prototype.pickObject=function(xPixUser, yPixUser, distCritPix){
                     road less than distCritPix
 */
 
-TrafficObjects.prototype.dropObject=function(obj, network, 
-				    xPixUser, yPixUser, distCritPix, scale){
+// needs global physical coordinates xUser yUser,scale
+TrafficObjects.prototype.dropObject=function(obj, road, 
+				    xUser, yUser, distCritPix, scale){
 
   console.log("itime=",itime
 	      ," in TrafficObjects.dropObject: obj.id=",obj.id,
-	      " obj.xPix=",obj.xPix,
-	      " network[0].roadID=",network[0].roadID);
-  // transform pointer to physical coordinates since road geometry
-  // defined in these coordinates
-  
-  var xUser=xPixUser/scale;
-  var yUser=-yPixUser/scale;
+	      " obj.xPix=",obj.xPix);
 
-  // find really nearest road, not just sufficiently near one
+  // find nearest part of the road (here, a single road, not a network)
 
-  var iroadNearest=-1;
-  var dropInfoNearest;
   var distMin=100000;
-  for(var iroad=0; iroad<network.length; iroad++){
+  var dropInfo=network[iroad].findNearestDistanceTo(xUser,yUser);
+  // => [distance in m, u in m, v in lanes]
 
-    var dropInfo=network[iroad].findNearestDistanceTo(xUser,yUser);
-    // => [distance in m, u in m, v in lanes]
-    //console.log("  TrafficObjects.dropObject: iroad=",iroad,
-//		" dropInfoNearest=",dropInfoNearest," distMin=",distMin);
-    if(dropInfo[0]<distMin){
-      dropInfoNearest=dropInfo;
-      distMin=dropInfoNearest[0];
-      iroadNearest=iroad;
-    }
-    //console.log("  end iroad loop cmds: iroadNearest=",iroadNearest);
-  }
+  //console.log("  TrafficObjects.dropObject: iroad=",iroad,
+  //		" dropInfoNearest=",dropInfoNearest," distMin=",distMin);
 
   // check success
 
   var success=(scale*distMin<=distCritPix);
-  var road=(success) ? network[iroadNearest] : 'void';
+  var selectedRoad=(success) ? road : 'void';
 
   // update trafficObject state depending on success
 
-  obj.road=road;
-  // obj.isActive set later by this.activate()
+  obj.road=selectedRoad;
   obj.inDepot=false;
   obj.isPicked=false;
   obj.isDragged=false;
-
-  obj.u=(success) ? dropInfoNearest[1] : -1;
-  obj.lane=(success) ? 0 : -1; // do not use v from mouse pointer/touch
-                               // unless obstacle (see below)
+  
+  obj.u=(success) ? dropInfo[1] : -1;
+  obj.v=(success&&(obj.type==='obstacle'))
+    ? dropInfo[2] : 0; // use v only if obstacle (see below)
 
   // obstacles: focus should be on object center, 
   // not front => move obstacles forward
   
-  var du=(obj.type==='obstacle') ? 0.5*obj.len : 0;  
-  
-  if(success && obj.type==='obstacle'){
-    obj.u+=du;
-    obj.lane=Math.round(
-      Math.max(0, Math.min(road.nLanes-1,dropInfoNearest[2])));
-  }
+  if(success && obj.type==='obstacle'){ obj.u+=0.5*obj.len;}
 
-  // update pixel coordinates to "snapped" objects for later picking
+  // update pixel coords to "snapped" objects (obj.v=0) for later picking
 
   if(success){
-    console.log("  success! roadID=",obj.road.roadID,
-		" obj.u=",obj.u," obj.lane=",obj.lane);
-    obj.xPix=road.get_xPix(obj.u-du, obj.lane, scale);
-    obj.yPix=road.get_yPix(obj.u-du, obj.lane, scale);
+    obj.xPix=road.get_xPix(obj.u-du, obj.v, scale);//!!! lane->v
+    obj.yPix=road.get_yPix(obj.u-du, obj.v, scale);
   }
 
 
@@ -659,7 +635,8 @@ TrafficObjects.prototype.dropObject=function(obj, network,
     this.activate(obj, road);
   }
 
-
+  // debug
+  
   if(true){
     console.log("  end TrafficObjects.dropObject: success=",success,
 		" nearest roadID=",road.roadID,
