@@ -51,7 +51,7 @@ of the traffic objects (traffObj=trafficObj[i])
                         if >1 lane and TL red, 
                         several obstacles with the same id
 // id=150..199          moveable speed limits (just formally, no virt vehs)
-// id>=200:             normal vehicles and fixed (non-depot) obstacles
+// id>=100000:          normal vehicles and fixed (non-depot) obstacles
 
 
 * The image files of the traffic objects should have canonical names 
@@ -68,7 +68,10 @@ of the traffic objects (traffObj=trafficObj[i])
 */
 
 
-
+var trafficObjPicked=false; 
+var trafficObjZooms=false; 
+var trafficObjIsDragged=false; 
+var speedlBoxActive=false;
 
 /**
 ##########################################################
@@ -809,10 +812,11 @@ automatic action at every timestep w/o GUI interaction
 TrafficObjects.prototype.zoomBack=function(){
   var relDisplacementPerCall=0.02; // zooms back as attached to a rubber band
   var pixelsPerCall=relDisplacementPerCall*this.sizeCanvas;
+  trafficObjZooms=false; // =>true if >=1 TrafficObject actually zooms
   for(var i=0; i<this.trafficObj.length; i++){
     var obj=this.trafficObj[i];
     if((!obj.isActive)&&(!obj.inDepot)&&(!obj.isDragged)&&(!obj.isPicked)){
-      userCanvasManip=true; 
+      trafficObjZooms=true; 
       var dx=obj.xPixDepot-obj.xPix;
       var dy=obj.yPixDepot-obj.yPix;
       var dist=Math.sqrt(dx*dx+dy*dy);

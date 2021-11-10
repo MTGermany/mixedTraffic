@@ -373,7 +373,8 @@ input[type="file"] {
 }
 
 
-
+/* notice: scatterplots 2d plots and speed color code dran by js directlt */
+/* not in control of css */
 
 /* (6)-(8) text layout of sliders: tables override general text spec) */
 

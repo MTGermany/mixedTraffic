@@ -34,7 +34,6 @@ var background_srcFile='figs/backgroundGrass.jpg';
 var displayForcefield=true; // can be changed interactively -> gui.js
 var displayForceStyle=2;  // 0: with probe, 1: arrow field arround veh,
                           // 2: moving arrows at veh
-var redrawBackground=true; // if graphical elements over bg have changed
 var hasChanged=true; // physical dim have changed (e.g. by window resize)
 var canvas=document.getElementById("canvas_mixed");
 var ctx=canvas.getContext("2d"); // graphics context
@@ -87,6 +86,9 @@ var amaxBike=3;
 var bcomfBike=2;
 var v0Obstacle=0;
 
+var speedlimit=1000; // per default no speedlimit
+var speedlimit_truck=80./3.6;
+
 var v0max=Math.max(v0,v0Truck,v0Bike); // to define max dist range of neigbors
 
 
@@ -95,13 +97,6 @@ var speedmap_max=Math.max(v0, v0Truck, v0Bike); // max speed (fixed in sim)
 
 
 
-//var longModelCar=new IDM(v0,Tgap,s0,amax,bcomf);
-//var longModelTruck=new IDM(v0Truck,TgapTruck,s0Truck,amaxTruck,bcomfTruck);
-//var longModelBike=new IDM(v0Bike,TgapBike,s0Bike,amaxBike,bcomfBike);
-
-var longModelCar=new ACC(v0,Tgap,s0,amax,bcomf);
-var longModelTruck=new ACC(v0Truck,TgapTruck,s0Truck,amaxTruck,bcomfTruck);
-var longModelBike=new ACC(v0Bike,TgapBike,s0Bike,amaxBike,bcomfBike);
 
 
 
@@ -154,12 +149,24 @@ var pushLat=parseFloat(slider_pushLat.value);   // in [0,1]; push by back vehs
 
 
 // (3) creation of the standard models
+// MT 2021-11: Every vehicle gets its own individual model with "new"
+// to allow for local and/or vehicle-persistent attributes
+// such as speed limits or variable maximum speeds
 
-var mixedModelCar=new MTM(longModelCar,s0y,s0yLat,s0yB,s0yLatB,
+
+//var longModelCarRef=new IDM(v0,Tgap,s0,amax,bcomf);
+//var longModelTruckRef=new IDM(v0Truck,TgapTruck,s0Truck,amaxTruck,bcomfTruck);
+//var longModelBikeRef=new IDM(v0Bike,TgapBike,s0Bike,amaxBike,bcomfBike);
+
+var longModelCarRef=new ACC(v0,Tgap,s0,amax,bcomf);
+var longModelTruckRef=new ACC(v0Truck,TgapTruck,s0Truck,amaxTruck,bcomfTruck);
+var longModelBikeRef=new ACC(v0Bike,TgapBike,s0Bike,amaxBike,bcomfBike);
+
+var mixedModelCarRef=new MTM(longModelCarRef,s0y,s0yLat,s0yB,s0yLatB,
 			  sensLat,tauLatOVM,sensDvy);
-var mixedModelTruck=new MTM(longModelTruck,s0y,s0yLat,s0yB,s0yLatB,
+var mixedModelTruckRef=new MTM(longModelTruckRef,s0y,s0yLat,s0yB,s0yLatB,
 			    sensLat,tauLatOVM,sensDvy);
-var mixedModelBike=new MTM(longModelBike,s0y,s0yLat,s0yB,s0yLatB,
+var mixedModelBikeRef=new MTM(longModelBikeRef,s0y,s0yLat,s0yB,s0yLatB,
 			    sensLat,tauLatOVM,sensDvy);
 var mixedModelObstacle=new ModelObstacle();
 
@@ -306,7 +313,7 @@ var umax=250;    // downstream boundary of sampled region [m];
 
 
 // TrafficObjects(canvas,nTL,nLimit,xRelDepot,yRelDepot,nRow,nCol)
-var trafficObjs=new TrafficObjects(canvas,1,3,0.60,0.50,3,2);
+var trafficObjs=new TrafficObjects(canvas,1,4,0.62,0.22,1,8);
 
 // also needed to just switch the traffic lights
 // (then args xRelEditor,yRelEditor not relevant)
@@ -365,26 +372,21 @@ function updateSim(dt){    // called here by main_loop()
   roadImgLanes.src=roadLanes_srcFileArr[nLanes-1]; // MT 2021
   hasChanged=(roadWidthOld!=roadWidthRef); // redef scale and r to fit window
 
-  if(slider_speedmax !== null){
-	speedMax=parseFloat(slider_speedmax.value);
-	longModelCar.speedmax=speedMax;  // passed by model ref to all cars!
-	longModelTruck.speedmax=speedMax;
-	longModelBike.speedmax=speedMax;
+
+  if(true){
+	mixedModelCarRef.tauLatOVM=tauLatOVM; // passed by model ref to all cars!
+	mixedModelTruckRef.tauLatOVM=tauLatOVM;
+	mixedModelBikeRef.tauLatOVM=tauLatOVM;
   }
 
-    if(true){
-	mixedModelCar.tauLatOVM=tauLatOVM; // passed by model ref to all cars!
-	mixedModelTruck.tauLatOVM=tauLatOVM;
-	mixedModelBike.tauLatOVM=tauLatOVM;
-    }
+  if(true){
+	mixedModelCarRef.sensDvy=sensDvy; // passed by model ref to all cars!
+	mixedModelTruckRef.sensDvy=sensDvy;
+	mixedModelBikeRef.sensDvy=sensDvy;
+  }
 
-    if(true){
-	mixedModelCar.sensDvy=sensDvy; // passed by model ref to all cars!
-	mixedModelTruck.sensDvy=sensDvy;
-	mixedModelBike.sensDvy=sensDvy;
-    }
-
-  //mainroad.updateSpeedlimits(trafficObjs); // !!! not yet impl. MT 2021-11
+  // !!! distribute new models to the vehicles
+  mainroad.updateSpeedlimits(trafficObjs); // !!! not yet impl. MT 2021-11
   mainroad.calcAccelerations();  
   mainroad.updateSpeedPositions(dt);
   mainroad.updateBCdown();
@@ -470,9 +472,13 @@ function drawSim() {
     // (only needed if no explicit road drawn but "%10"-or condition"
     //  because some older firefoxes do not start up/draw properly)
 
+  
+//  console.log("drawSim: trafficObjZooms=",trafficObjZooms," trafficObjIsDragged=",trafficObjIsDragged);
+
   ctx.setTransform(1,0,0,1,0,0);
-  if(hasChanged||(itime<=1) || (itime%10==0) ){ 
-          ctx.drawImage(background,0,0,canvas.width,canvas.height);
+  if(hasChanged||trafficObjZooms||trafficObjIsDragged
+     ||(itime<=1) || (itime%10==0) ){ 
+    ctx.drawImage(background,0,0,canvas.width,canvas.height);
   }
   
  
@@ -566,17 +572,18 @@ function drawSim() {
     if(showMouseCoords){showLogicalCoords(xPixUser,yPixUser);}
 
 
-    // (8) draw flow-density data of selected region
+    // (8) draw flow-speed-density scatter plots data of selected region
 
-    if((itime%ndtSample==0)||(itime%10==0)){ // the "or" condition because of update of bg
+  if((itime%ndtSample==0)||(itime%10==0)
+    ||trafficObjZooms||trafficObjIsDragged){ 
 
 
         // determine overall rel dimensions 
 
 	var xCenterRel=0.71;
-	var yCenterRel=0.50; // horiz boundary of diags: (0=top, 1=bottom)
+	var yCenterRel=0.44; // horiz boundary of diags: (0=top, 1=bottom)
 	var wRel=0.25;
-	var hRel=0.15;
+	var hRel=0.12;
 
         // determine arguments for plotxy
 
@@ -598,7 +605,7 @@ function drawSim() {
       var VSpec=[2,3.6,50,"Speed [km/h]"];
       var boxSpec=[3,4,5,6,7];
 
-        // define plot instance and do the plotting (new necessary!)
+        // define scatter plots instance and do the plotting (new necessary!)
 
       var plot1=new plotxy(wPix,hPix,xPixLeft,yPixTop); // lower diagr
       plot1.scatterplot(ctx,macroProperties,rhoSpec,QSpec); // lower
@@ -614,7 +621,12 @@ function drawSim() {
   trafficObjs.draw(scale);
   trafficObjs.zoomBack(); // to bring dropped objects back to the depot
 
-  redrawBackground=false; // activate at begin of drawsim if needed
+  // (10) draw speedlimit-change select box
+
+  ctx.setTransform(1,0,0,1,0,0); 
+  drawSpeedlBox();
+
+
 } // drawSim
  
 

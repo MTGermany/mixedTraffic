@@ -32,13 +32,24 @@ function IDM(v0,T,s0,a,b){
     this.s0=s0;
     this.a=a;
     this.b=b;
-    this.alpha_v0=1; // multiplicator for temporary reduction
 
     // possible restrictions (value 1000 => initially no restriction)
 
     this.speedlimit=1000; // if effective speed limits, speedlimit<v0  
-    this.speedmax=1000; // if vehicle restricts speed, speedmax<speedlimit, v0
     this.bmax=9;
+}
+
+// deep copy of variable data elements (not func pointers)
+
+IDM.prototype.copy=function(longModel){
+  this.v0=longModel.v0; 
+  this.T=longModel.T;
+  this.s0=longModel.s0;
+  this.a=longModel.a;
+  this.b=longModel.b;
+
+  this.speedlimit=longModel.speedlimit; 
+  this.bmax=longModel.bmax;
 }
 
 
@@ -53,8 +64,7 @@ IDM.prototype.calcAccFree=function(v){
     // determine valid local v0
 
     var v0eff=Math.max
-        (0.01, Math.min(this.v0, this.speedlimit, this.speedmax));
-    v0eff*=this.alpha_v0;
+        (0.01, Math.min(this.v0, this.speedlimit));
     var accFree=(v<v0eff) ? this.a*(1-Math.pow(v/v0eff,4))
 	: this.a*(1-v/v0eff);
     return accFree;
@@ -126,11 +136,23 @@ function ACC(v0,T,s0,a,b){
     this.a=a;
     this.b=b;
     this.cool=0.99;
-    this.alpha_v0=1; // multiplicator for temporary reduction
 
     this.speedlimit=1000; // if effective speed limits, speedlimit<v0  
-    this.speedmax=1000; // if vehicle restricts speed, speedmax<speedlimit, v0
     this.bmax=9;
+}
+
+// deep copy of variable data elements (not func pointers)
+
+ACC.prototype.copy=function(longModel){
+  this.v0=longModel.v0; 
+  this.T=longModel.T;
+  this.s0=longModel.s0;
+  this.a=longModel.a;
+  this.b=longModel.b;
+  this.cool=0.99;
+
+  this.speedlimit=longModel.speedlimit; 
+  this.bmax=longModel.bmax;
 }
 
 /**
@@ -144,8 +166,7 @@ ACC.prototype.calcAccFree=function(v){
     // determine valid local v0
 
     var v0eff=Math.max
-        (0.01, Math.min(this.v0, this.speedlimit, this.speedmax));
-    v0eff*=this.alpha_v0;
+        (0.01, Math.min(this.v0, this.speedlimit));
     var accFree=(v<v0eff) ? this.a*(1-Math.pow(v/v0eff,4))
 	: this.a*(1-v/v0eff);
     return accFree;
@@ -171,8 +192,7 @@ ACC.prototype.calcAccInt=function(s,v,vl,al){
 
     // determine valid local v0
 
-    var v0eff=Math.min(this.v0, this.speedlimit, this.speedmax);
-    v0eff*=this.alpha_v0;
+    var v0eff=Math.min(this.v0, this.speedlimit);
 
     // actual acceleration model
 
@@ -194,8 +214,6 @@ ACC.prototype.calcAccInt=function(s,v,vl,al){
     var accACC=this.cool*accMix +(1-this.cool)*accIDM;
 
     var accInt= Math.max(-this.bmax, accACC  - accFree);
-
-    //if(this.alpha_v0<0.6){ // alpha not yet used
 
     if(false){
         console.log("ACC.calcAcc:"
@@ -269,13 +287,20 @@ function MTM(longModel,s0y,s0yLat,s0yB,s0yLatB,sensLat,tauLatOVM,sensDvy){
   
   this.nj=8; // number of discr. steps; 
              // max antic length approx 2*relLongAttenLen*sStop
-
-
 }
 
+// deep copy of variable data elements (not func pointers)
 
-
-
+MTM.prototype.copy=function(mixedModel){
+  this.longModel.copy(mixedModel.longModel);
+  this.s0y=mixedModel.s0y;
+  this.s0yB=mixedModel.s0yB;
+  this.s0yLat=mixedModel.s0yLat;
+  this.s0yLatB=mixedModel.s0yLatB;
+  this.sensLat=mixedModel.sensLat;
+  this.tauLatOVM=mixedModel.tauLatOVM;
+  this.sensDvy=mixedModel.sensDvy;
+}
 
 /**
 ###########################################################################

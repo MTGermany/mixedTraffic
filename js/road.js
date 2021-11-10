@@ -38,6 +38,14 @@ function road(roadID, isRing, roadLen, axis_x, axis_y, widthLeft, widthRight,
   this.widthRight=widthRight; // half width as f(u) to the right
   this.axis_x=axis_x;
   this.axis_y=axis_y;
+
+  this.trafficLights=[]; // Introduce by this.addTrafficLight
+                         // to model the traffic light->road operations.
+                         // need separate array 
+                         // since no virtual vehicles corresp. to green TL
+                         // (all drawing is done by the 
+                         // ObstacleTLDepot objects)
+  
   
   // MT 2021-11 assume roadWidthRef is multiple of wLane
   // wLane top-level var
@@ -79,38 +87,60 @@ function road(roadID, isRing, roadLen, axis_x, axis_y, widthLeft, widthRight,
 
     // vehicle and vehicle composition related arrays
     
-    this.veh=[];
-    this.speed=[]; // need vehicle long speeds separately for calc macro properties
-    this.Lmacro=0; // length of road section umax-umin where to calc macro properties
-    this.vehType=["car", "truck", "bike", "obstacle"];
-    this.vehLength=[car_length,truck_length,bike_length];
-    this.vehWidth=[car_width,truck_width,bike_width];
-    this.vehModel=[mixedModelCar,mixedModelTruck,mixedModelBike,
-		   mixedModelObstacle];
+  this.veh=[];
+  this.speed=[]; // need vehicle long speeds separately for calc macro properties
+  this.Lmacro=0; // length of road section umax-umin where to calc macro properties
+  this.vehType=["car", "truck", "bike", "obstacle"];
+  this.vehLength=[car_length,truck_length,bike_length];
+  this.vehWidth=[car_width,truck_width,bike_width];
+  this.mixedModelRef=[mixedModelCarRef,mixedModelTruckRef,mixedModelBikeRef,
+			mixedModelObstacle];
+  this.longModelRef=[longModelCarRef, longModelTruckRef, longModelBikeRef,
+		     null];
 
     
     // construct vehicle array
     // u=long logical coordinate; i=0: first vehicle=maximum u=(n-1)/n*roadLen
     // v=transv logical coordinate; v=0: center; v increasing left->right
 
-    var nvehFromDens=Math.floor(this.roadLen*densInit);
+  var nvehFromDens=Math.floor(this.roadLen*densInit);
      
-    for(var i=0; i<nvehFromDens; i++){
-	var u=(nvehFromDens-1-i)*this.roadLen/nvehFromDens; 
-	var v=(i%3-1)* 0.1*(this.widthLeft(u)+this.widthRight(u));
-	var rnd=Math.random();
-	var iType=(rnd<fracTruckInit) ? 1 : (rnd<fracTruckInit+fracBikeInit) ? 2 : 0;
+  for(var i=0; i<nvehFromDens; i++){
+    var u=(nvehFromDens-1-i)*this.roadLen/nvehFromDens;
+    var v=(i%3-1)* 0.1*(this.widthLeft(u)+this.widthRight(u));
+    var rnd=Math.random();
+    var iType=(rnd<fracTruckInit) ? 1 : (rnd<fracTruckInit+fracBikeInit) ? 2 : 0;
 
-        // actually construct vehicles
-
-	this.veh[i]=new vehicle(this.vehType[iType], this.vehLength[iType],
-				this.vehWidth[iType], 
-				u, v, speedInit, 0, this.vehModel[iType]);
-    }
-    this.writeVehicles();
+    // actually construct vehicles with individual models ("new")
+    
+    var mixedModel=this.createNewMixedModel(iType);
+    this.veh[i]=new vehicle(this.vehType[iType], this.vehLength[iType],
+			    this.vehWidth[iType],
+			    u, v, speedInit, 0, mixedModel);
+  }
+  this.writeVehicles();
 } // road constructor
 
 
+//######################################################################
+// creates deep copy of MTM mixedModel for itype in {car,truck,bike,obstacle}
+//######################################################################
+
+road.prototype.createNewMixedModel=function(iType){
+  var longModel;
+  var mixedModel;
+    
+  if(iType<3){ // overwrite params (not applicable to obstacles)
+    longModel=new ACC(v0,Tgap,s0,amax,bcomf); // car; "new" important
+    mixedModel=new MTM(longModel,s0y,s0yLat,s0yB,s0yLatB,
+		       sensLat,tauLatOVM,sensDvy); // car, new important
+    mixedModel.copy(this.mixedModelRef[iType]);
+  }
+  else{ //iType==3
+    mixedModel=new ModelObstacle();// no longModel needed
+  }
+  return mixedModel;
+}
 
 
 
@@ -307,51 +337,28 @@ road.prototype.initializeMicro=function(types,lengths,widths,longPos,latPos,
 
     //empty vehicles array if not empty
 
-    if(this.veh.length>0){this.veh.splice(0,this.veh.length);}
+  if(this.veh.length>0){this.veh.splice(0,this.veh.length);}
 
     // add the new vehicles to the array
 
-    for(var i=0; i<types.length; i++){
+  for(var i=0; i<types.length; i++){
 
-	var iType=(types[i] == "car") ? 0 :
-	    (types[i] == "truck") ? 1 :
-	    (types[i] == "bike") ? 2 :
-	    3;
+    var iType=(types[i] == "car") ? 0 :
+	(types[i] == "truck") ? 1 :
+	(types[i] == "bike") ? 2 :
+	3;
+    
+    var mixedModel=this.createNewMixedModel(iType);
 	
-        var vehNew=new vehicle(types[i], lengths[i], widths[i], 
-			       longPos[i],latPos[i],speedsLong[i],speedsLat[i],
-			       this.vehModel[iType]);
-	this.veh.push(vehNew);
+    var vehNew=new vehicle(types[i], lengths[i], widths[i], 
+			   longPos[i],latPos[i],speedsLong[i],speedsLat[i],
+			   mixedModel);
+    this.veh.push(vehNew);
+  }
 
-	if(false){
-	 console.log("i=",i," this.veh.length=",this.veh.length,
-		    " this.veh[i].u=",this.veh[i].u,
-		     " this.veh[i].speedLat=",this.veh[i].speedLat,
-		     " this.veh[i].type=",this.veh[i].type);
-	 console.log("mixedModelTruck.calcAccLongFree(10)=",mixedModel.calcAccLongFree(10));
-	 console.log("mixedModelCar.calcAccLongFree(10)=",mixedModelCar.calcAccLongFree(10));
-	 console.log("mixedModel.calcAccLongFree(10)=",mixedModel.calcAccLongFree(10));
-	}
-
-    }
-
-    this.sortVehicles(); // final step of initializeMicro
-
-    if(true){
-      console.log("road.initializeMicro: initialized with ", this.veh.length," vehicles");
-      for (var i=0; i<nvehInit; i++){
-	  console.log("i=",i,
-		      " type=",this.veh[i].type,
-		      " vehLen=",this.veh[i].len,
-		      " vehWidth=",this.veh[i].width,
-		      " u=",this.veh[i].u,
-		      " v=",this.veh[i].v,
-		      " speed=",this.veh[i].speed,
-		      " speedLat=",this.veh[i].speedLat);
-      }
-    }
-
-    this.writeVehicles();
+  this.sortVehicles(); // final step of initializeMicro
+  
+  this.writeVehicles();
 }//initializeMicro
 
 
@@ -441,7 +448,6 @@ road.prototype.calcAccelerations=function(){
     
     // get this.veh[i].imin ... this.veh[i].imax for all vehicles
 
-    //this.updateEnvironment(); // get this.veh[i].imin ... this.veh[i].imax
     //this.writeVehicles();
 
     for(var i=0; i<this.veh.length; i++){
@@ -556,8 +562,9 @@ road.prototype.calcAccelerationsOfVehicle=function(i){
 
     // leaders
 
-  var logging=(this.veh[i].id==9364); // need fixed random seed for this
- 
+  //var logging=(this.veh[i].id==9364); // need fixed random seed for this
+  var logging=false;
+  
   for(var ilead=0; ilead<nLeaders; ilead++){
 	var j=iLeaders[ilead];
 	accLatTraffic 
@@ -833,11 +840,13 @@ road.prototype.updateBCup=function(Qin,fracTruck,fracBike,dt){
       var vNew=roadWidthLoc*vNewRel[index]; // not speed but lateral pos!
       var speedRef=1000; // js does not skip cond statement if false!
       if(this.veh.length>=2){speedRef=1.2*this.veh[iLast].speed;} 
-      var speedNew=Math.min(this.vehModel[iType].longModel.v0, Math.max(speedRef,3));
+      var speedNew=Math.min(this.mixedModelRef[iType].longModel.v0, Math.max(speedRef,3));
+      
+      var mixedModel=this.createNewMixedModel(iType);
 
       var vehNew=new vehicle(this.vehType[iType], this.vehLength[iType],
 			     this.vehWidth[iType],
-			     uNew,vNew,speedNew,0,this.vehModel[iType]);
+			     uNew,vNew,speedNew,0,mixedModel);
       this.veh.push(vehNew); // add vehicle after old pos this.veh.length-1 
       this.inVehBuffer -=1;
       this.inVehCount++;
@@ -1160,7 +1169,7 @@ road.prototype.drawVectorfield=function(speed,scale,
     // (needed since this vehicle needs the local neighborhood)
 
     var virtVeh=new vehicle("virtVeh",car_length,car_width,
-			    0,0,speed,0,mixedModelCar);
+			    0,0,speed,0,this.mixedModelRef[0]); //model irrel
     this.veh.push(virtVeh);
 
     ctx.fillStyle=colormapSpeedOpaque(virtVeh.speed,speedmin,speedmax,"truck");
@@ -1554,19 +1563,18 @@ road.prototype.dropObject=function(trafficObj){
   if(trafficObj.type==='obstacle'){
     var roadVehicle=new vehicle("obstacle",trafficObj.len,
 				trafficObj.width,
-				u, v, 0,0,mixedModelObstacle);
+				u, v, 0, 0, mixedModelObstacle);
 
       //!! id ctrls veh image: 50=black obstacle,
       // 51=constructionVeh1.png etc. Attribute veh.imgNumber defined only
       // for vehicles in depot!
       
-    roadVehicle.id=trafficObj.id;
+    roadVehicle.id=trafficObj.id; // overwrite random id @ vehicle cstr
     roadVehicle.image=trafficObj.image;
     // insert vehicle (array position does not matter since sorted anyway)
 
     this.veh.push(roadVehicle);
     this.sortVehicles();
-    //this.updateEnvironment(); // needed here??!!
     console.log("  end road.dropObject: dropped obstacle at uDrop=",u,
 		" v=",v," id=",roadVehicle.id,
 		" imgNumber=",roadVehicle.imgNumber);
@@ -1613,5 +1621,258 @@ road.prototype.removeObstacle= function(id) {
   else this.veh.splice(iDel,1);
 }
 
+
+
+/*
+#############################################################
+TrafficObjects: Add a new (red or green) traffic light to road.trafficLights
+#############################################################
+
+@param depotObject=a TL-type depot object
+
+@return adds a traffic-light object to this.trafficLights[] serving 
+purely for the road operations of the traffic light. 
+All drawing is controlled by the depotObjects (elements of the obstTL[])
+*/
+
+road.prototype.addTrafficLight= function(depotObject) {
+  var trafficLight={id: depotObject.id,
+		    u: depotObject.u,
+		    value: depotObject.value, // "red" or "green"
+		   };
+  this.trafficLights.push(trafficLight);
+  this.changeTrafficLight(depotObject.id,depotObject.value);
+
+  if(true){
+    console.log("itime=",itime," road.addTrafficLight: roadID=",this.roadID,
+	      " added traffic light id=",depotObject.id,
+		" at u=",formd(depotObject.u)," value=",depotObject.value);
+  }
+  
+}
+
+
+/*
+#############################################################
+Programmatically change state (=value) of traffic light
+and implement effects
+#############################################################
+
+@param id:     unique id in [100,199]
+@param value:  (optional) "red", or "green". 
+               If not given, the value is toggled
+@return:       if a traffic light of this id is found, 
+               its state is changed accordingly
+*/
+
+road.prototype.changeTrafficLight=function(id,value){
+
+  console.log("in road.changeTrafficLight");
+  
+  var success=false;
+  var pickedTL;
+  for(var i=0; (!success)&&(i<this.trafficLights.length); i++){
+    if(id===this.trafficLights[i].id){
+      success=true;
+      pickedTL=this.trafficLights[i];
+
+      if(typeof(value) === "undefined"){ // just toggle if no value given
+	pickedTL.value=(pickedTL.value==="red")
+	  ? "green" : "red";
+	console.log("road.changeTrafficLight: id=",id, "no TL state given:",
+		    " new value=opposite of old value=",pickedTL.value);
+      }
+      else{pickedTL.value=value;}
+    }
+  }
+
+  if(!success){
+    console.log("road.changeTrafficLight: no TL of id ",id," found!");
+    return;
+  }
+
+    // implement effect to traffic by adding/removing virtual obstacles
+    // (1) new TL value green
+
+  if(pickedTL.value==="green"){
+    console.log("remove TL virt vehicle id=",id);
+      // debug
+    for(var i=0; i<this.veh.length; i++){
+      console.log("before removing: u=",this.veh[i].u," id=",this.veh[i].id);
+    }
+
+
+    for(var i=0; i<this.veh.length; i++){ //!!! is this.veh.length updated?
+      if(this.veh[i].id===id){
+	this.veh.splice(i, 1); // red TL virt veh removed
+	console.log("road.changeTrafficLight: removed virt red TL vehicle");
+      }
+    }
+
+    for(var i=0; i<this.veh.length; i++){
+      console.log("after removing: u=",this.veh[i].u," id=",this.veh[i].id);
+    }
+    
+    
+  }
+
+  // (2) new TL value red
+
+  //!! heineous bug: only generate new virt vehicles if none of this id
+  // there. Otherwise unbounded growth of virt veh if several 
+  // commands changeTrafficLight(id,"red") without (id,"green") given!
+
+  else{
+    var virtVehAlreadyExist=false; // one or more
+    for(var i=0; i<this.veh.length; i++){
+      if(this.veh[i].id===id){virtVehAlreadyExist=true;}
+    }
+
+    if(!virtVehAlreadyExist){
+      var u=pickedTL.u;
+      var virtVehWidth=this.widthLeft(u)+this.widthRight(u);
+      var virtVehLen=0.5;  // 0.5 m wide stopping line of TL
+      var redTLvirtVehicle=new vehicle("obstacle",virtVehLen,virtVehWidth,
+				u, 0, 0, 0, mixedModelObstacle);
+      redTLvirtVehicle.id=id; // override id generated @ vehicle cstr
+      this.veh.push(redTLvirtVehicle);
+      console.log("road.changeTrafficLight: new virtual red TL vehicle");
+    } // !virtVehAlreadyExist
+  } // new TL value red
+
+  this.sortVehicles();
+
+  // debug
+  for(var i=0; i<this.veh.length; i++){
+    if(this.veh[i].type==="obstacle"){
+      console.log("end changeTrafficLight: obstacle found: u=",this.veh[i].u," id=",this.veh[i].id);
+    }
+  }
+
+} // changeTrafficLight
+
+
+
+
+
+
+/*
+#############################################################
+TrafficObjects: remove a traffic light from road.trafficLights
+#############################################################
+
+@param id:     unique id in [100,199]
+
+@return:       removes the traffic light of this id from road.trafficLights 
+               if this id is found.  
+               If last value was red, also removes the virtual
+               vehicles associated with it
+*/
+
+road.prototype.removeTrafficLight= function(id) {
+    // change value of trafficLight object
+
+  console.log("in road.removeTrafficLight: id=",id,"this.trafficLights.length=",this.trafficLights.length);
+  var success=false;
+  var iDel=-1;
+  for(var i=0; (!success)&&(i<this.trafficLights.length); i++){
+    if(this.trafficLights[i].id===id){
+      success=true;
+      console.log("  succes! i=",i," trafficLight=",this.trafficLights[i]);
+      iDel=i;
+      this.changeTrafficLight(id,"green"); // to remove virt vehicles
+    }
+  }
+  if(iDel===-1) console.log("road.removeTrafficLight: no id ",id," found!");
+  else this.trafficLights.splice(iDel,1);
+}
+
+
+/* #####################################################
+ TrafficObjects: implement effect of user-draggable speed limits 
+from the traffic objects:
+
+ distribute speed limits to the regular vehicle's longmodels
+ (free sign=>value=200./3.6=>effectively no influence)
+ need to order the speedlimit positions first 
+
+ NOTICE: In top-level sim, all speedlimits should be set to 1000 or something
+ to take care of the effect of removing limits
+
+//#####################################################*/
+
+road.prototype.updateSpeedlimits=function(trafficObjects){
+
+  console.log("\nin road.updateSpeedlimits");
+
+  // start by removing all speedlimits
+
+  for(var iveh=0; iveh<this.veh.length; iveh++){
+    var veh=this.veh[iveh];
+    if(veh.type!="obstacle"){
+      veh.mixedModel.longModel.speedlimit=(veh.type==="truck")
+	? speedlimit_truck : 1000;
+    }
+  }
+
+
+  
+  // sort trafficObj array by increasing u values (mixing of different roads
+  // and object types OK since filtered in loop)
+
+  trafficObjects.trafficObj.sort(function(a,b){
+	    return a.u - b.u; // minus, not > or < !!
+  })
+
+
+  
+  // implement (all speedlimits should be set to 1000 prior to this action)
+
+  var duAntic=30; // anticipation distance for  obeying the speed limit
+  var success=false;
+  for(var i=0; i<trafficObjects.trafficObj.length; i++){
+    var obj=trafficObjects.trafficObj[i];
+    if((obj.type==='speedLimit')&&(obj.isActive)){
+      success=true;
+      var speedL=obj.value/3.6;  // in m/s
+      if(true){
+	console.log("road.updateSpeedlimits: speed limit ",
+		    formd(speedL)," starting at ",
+		    formd(obj.u));
+      }
+
+      var iveh=0;
+      while((iveh<this.veh.length)&&(this.veh[iveh].u>obj.u-duAntic)){
+	var targetVeh=this.veh[iveh];
+	if(targetVeh.type!="obstacle"){
+	  targetVeh.mixedModel.longModel.speedlimit=(targetVeh.type==="truck")
+	    ? Math.min(speedL,speedlimit_truck) : speedL;
+	}
+
+	iveh++;
+      }
+      //if(iveh==this.veh.length){return;} // otherwise risk of range excess
+
+    }// type speedlimit and active
+  }
+
+  // test
+
+  if(false){
+    for(var iveh=0; iveh<this.veh.length; iveh++){
+      var veh=this.veh[iveh];
+      if(veh.type!="obstacle"){
+	console.log("end updateSpeedlimits: u=",veh.u,
+		    "speedlimit=",veh.mixedModel.longModel.speedlimit);
+      }
+    }
+  }
+
+
+  if(!success){
+    //console.log(" no active limits");
+  }
+
+}//updateSpeedlimits
 
 

@@ -4,37 +4,48 @@ function formd(x){return parseFloat(x).toFixed(2);}
 // type = "bike", "car", "truck", or "obstacle"
 // speed=longitudinal speed (lat speed=0 initially)
 
+
+/*
+special vehicles: id<200:
+ id=1:                ego vehicle (not yet used)
+ id=10,11, ..49       disturbed vehicles (not yet used)
+ id=50..99            special obstacles => generated veh.type="obstacle"
+ id=100..149          traffic lights => generated veh.type="obstacle"
+ id=150..199          moveable speed limits (just formally, no virt vehs)
+ id>=100000:          normal vehicles and fixed (non-depot) obstacles
+*/
+
 function vehicle(type, len, width, u, v, speedLong, speedLat, mixedModel){
     //console.log("vehicle: in vehicle cstr: type=",type);
 
 
-    this.type=type;
-    this.len=len;       // car length[m]
-    this.width=width;   // car width[m]
-    this.u=u;           // arc length [m]
-    this.v=v;           // transv log. coord [m] (up to the right, center=0)
-    this.travTime=0;    // calculated in road.updateStatistics(umin,umax,dt)
-    this.speed=speedLong;
-    this.speedLat=speedLat;
-    this.dvdu=speedLat/(Math.max(speedLong,0.0001)); //tan angle to road axis
-    this.mixedModel=mixedModel;
-    if(this.type=="obstacle"){
+  this.type=type;
+  this.len=len;       // car length[m]
+  this.width=width;   // car width[m]
+  this.u=u;           // arc length [m]
+  this.v=v;           // transv log. coord [m] (up to the right, center=0)
+  this.travTime=0;    // calculated in road.updateStatistics(umin,umax,dt)
+  this.speed=speedLong;
+  this.speedLat=speedLat;
+  this.dvdu=speedLat/(Math.max(speedLong,0.0001)); //tan angle to road axis
+  this.mixedModel=mixedModel;
+  if(this.type=="obstacle"){
 	this.speed=0;
 	this.speedLat=0;
-    }
-    this.accLong=0;
-    this.accLat=0;
-    this.index=-100;    // index in the actual array (changes all the time) 
-    this.id=Math.floor(10000*Math.random());
+  }
+  this.accLong=0;
+  this.accLat=0;
+  this.index=-100;    // index in the actual array (changes all the time) 
+  this.id=100000+Math.floor(900000*Math.random());
     //console.log("vehicle cstr: this.id=",this.id);
     
 
     // history variables only for debugging (old=1 timestep in the past)
 
-    this.accLongOld=0;
-    this.accLatOld=0;
-    
-    this.indexOld=0;
+  this.accLongOld=0;
+  this.accLatOld=0;
+
+  this.indexOld=0;
     
 }
 

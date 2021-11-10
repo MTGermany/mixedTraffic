@@ -1,11 +1,11 @@
+//####################################################################
+// TrafficObjects global state variables
+//####################################################################
 var xUser, yUser;       // physical coordinates 
 var xUserDown, yUserDown; // physical coordinates at mousedown/touchStart evt
 var mousedown=false; //true if onmousedown event fired, but not yet onmouseup
 
-var trafficObjPicked=false; 
-var trafficObjZoomBack=false; // =true after unsuccessful drop
 
-var specialRoadObject; // element road.veh[i]: obstacles, TL, user-driven vehs
 var distDragCrit=10;   // drag function if dragged more [m]; otherwise click
 var distDrag=0;        // physical distance[m] of the dragging
 
@@ -16,12 +16,12 @@ function formd0(x){return parseFloat(x).toFixed(0);}
 //####################################################################
 
 function handleMouseEnter(event){
-  console.log("mouse entered");
+  //console.log("mouse entered");
   activateCoordDisplay(event);
 }
 
 function handleMouseDown(event){
-  console.log("mouse down");
+  //console.log("mouse down");
   mousedown=true;
   getMouseCoordinates(event); //=> xUser, yUser, xPixUser, yPixUser
   xUserDown=xUser; // memorize starting point of mouse drag
@@ -37,13 +37,15 @@ function handleMouseMove(event){
 }
 
 function handleMouseUp(event){
-  console.log("mouse up");
+  //console.log("mouse up");
   getMouseCoordinates(event); // => xUser, yUser, xPixUser, yPixUser
   dropObject(xUser, yUser); // from simulation.de's finishDistortOrDropObject
   drawSim;
   if(false){console.log("  end handleMouseUp(evt):",
 			" speedlBoxActive=",speedlBoxActive);}
 }
+
+
 
 //#####################################################
 // canvas onclick and part of touchEnd callback
@@ -56,7 +58,7 @@ function handleMouseUp(event){
 //#####################################################
 
 function handleClick(event){
-  console.log("mouse clicked");
+  //console.log("mouse clicked");
   getMouseCoordinates(event); //=> xPixUser, yPixUser, xUser, yUser;
   var isDragged=(distDrag>distDragCrit);
   
@@ -88,7 +90,7 @@ function handleClick(event){
     
     if(!changingSpeedl){
       console.log("change TL or slow down vehicles");
-      influenceClickedVehOrTL(xUser,yUser);
+      influenceTL(xUser,yUser);
     }
   }
 }
@@ -96,9 +98,13 @@ function handleClick(event){
 
 
 function handleMouseOut(event){
-  console.log("mouse out");
+  //console.log("mouse out");
   deactivateCoordDisplay(event);
+  mousedown=false;
+  touchdown=false;
+  roadPicked=false;
 }
+
 
 
 
@@ -152,13 +158,14 @@ function deactivateCoordDisplay(event){
 
 function doDragging(xUser,yUser,xUserDown,yUserDown){
 
-    if(mousedown){ 
-        redrawBackground=true; 
+  trafficObjIsDragged=false;
+  
+  if(mousedown){
 
 	distDrag=Math.sqrt(Math.pow(xUser-xUserDown,2)
 			   + Math.pow(yUser-yUserDown,2));
 
-	if(true){
+	if(false){
 	  console.log("mousemove && mousedown: trafficObjPicked=",
 		      trafficObjPicked,
 		    " xUser=",xUser,"xUserDown=",xUserDown,
@@ -167,7 +174,8 @@ function doDragging(xUser,yUser,xUserDown,yUserDown){
 	}
 
 	if(distDrag>distDragCrit){ // !! do no dragging actions if only click
-	    if(trafficObjPicked){// dragged an object 
+	  if(trafficObjPicked){// drag an object
+	    trafficObjIsDragged=true;
 	      if(trafficObject.isActive){
 		trafficObjs.deactivate(trafficObject); // detach obj from road
 	      }
@@ -177,12 +185,12 @@ function doDragging(xUser,yUser,xUserDown,yUserDown){
 	      trafficObject.yPix=yPixUser;
 	    }
 	}
-    }// mouse down
+  }// mouse down
 
 
     // reset dragged distance to zero if mouse is up
 
-    else{distDrag=0;} 
+  else{distDrag=0;}
 }
 
 
@@ -263,6 +271,170 @@ function dropObject(xUser, yUser){
 
   
 } // handleMouseUp -> dropObject
+
+
+//##################################################
+// one of the onclick callback functions:
+// change lights if a traffic light is nearby
+// (from traffic-simulation.de influenceClickedVehOrTL)
+//##################################################
+
+function influenceTL(xUser,yUser){
+  //console.log("\n\nitime=",itime," onclick: in influenceClickedVehOrTL");
+  //console.log("yUser=",yUser," yPixUser=",yPixUser);
+  if(distDrag<distDragCrit){ // only do actions if click, no drag
+    var success=trafficObjs.changeTrafficLightByUser(xPixUser,yPixUser);
+  }
+
+  // reset drag distance recorder
+
+  distDrag=0;
+
+} // influenceTL
+
+
+
+
+// if applicable, sets speedlBoxActive=true; and updates speedlBoxAttr
+
+var speedlBoxAttr={
+  obj: "null",
+  limits: [10,20,30,40,50,60,80,100,120,1000],
+  sizePix: 42,
+  xPixLeft: 42,
+  yPixTop: 42,
+  wPix: 42,
+  hPix: 42,
+  textsize: 42,
+  hBoxPix: 42
+}
+
+
+function activateSpeedlBox(xPixUser,yPixUser){
+
+  var sizePix=Math.min(canvas.width, canvas.height);
+
+
+  speedlBoxActive=false;
+
+  var relWidth=0.10;  // rel size and position of the graphical select box
+  var relHeight=0.025*speedlBoxAttr.limits.length; // rel to the smaller dim
+  var relDistx=0.10;  // center-center
+  var relDisty=0.00;
+  var relTextsize_vmin= 0.02;
+
+  var results=trafficObjs.selectSignOrTL(xPixUser,yPixUser);
+  var obj=results[1];
+  console.log("\n\nitime=",itime," in activateSpeedlBox (canvas_gui)",
+	      " results=",results," type=",obj.type);
+
+  if(results[0]){
+    if(obj.type==='speedLimit'){
+      speedlBoxAttr.obj=obj;
+      speedlBoxActive=true; // then, drawSpeedlSelectBox drawn
+
+      speedlBoxAttr.sizePix=sizePix;
+      speedlBoxAttr.xPixLeft=xPixUser+sizePix*(relDistx-0.5*relWidth);
+      speedlBoxAttr.yPixTop=yPixUser+sizePix*(relDisty-0.5*relHeight);
+      if(xPixUser>0.8*canvas.width){
+	speedlBoxAttr.xPixLeft -=2*sizePix*relDistx;
+      }
+      if(yPixUser>0.8*canvas.height){
+	speedlBoxAttr.yPixTop -=0.5*sizePix*relHeight;
+      }
+      if(yPixUser<0.2*canvas.height){
+	speedlBoxAttr.yPixTop +=0.5*sizePix*relHeight;
+      }
+      speedlBoxAttr.wPix=sizePix*relWidth;
+      speedlBoxAttr.hPix=sizePix*relHeight;
+      speedlBoxAttr.hBoxPix=speedlBoxAttr.hPix/speedlBoxAttr.limits.length;
+
+      var nLimit=speedlBoxAttr.limits.length;
+      var hPix=speedlBoxAttr.hPix;
+      var yPixTop=speedlBoxAttr.yPixTop;
+
+      speedlBoxAttr.textsize=relTextsize_vmin*sizePix;
+    }
+  }
+  var returnVal=results[0]&&(obj.type==='speedLimit');
+  console.log("  end activateSpeedlBox: speedlBoxActive=",speedlBoxActive,
+	      " returnVal=",returnVal);
+  return returnVal;
+}
+
+
+function changeSpeedl(xPixUser,yPixUser){
+
+  console.log("\n\nitime=",itime," in changeSpeedl (canvas_gui):",
+	      " speedlBoxActive=",speedlBoxActive);
+  if(speedlBoxActive){
+ 
+    if( (xPixUser>speedlBoxAttr.xPixLeft)
+	&& (xPixUser<speedlBoxAttr.xPixLeft+speedlBoxAttr.wPix)
+	&& (yPixUser>speedlBoxAttr.yPixTop)
+	&& (yPixUser<speedlBoxAttr.yPixTop+speedlBoxAttr.hPix)){
+     
+      console.log("  speedlBoxActive and clicked inside box!");
+ 
+      var obj=speedlBoxAttr.obj;
+      var nLimit=speedlBoxAttr.limits.length;
+
+      var iSelect=Math.floor(nLimit*(yPixUser-speedlBoxAttr.yPixTop)/
+			     speedlBoxAttr.hPix);
+      obj.value=speedlBoxAttr.limits[iSelect];
+      var fileIndex=(0.1*obj.value<13)
+	? Math.round(0.1*obj.value) : 0;
+      obj.image.src = "figs/speedLimit_"+(fileIndex)+"0.svg";
+      //console.log("  traffic object of id=",obj.id,
+//		  " has new speed limit ",obj.value);
+    }
+  }
+  speedlBoxActive=false; // apply only once
+  hasChanged=true;  // to draw the green background the next timestep
+  console.log("  end changeSpeedl: traffic object of id=",
+	      speedlBoxAttr.obj.id,
+	      " type=",speedlBoxAttr.obj.type,
+	      " has new speed limit ",speedlBoxAttr.obj.value,
+	      " using image file ",speedlBoxAttr.obj.image.src);
+ // a=gieskanne;
+}
+
+
+function drawSpeedlBox(){
+  if(speedlBoxActive){
+    //console.log("itime=",itime," in drawSpeedlBox (canvas)");
+    //console.log("yUser=",yUser," yPixUser=",yPixUser);
+
+    var sizePix=speedlBoxAttr.sizePix;
+
+    var xPixLeft=speedlBoxAttr.xPixLeft;
+    var yPixTop=speedlBoxAttr.yPixTop;
+    var wPix=speedlBoxAttr.wPix;
+    var hPix=speedlBoxAttr.hPix;
+
+    // (1) draw the white rectangular background box
+
+    ctx.setTransform(1,0,0,1,0,0); 
+    ctx.fillStyle="rgb(255,255,255)";
+    ctx.fillRect(xPixLeft,yPixTop,wPix,hPix);
+
+   // (2) draw the speedlimit options
+
+    ctx.fillStyle="rgb(0,0,0)";
+    ctx.font=speedlBoxAttr.textsize+'px Arial';
+    var limits=speedlBoxAttr.limits;
+
+    for(var i=0; i<limits.length; i++){
+      var textStr=(limits[i]<200) ? limits[i]+" km/h" : "free";
+      ctx.fillText(textStr,xPixLeft+0.01*sizePix,
+  		   yPixTop+(i+0.7)*hPix/limits.length);
+    }
+  }
+}
+
+
+
+
 
 
 
