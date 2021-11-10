@@ -14,6 +14,7 @@ var dt=parseFloat(sliderTimewarp.value)/fps;
 
 // (2) graphical elements
 
+var scale=1; // [pixel/m], only initialisation
 var car_srcFile='figs/blackCarCropped.gif';
 var truck_srcFile='figs/truck1Small.png';
 var bike_srcFile='figs/bikeCropped.gif';
@@ -45,8 +46,6 @@ var ctx=canvas.getContext("2d"); // graphics context
 // start showMouseCoords=false  since otherw NaN if mouse initially outside
 
 var showMouseCoords=false; 
-var xPixUser; // get from activateCoordDisplay event if html.onmousemove=true
-var yPixUser;
 
 
 
@@ -284,7 +283,8 @@ function widthRight(u){ // width road axis - right boundary
 }
 
 
-var mainroad=new road(roadID, isRing, roadLen, widthLeft, widthRight,
+var mainroad=new road(roadID, isRing, roadLen,
+		      axis_x, axis_y,widthLeft, widthRight,
 		      densityInit, speedInit, fracTruck, fracBike, 
 		      v0max, dvdumax);
 
@@ -483,16 +483,16 @@ function drawSim() {
     
     var changedGeometry=hasChanged||(itime<=1);
     var roadImg=(floorField) ? roadImgLanes : roadImgNoLanes
-    mainroad.draw(roadImg,scale,axis_x,axis_y,changedGeometry);
+    mainroad.draw(roadImg,scale,changedGeometry);
 
   // (3a) draw boundaries of detection region [umin:umax] for
   // scatter plot  MT 2021
 
-  mainroad.drawScatterPlotBoundaries(scale,axis_x,axis_y,umin,umax);
+  mainroad.drawScatterPlotBoundaries(scale,umin,umax);
  
     // (4) draw vehicles (obstacleImg here empty, only needed for interface)
 
-    mainroad.drawVehicles(carImg,truckImg,bikeImg,obstacleImg,scale,axis_x,axis_y,
+    mainroad.drawVehicles(carImg,truckImg,bikeImg,obstacleImg,scale,
 			  speedmap_min, speedmap_max);
 
     // (4a) draw acceleration vector field
@@ -500,7 +500,7 @@ function drawSim() {
     if(displayForcefield){
         //mainroad.drawVectorfield(parseFloat(slider_speedProbe.value),
         mainroad.drawVectorfield(15,
-				 scale,axis_x,axis_y,
+				 scale,
 				 speedmap_min, speedmap_max, 
 				 displayForceStyle);
     }
@@ -508,7 +508,7 @@ function drawSim() {
     // (4b) draw vehicle IDs
 
     if(true){
-	mainroad.drawVehIDs(scale,axis_x,axis_y,0.015*canvas.height);
+	mainroad.drawVehIDs(scale,0.015*canvas.height);
     }
 
 
@@ -622,6 +622,7 @@ function drawSim() {
 
 function showLogicalCoords(xPixUser,yPixUser){
 
+  //!!! use Road.findNearestDistanceTo
 
    // get (x,y) physical coordinates of these pixel coordinates
 

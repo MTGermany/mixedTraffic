@@ -2,7 +2,6 @@ var xUser, yUser;       // physical coordinates
 var xUserDown, yUserDown; // physical coordinates at mousedown/touchStart evt
 var mousedown=false; //true if onmousedown event fired, but not yet onmouseup
 
-var roadPicked=false; 
 var trafficObjPicked=false; 
 var trafficObjZoomBack=false; // =true after unsuccessful drop
 
@@ -10,6 +9,7 @@ var specialRoadObject; // element road.veh[i]: obstacles, TL, user-driven vehs
 var distDragCrit=10;   // drag function if dragged more [m]; otherwise click
 var distDrag=0;        // physical distance[m] of the dragging
 
+function formd0(x){return parseFloat(x).toFixed(0);}
 
 //####################################################################
 // mouse callbacks
@@ -20,36 +20,80 @@ function handleMouseEnter(event){
   activateCoordDisplay(event);
 }
 
-function handleMouseMove(event){
-  console.log("mouse moved");
-  getMouseCoordinates(event); //=> xUser, yUser, xPixUser, yPixUser
-  doDragging(xUser,yUser,xUserDown,yUserDown); 
-  drawSim(); // to be able to move objects during stopped simulation
-}
-
 function handleMouseDown(event){
   console.log("mouse down");
   mousedown=true;
   getMouseCoordinates(event); //=> xUser, yUser, xPixUser, yPixUser
   xUserDown=xUser; // memorize starting point of mouse drag
   yUserDown=yUser;
-    //pickRoadOrObject(xUser,yUser);
+  pickObject(xUser,yUser); // here only trafficObject
+}
+
+function handleMouseMove(event){
+  //console.log("mouse moved");
+  getMouseCoordinates(event); //=> xUser, yUser, xPixUser, yPixUser
+  doDragging(xUser,yUser,xUserDown,yUserDown); 
+  drawSim(); // to be able to move objects during stopped simulation
 }
 
 function handleMouseUp(event){
   console.log("mouse up");
   getMouseCoordinates(event); // => xUser, yUser, xPixUser, yPixUser
-  //finishDistortOrDropObject(xUser, yUser);
-  // drawSim;
+  dropObject(xUser, yUser); // from simulation.de's finishDistortOrDropObject
+  drawSim;
+  if(false){console.log("  end handleMouseUp(evt):",
+			" speedlBoxActive=",speedlBoxActive);}
 }
+
+//#####################################################
+// canvas onclick and part of touchEnd callback
+// do at most one of the following actions
+// [(1) traffic light editor (only traffic-simulation.de)
+// (2) change speed limits
+// (3) switch traffic lights
+// (4) slow down vehicles
+// (2)-(4) only if isDragged=false (real click)
+//#####################################################
 
 function handleClick(event){
   console.log("mouse clicked");
   getMouseCoordinates(event); //=> xPixUser, yPixUser, xUser, yUser;
-  //var didSpeedlManip=false; // only one action; change speedl, TL or slow veh
-  //var isDragged=(distDrag>distDragCrit);
-  // many actions
+  var isDragged=(distDrag>distDragCrit);
+  
+  // only if clicked w/o drag:
+  // deal with either speedlimit changes, TL, or slow vehicles
+  // (drop vehicles/drag them away etc only if isDragged)
+
+  if(!isDragged){
+    
+    // (2) speedlimit changes if applicable
+    
+    var changingSpeedl=false; 
+
+    // change speedlimit if speeldBoxActive
+    
+    if(speedlBoxActive){
+      changingSpeedl=true;
+      changeSpeedl(xPixUser,yPixUser); 
+    }
+
+    // check if click should activate speedlimit box for manip at next click 
+
+    else{ 
+      changingSpeedl=activateSpeedlBox(xPixUser,yPixUser);
+    }
+
+    // (3) if no speedlimit-changing related action, 
+    // change TL if applicable or otherwise slow down vehicle if applicable
+    
+    if(!changingSpeedl){
+      console.log("change TL or slow down vehicles");
+      influenceClickedVehOrTL(xUser,yUser);
+    }
+  }
 }
+
+
 
 function handleMouseOut(event){
   console.log("mouse out");
@@ -102,8 +146,8 @@ function deactivateCoordDisplay(event){
 
 
 // do drag actions if onmousemove&&mousedown or if touchdown=true
-//which action(s) (booleans depotObjPicked, funnelObjPicked,roadPicked) 
-//is determined by onmousedown/touchStart  callback
+// which action(s) (onmousdown drag road or trafficObject)
+// is determined by onmousedown/touchStart  callback
 
 
 function doDragging(xUser,yUser,xUserDown,yUserDown){
@@ -115,9 +159,8 @@ function doDragging(xUser,yUser,xUserDown,yUserDown){
 			   + Math.pow(yUser-yUserDown,2));
 
 	if(true){
-	    console.log("mousemove && mousedown: roadPicked=",roadPicked,
-		    " depotObjPicked=",depotObjPicked,
-		    " funnelObjPicked=",funnelObjPicked,
+	  console.log("mousemove && mousedown: trafficObjPicked=",
+		      trafficObjPicked,
 		    " xUser=",xUser,"xUserDown=",xUserDown,
 		    " distDrag=",distDrag,
 		    " distDragCrit=",distDragCrit);
@@ -146,8 +189,80 @@ function doDragging(xUser,yUser,xUserDown,yUserDown){
 
 
 
+// #########################################################
+// do the action 1: pick an active or passive trafficObject
+// if one is nearby (adapted from pickRoadOrObject of traffic-simulation.de)
+// #########################################################
+
+function pickObject(xUser,yUser){
 
 
+  if(true){
+    console.log("itime=",itime," in pickObject: xUser=",
+		formd0(xUser)," yUser=",formd0(yUser));
+  }
+
+  if(!(typeof trafficObjs === 'undefined')){ // just check for scenarios w/o
+    var distCrit_m=20; //[m] !! make it rather large  
+    var pickResults=trafficObjs.pickObject(xPixUser, yPixUser, 
+				      distCrit_m*scale);
+    console.log("  pickObject: pickResults=",pickResults);
+    if(pickResults[0]){ // pickResults=[success, trafficObject]
+      trafficObject=pickResults[1];
+      trafficObjPicked=true;
+      if(false){
+        console.log("  end pickRoadOrObject: success! picked trafficObject id=",
+		    trafficObject.id," type ",
+		    trafficObject.type,
+		    " isActive=",trafficObject.isActive,
+		    " inDepot=",trafficObject.inDepot," end");
+      }
+      return;
+    }
+  }
+
+} // canvas onmousedown or touchStart: pickRoadOrObject
+
+
+
+// #########################################################
+// do the action 2: drop=finalize dragging action 
+// Notice: klicking action influenceClickedVehOrTL(..) is separately below 
+// while both called in handleTouchEnd(evt)
+// from traffic-simulation.de's finishDistortOrDropObject
+// #########################################################
+
+function dropObject(xUser, yUser){
+  if(true){
+    console.log("itime=",itime," in dropObject (canvas_gui):",
+    		" trafficObjPicked=",trafficObjPicked,
+  		"");
+  }
+
+  mousedown=false;
+  
+  if(distDrag<distDragCrit){
+    if(true){
+      console.log("  end dropObject: dragging crit",
+		  " distDrag =",distDrag,"< distDragCrit=",distDragCrit,
+		  " not satisfied (only click) => do nothing)");
+    }
+    return;
+  }
+
+
+  if(trafficObjPicked){
+
+    var distCrit_m=20;  // optimize!!
+    var distCritPix=distCrit_m*scale;
+    trafficObjs.dropObject(trafficObject, mainroad, 
+			   xUser, yUser, distCritPix, scale);
+    trafficObjPicked=false;
+    console.log("  end dropObject: dropped object!");
+  }
+
+  
+} // handleMouseUp -> dropObject
 
 
 
@@ -207,7 +322,8 @@ function myRestartFunction(){
   itime=0;
   hasChanged=true;
   macroProperties=[]; // to reset data for the scatterplot commands
-  mainroad=new road(roadID, isRing, roadLen, widthLeft, widthRight,
+  mainroad=new road(roadID, isRing, roadLen,
+		    widthLeft, widthRight, axis_x, axis_y,
 		    densityInit, speedInit, fracTruck, fracBike,
 		    v0max, dvdumax);
   //plot1=new plotxy(wPix,hPix,xPixLeft,yPixTop);

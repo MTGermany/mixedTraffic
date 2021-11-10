@@ -107,9 +107,9 @@ function TrafficObjects(canvas,nTL,nLimit,xRelDepot,yRelDepot,nRow,nCol){
   this.sizeRel=0.08;         // relative size of passive graphical objects
   this.active_scaleFact=1.0; // pixel size factor active/passive objects
                              // other than obstacles (phys length relevant)
-  this.lenPhys=25;       // physical length[m] of active obstacles
+  this.lenPhys=15;       // physical length[m] of active obstacles
                              // (drawn by the road.draw methods)
-  this.wPhys=10;         // 1..1.5 times road.lanewidth
+  this.wPhys=4;         // Physical width [m]
 
   
   // variable size variables (updated in this.calcDepotPositions)
@@ -192,13 +192,13 @@ function TrafficObjects(canvas,nTL,nLimit,xRelDepot,yRelDepot,nRow,nCol){
       isDragged: false,  // !! controlled by doDragging (canvas_gui)
                          // -> direct setting in canvas_gui
       road: 'void',      // only defined if isActive=true
-      u: -1,             // physical long position [m] (<0 if !isActive)
+      u: -1000,          // physical long position [m] (<0 if !isActive)
                          // for graph focus, advanced by du=this.lenPhys/2 
                          // if obstacle 
-      lane: -1,          // =round(v); isActive: 0 to road.nLanes-1,
-                         // !isActive: -1
+      v: -1000,          // isActive: about +/- 10 m from road axis
+                         // !isActive: -1000
       len: this.lenPhys, //[m], for drawing of active obj of type "obstacle"
-      width: this.wPhys, //[m], about 1-1.5*road.lanewidth 
+      width: this.wPhys, //[m], for drawing of active obj of type "obstacle"
       xPix: 42,          // actual pixel position (to be calculated later
       yPix: 42,          // in calcDepotPositions
       xPixSign1: 42,    // pixel pos of more distant active TL/speedl img
@@ -306,13 +306,14 @@ TrafficObjects.prototype.draw=function(){
 
       var obj=this.trafficObj[i];
       var road=obj.road;
-
+      //console.log("TrafficObjects.draw: road=",road);
+      
       // draw the stopping line 
 
-      var crossingLineLength=road.nLanes*road.laneWidth;
-
-      var xCenterPix=  scale*road.traj_x(obj.u);
-      var yCenterPix= -scale*road.traj_y(obj.u); // minus!!
+      var crossingLineLength=road.widthLeft(obj.u)+road.widthRight(obj.u);
+      var vCenter=road.widthRight(obj.u)-0.5*crossingLineLength;
+      var xCenterPix= road.get_xPix(obj.u, vCenter, scale);
+      var yCenterPix= road.get_yPix(obj.u, vCenter, scale);
       var wPix=scale*crossingLineWidth;
       var lPix=scale*crossingLineLength;
       var phi=road.get_phi(obj.u);
@@ -323,13 +324,13 @@ TrafficObjects.prototype.draw=function(){
       ctx.fillStyle="rgb(255,255,255)";
       ctx.fillRect(-0.5*wPix, -0.5*lPix, wPix, lPix);
 
-      // draw the traffic light (pair) itself
+      // draw the traffic light/speed-limit sign (pair) itself
 
       // left if cphi>0, right otherwise, so that sign always above road
       // nice side-effect if both signs drawn: nearer sign drawn later
       // =>correct occlusion effect
       
-      var distCenter=0.5*crossingLineLength+0.6*road.laneWidth;
+      var distCenter=0.5*crossingLineLength+2; // 2 m outside of road
       var v=(cphi>0) ? -distCenter : distCenter; // [m]
 
       if(this.active_drawTopSign){ // draw active sign above the road
@@ -500,8 +501,7 @@ TrafficObjects.prototype.activate=function(obj, road, u){
   obj.isActive=true; 
   if(!(typeof u === 'undefined')){ // external setting; must take care of all
     obj.u=u;
-    //obj.lane=0.5*road.nLanes; // center, v=0
-    obj.lane=0; // !!! 
+    obj.v=0; // !! differs from traffic-simulation.de
     obj.xPix=road.get_xPix(u,0,scale);
     obj.yPix=road.get_yPix(u,0,scale);
     obj.inDepot=false;
@@ -576,14 +576,14 @@ TrafficObjects.prototype.pickObject=function(xPixUser, yPixUser, distCritPix){
   * If the global var isDragged=false, restore the state before picking
 
 @param obj:         the object to be dropped
-@param network:     an array of road objects as candidates for dropping
+@param road:        a road (traffic-sim.de: network) obj as target of dropping
 @param xPixUser:    users pixel coordinates ((0,0)=left top)
 @param yPixUser:
 @param distCritPix: drop on a road successful if distPix to nearest 
                     road less than distCritPix
 */
 
-// needs global physical coordinates xUser yUser,scale
+// needs global physical coordinates xUser yUser,scale [pix/m]
 TrafficObjects.prototype.dropObject=function(obj, road, 
 				    xUser, yUser, distCritPix, scale){
 
@@ -594,15 +594,15 @@ TrafficObjects.prototype.dropObject=function(obj, road,
   // find nearest part of the road (here, a single road, not a network)
 
   var distMin=100000;
-  var dropInfo=network[iroad].findNearestDistanceTo(xUser,yUser);
-  // => [distance in m, u in m, v in lanes]
+  var dropInfo=road.findNearestDistanceTo(xUser,yUser);
+  // => [distance in m, u in m, v in m]
 
   //console.log("  TrafficObjects.dropObject: iroad=",iroad,
   //		" dropInfoNearest=",dropInfoNearest," distMin=",distMin);
 
   // check success
 
-  var success=(scale*distMin<=distCritPix);
+  var success=(scale*dropInfo[0]<=distCritPix);
   var selectedRoad=(success) ? road : 'void';
 
   // update trafficObject state depending on success
@@ -617,14 +617,16 @@ TrafficObjects.prototype.dropObject=function(obj, road,
     ? dropInfo[2] : 0; // use v only if obstacle (see below)
 
   // obstacles: focus should be on object center, 
-  // not front => move obstacles forward
+  // not front => move obstacles 0.5*len forward
   
+  var du=(obj.type==='obstacle') ? 0.5*obj.len : 0;  
   if(success && obj.type==='obstacle'){ obj.u+=0.5*obj.len;}
 
   // update pixel coords to "snapped" objects (obj.v=0) for later picking
-
+  // pick obstacles at center at original drop position u-du
+  
   if(success){
-    obj.xPix=road.get_xPix(obj.u-du, obj.v, scale);//!!! lane->v
+    obj.xPix=road.get_xPix(obj.u-du, obj.v, scale);  //!! lane->v
     obj.yPix=road.get_yPix(obj.u-du, obj.v, scale);
   }
 
@@ -824,7 +826,7 @@ TrafficObjects.prototype.zoomBack=function(){
 	obj.xPix += pixelsPerCall*dx/dist;
 	obj.yPix += pixelsPerCall*dy/dist;
       }
-      if(true){
+      if(false){
         console.log("TrafficObjects.zoomBack: i=",i,
 		    " obj.xPix=",obj.xPix,
 		    " obj.xPix=",obj.xPix,

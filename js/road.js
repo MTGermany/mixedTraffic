@@ -9,6 +9,7 @@ with road geometry functions (u,v)->(x,y) to be provided by the main program
 @param roadID:         integer-valued road ID
 @param isRing:         true if periodic BC, false if open BC
 @param roadLen:        link length [m]
+@param axis_x,axis_y   function pointer road axis_x(u), axis_y(u)
 @param widthLeft:      function pointer width[m] left boundary-road axis (u)
 @param widthRight:     function pointer width[m] road axis-right boundary (u)
 @param densInit:       initial linear density [veh/m]
@@ -25,17 +26,19 @@ with road geometry functions (u,v)->(x,y) to be provided by the main program
 // constructor
 // widthLeft(u), widthRight(u) is a function which is passed!!
 
-function road(roadID, isRing, roadLen, widthLeft, widthRight, 
+function road(roadID, isRing, roadLen, axis_x, axis_y, widthLeft, widthRight, 
 	      densInit, speedInit, fracTruckInit, fracBikeInit, 
 	      v0max,dvdumax){
 
   console.log("road: in road cstr: roadID=",roadID," roadLen=",roadLen);
-    this.roadID=roadID;
-    this.isRing=isRing;
-    this.roadLen=roadLen;
-    this.widthLeft=widthLeft;   // half width as f(u) from road axis
-    this.widthRight=widthRight; // half width as f(u) to the right
-
+  this.roadID=roadID;
+  this.isRing=isRing;
+  this.roadLen=roadLen;
+  this.widthLeft=widthLeft;   // half width as f(u) from road axis
+  this.widthRight=widthRight; // half width as f(u) to the right
+  this.axis_x=axis_x;
+  this.axis_y=axis_y;
+  
   // MT 2021-11 assume roadWidthRef is multiple of wLane
   // wLane top-level var
 
@@ -68,7 +71,7 @@ function road(roadID, isRing, roadLen, widthLeft, widthRight,
     // whenever road.draw(..) with changedGeometry=true is called
     // (x,y)=location in east-north direction while (u,v)=logical coordinates 
 
-    this.draw_x=[];  // this.draw_x[iSegm]=axis_x(u)
+    this.draw_x=[];  // this.draw_x[iSegm]=this.axis_x(u)
     this.draw_y=[];
     this.draw_phi=[];
     this.draw_cosphi=[];
@@ -868,13 +871,14 @@ road.prototype.updateBCup=function(Qin,fracTruck,fracBike,dt){
 @return direction (heading) of the road (0=East, pi/2=North etc)
 */
 
-road.prototype.get_phi=function(axis_x,axis_y,u){
+road.prototype.get_phi=function(u){
+  //console.log("road.get_phi: axis_x(10)=",this.axis_x(10));
 
     var smallVal=0.0000001;
 
     var du=0.1;
-    var dx=axis_x(u+du)-axis_x(u-du);
-    var dy=axis_y(u+du)-axis_y(u-du);
+    var dx=this.axis_x(u+du)-this.axis_x(u-du);
+    var dy=this.axis_y(u+du)-this.axis_y(u-du);
     var phi=(Math.abs(dx)<smallVal) ? 0.5*Math.PI : Math.atan(dy/dx);
     if( (dx<0) || ((Math.abs(dx)<smallVal)&&(dy<0))){phi+=Math.PI;}
     return phi;
@@ -886,15 +890,13 @@ road.prototype.get_phi=function(axis_x,axis_y,u){
 /**
 @param u=logical longitudinal coordinate (zero at beginning)
 @param v=logical transversal coordinate (zero at road center, towards right)
-@param axis_x(u), axis_y(u)=phys. road geometry as parametrized 
-       function of the arc length
 @param scale translates physical road coordinbates into pixel:[scale]=pixels/m
 @return x pixel coordinate
 */
 
-road.prototype.get_xPix=function(axis_x,axis_y,u,v,scale){
-    var phi=this.get_phi(axis_x,axis_y,u);
-    return scale*(axis_x(u)+v*Math.sin(phi));
+road.prototype.get_xPix=function(u,v,scale){
+    var phi=this.get_phi(u);
+    return scale*(this.axis_x(u)+v*Math.sin(phi));
 }
 
 //######################################################################
@@ -903,15 +905,13 @@ road.prototype.get_xPix=function(axis_x,axis_y,u,v,scale){
 /**
 @param u=logical longitudinal coordinate (zero at beginning)
 @param v=logical transversal coordinate (zero at road center, towards right)
-@param axis_x(u), axis_y(u)=phys. road geometry as parametrized 
-       function of the arc length
 @param scale translates physical road coordinbates into pixel:[scale]=pixels/m
 @return y pixel coordinate 
 */
 
-road.prototype.get_yPix=function(axis_x,axis_y,u,v,scale){
-    var phi=this.get_phi(axis_x,axis_y,u);
-    return -scale*(axis_y(u)-v*Math.cos(phi));
+road.prototype.get_yPix=function(u,v,scale){
+    var phi=this.get_phi(u);
+    return -scale*(this.axis_y(u)-v*Math.cos(phi));
 }
 
 
@@ -922,14 +922,12 @@ road.prototype.get_yPix=function(axis_x,axis_y,u,v,scale){
 
 /**
 @param scale:      scale of map (x,y) -> (xPix,yPix) in pixels/m
-@param axis_x(u):  x coord (East) of road axis as function of the arc length
-@param axis_y(u):  y coord (North) of road axis as function of the arc length
 @param hasChanged: true at beginning or if a resize event took place
 
 @return:           draw into graphics context ctx (def. in calling routine)
 */
 
-road.prototype.draw=function(roadImg,scale,axis_x,axis_y,hasChanged){
+road.prototype.draw=function(roadImg,scale,hasChanged){
 
     var lSegm=this.roadLen/this.draw_nSegm;
 
@@ -938,9 +936,9 @@ road.prototype.draw=function(roadImg,scale,axis_x,axis_y,hasChanged){
     for (var iSegm=0; iSegm<this.draw_nSegm; iSegm++){
 	var u=this.roadLen*(iSegm+0.5)/this.draw_nSegm;
       if((itime==0)||hasChanged){ // lookup table only at beginning or after rescaling
-	    this.draw_x[iSegm]=axis_x(u); 
-	    this.draw_y[iSegm]=axis_y(u);
-	    this.draw_phi[iSegm]=this.get_phi(axis_x, axis_y, u);
+	    this.draw_x[iSegm]=this.axis_x(u); 
+	    this.draw_y[iSegm]=this.axis_y(u);
+	    this.draw_phi[iSegm]=this.get_phi(u);
 	    this.draw_cosphi[iSegm]=Math.cos(this.draw_phi[iSegm]);
 	    this.draw_sinphi[iSegm]=Math.sin(this.draw_phi[iSegm]);
 
@@ -989,8 +987,6 @@ road.prototype.draw=function(roadImg,scale,axis_x,axis_y,hasChanged){
 
 /**
 @param scale:      scale of map (x,y) -> (xPix,yPix) in pixels/m
-@param axis_x(u):  x coord (East) of road axis as function of the arc length
-@param axis_y(u):  y coord (North) of road axis as function of the arc length
 @param speedmin:   minimum speed [m/s] for the colormap (red=slow,blue=fast)
 @param speedmax:   maximum speed [m/s] for the colormap (red=slow,blue=fast)
 
@@ -998,71 +994,94 @@ road.prototype.draw=function(roadImg,scale,axis_x,axis_y,hasChanged){
 */
 
 road.prototype.drawVehicles=function(carImg, truckImg, bikeImg, obstacleImg, 
-				     scale,axis_x, axis_y,
+				     scale,
 				     speedmin,speedmax){
 
   // phiVehRelMax purely optical; vehicle "drift" sideways if speedLong
   // very small to resolve deadlocks of stopped vehicles
 
-    
 
   for(var i=0; i<this.veh.length; i++){
-      var type=this.veh[i].type;
-      var vehLenPix=scale*this.veh[i].len;
-      var vehWidthPix=scale*this.veh[i].width;
+    var type=this.veh[i].type;
+    var vehLenPix=scale*this.veh[i].len;
+    var vehWidthPix=scale*this.veh[i].width;
 
-      var uCenterPhys=this.veh[i].u-0.5*this.veh[i].len;
-      var vCenterPhys=this.veh[i].v; // incr left -> right, 0 @ road center
+    var uCenterPhys=this.veh[i].u-0.5*this.veh[i].len;
+    var vCenterPhys=this.veh[i].v; // incr left -> right, 0 @ road center
 
-      var phiRoad=this.get_phi(axis_x, axis_y, uCenterPhys);
+    var phiRoad=this.get_phi(uCenterPhys);
       var dvdu=this.veh[i].speedLat/(Math.max(this.veh[i].speed,0.0001));
-      var phiVehRel=(Math.abs(dvdu)<0.00001) 
+    var phiVehRel=(Math.abs(dvdu)<0.00001) 
 	  ? 0 : - Math.atan(dvdu);
-      var phiVeh=phiRoad + Math.max(-phiVehRelMax, Math.min(phiVehRelMax,phiVehRel));
-      var cphiRoad=Math.cos(phiRoad);
-      var sphiRoad=Math.sin(phiRoad);
-      var cphiVeh=Math.cos(phiVeh);
-      var sphiVeh=Math.sin(phiVeh);
-      var xCenterPix=scale*(axis_x(uCenterPhys) + vCenterPhys*sphiRoad);
-      var yCenterPix=-scale*(axis_y(uCenterPhys) - vCenterPhys*cphiRoad);
+    var phiVeh=phiRoad
+	+ Math.max(-phiVehRelMax, Math.min(phiVehRelMax,phiVehRel));
+
+    var isActiveTrafficObjObstacle=(this.veh[i].id>=50)&&(this.veh[i].id<100);
+
+    var vehImg=(type=="car") ? carImg : (type=="truck") ? truckImg :
+      (type=="bike") ? bikeImg : obstacleImg;
+
+
+    // TrafficObjects:
+    // if veh id in [50,99]: vehicle is active TrafficObject obstacle
+    // draw with associated image (only) these vehicles have
+
+    if(isActiveTrafficObjObstacle){
+      vehImg=this.veh[i].image;
+      vehLenPix*=1.5;  //!!! ad-hoc; properly must do vehLenPixDepot
+	               // *lenPhys/lenDepotPhys
+      vehWidthPix*=2.0;
+   
+      // turn upside down images
+      
+      if((phiRoad>0.5*Math.PI)&&(phiRoad<1.5*Math.PI)){
+        phiVeh-=Math.PI;
+      }
+    }
+    
+    var cphiRoad=Math.cos(phiRoad);
+    var sphiRoad=Math.sin(phiRoad);
+    var cphiVeh=Math.cos(phiVeh);
+    var sphiVeh=Math.sin(phiVeh);
+    var xCenterPix=scale*(this.axis_x(uCenterPhys) + vCenterPhys*sphiRoad);
+    var yCenterPix=-scale*(this.axis_y(uCenterPhys) - vCenterPhys*cphiRoad);
 
        
           // (1) draw vehicles as images
 
-      vehImg=(type=="car") ? carImg : (type=="truck") ? truckImg :
-	  (type=="bike") ? bikeImg : obstacleImg;
-      ctx.setTransform(cphiVeh, -sphiVeh, +sphiVeh, 
-		       cphiVeh, xCenterPix, yCenterPix);
-      ctx.drawImage(vehImg, -0.5*vehLenPix, -0.5*vehWidthPix,
-		    vehLenPix,vehWidthPix);
+   
+    ctx.setTransform(cphiVeh, -sphiVeh, +sphiVeh, 
+		     cphiVeh, xCenterPix, yCenterPix);
+    ctx.drawImage(vehImg, -0.5*vehLenPix, -0.5*vehWidthPix,
+		  vehLenPix,vehWidthPix);
 
           // (2) draw semi-transp boxes of speed-dependent color 
           //     over the images
           //     (different size of box because of mirrors of veh images)
 
-      if(type!="obstacle"){
+    if(type!="obstacle"){
           var effLenPix=(type=="car") ? 0.95*vehLenPix : 0.90*vehLenPix;
           var effWPix=(type=="car") ? 0.90*vehWidthPix : 0.75*vehWidthPix;
           var speed=this.veh[i].speed;
           ctx.fillStyle=colormapSpeed(speed,speedmin,speedmax,type);
 	  ctx.fillRect(-0.5*effLenPix, -0.5*effWPix, effLenPix, effWPix);
-      }
-      ctx.fillStyle="rgb(0,0,0)";
+    }
+    ctx.fillStyle="rgb(0,0,0)";
 
-      if(false){
+    if(false){
 	  console.log("in road.drawVehicles:"
 		      +" u="+this.veh[i].u
 		      +" v="+this.veh[i].v
 		      +" xCenterPix="+xCenterPix
 		      +" yCenterPix="+yCenterPix
 		     );
-      }
+    }
   }
 } // road.prototype.drawVehicles
 
 
 
-road.prototype.drawScatterPlotBoundaries=function(scale,axis_x,axis_y,umin,umax){
+road.prototype.drawScatterPlotBoundaries=function(scale,umin,umax){
   var bLen=2; // graphical boundary width [m] = length of graphical virt vehicle
   var bLenPix=scale*bLen;
   var ub=[umin,umax];
@@ -1071,11 +1090,11 @@ road.prototype.drawScatterPlotBoundaries=function(scale,axis_x,axis_y,umin,umax)
     // widthLeft(u), widthRight(u) road geom functions
     var u=ub[i];
     var bWidthPix=scale*(this.widthLeft(u)+this.widthRight(u));
-    var phiRoad=this.get_phi(axis_x, axis_y, u);
+    var phiRoad=this.get_phi(u);
     var cphiRoad=Math.cos(phiRoad);
     var sphiRoad=Math.sin(phiRoad);
-    var xCenterPix=scale*axis_x(u);
-    var yCenterPix=-scale*axis_y(u);
+    var xCenterPix=scale*this.axis_x(u);
+    var yCenterPix=-scale*this.axis_y(u);
 
     ctx.setTransform(cphiRoad, -sphiRoad, +sphiRoad, 
 		     cphiRoad, xCenterPix, yCenterPix);
@@ -1100,8 +1119,6 @@ The color of the arrows is that of the speed coding of the virtual vehicle
 
 @param speed:      speed [m/s] of the virtual vehicle
 @param scale:      geometric scale [pixels/m]
-@param axis_x(u):  x coord (East) of road axis as function of the arc length
-@param axis_y(u):  y coord (North) of road axis as function of the arc length
 @param speedmin:   minimum speed for color-coding (transferred to colormap*)
 @param speedmax:   maximum speed for color-coding (transferred to colormap*)
 @param displayStyle:  
@@ -1117,7 +1134,6 @@ The color of the arrows is that of the speed coding of the virtual vehicle
 */
 
 road.prototype.drawVectorfield=function(speed,scale,
-					axis_x, axis_y,
 					speedmin,speedmax,displayStyle){
 
   var logging=false;
@@ -1195,11 +1211,11 @@ road.prototype.drawVectorfield=function(speed,scale,
 		    " accLat=", parseFloat(virtVeh.accLat).toFixed(2));
 	}
 	//accLong=2; accLat=0;
-        var phiRoad=this.get_phi(axis_x, axis_y, virtVeh.u);
+        var phiRoad=this.get_phi(virtVeh.u);
         var cphiRoad=Math.cos(phiRoad);
         var sphiRoad=Math.sin(phiRoad);
-        var xStartPix=scale*(axis_x(virtVeh.u) + virtVeh.v*sphiRoad);
-        var yStartPix=-scale*(axis_y(virtVeh.u) - virtVeh.v*cphiRoad);
+        var xStartPix=scale*(this.axis_x(virtVeh.u) + virtVeh.v*sphiRoad);
+        var yStartPix=-scale*(this.axis_y(virtVeh.u) - virtVeh.v*cphiRoad);
 
         // transform coordinates such that (u,v)=(x,y)
 
@@ -1310,11 +1326,11 @@ road.prototype.drawVectorfield=function(speed,scale,
 	// prepare drawing
 
 	if(drawArrows){
-	var phiRoad=this.get_phi(axis_x, axis_y, u);
+	var phiRoad=this.get_phi(u);
         var cphiRoad=Math.cos(phiRoad);
         var sphiRoad=Math.sin(phiRoad);
-        var xStartPix=scale*(axis_x(u) + v*sphiRoad);
-        var yStartPix=-scale*(axis_y(u) - v*cphiRoad);
+        var xStartPix=scale*(this.axis_x(u) + v*sphiRoad);
+        var yStartPix=-scale*(this.axis_y(u) - v*cphiRoad);
         var dxPix=scaleAcc*vehNearest.accLong;
         var dyPix=ratioLat*scaleAcc*vehNearest.accLat;
 
@@ -1350,11 +1366,11 @@ road.prototype.drawVectorfield=function(speed,scale,
 	var u=this.veh[i].u;
 	var v=this.veh[i].v;
 	var speed=this.veh[i].speed;
-	var phiRoad=this.get_phi(axis_x, axis_y, u);
+	var phiRoad=this.get_phi(u);
         var cphiRoad=Math.cos(phiRoad);
         var sphiRoad=Math.sin(phiRoad);
-        var xStartPix=scale*(axis_x(u) + v*sphiRoad);
-        var yStartPix=-scale*(axis_y(u) - v*cphiRoad);
+        var xStartPix=scale*(this.axis_x(u) + v*sphiRoad);
+        var yStartPix=-scale*(this.axis_y(u) - v*cphiRoad);
         var dxPix=scaleAcc*this.veh[i].accLong;
         var dyPix=ratioLat*scaleAcc*this.veh[i].accLat;
 
@@ -1379,14 +1395,12 @@ road.prototype.drawVectorfield=function(speed,scale,
 //######################################################################
 /**
 @param scale:      geometric scale [pixels/m]
-@param axis_x(u):  x coord (East) of road axis as function of the arc length
-@param axis_y(u):  y coord (North) of road axis as function of the arc length
 @param fontHeight:  height (pixels) of the font
 
 @return draw vehicle IDs into graphics context ctx (defined in calling routine)
 */
 
-road.prototype.drawVehIDs=function(scale,axis_x,axis_y,fontHeight){
+road.prototype.drawVehIDs=function(scale,fontHeight){
 
     for(var i=0; i<this.veh.length; i++){ 
 
@@ -1397,11 +1411,11 @@ road.prototype.drawVehIDs=function(scale,axis_x,axis_y,fontHeight){
 
 	var u=this.veh[i].u+0.5*wPix/scale; // label just touches vehicle at front
 	var v=this.veh[i].v;
-	var phiRoad=this.get_phi(axis_x, axis_y, u);
+	var phiRoad=this.get_phi(u);
         var cphiRoad=Math.cos(phiRoad);
         var sphiRoad=Math.sin(phiRoad);
-        var xCenterPix=scale*(axis_x(u) + v*sphiRoad);
-        var yCenterPix=-scale*(axis_y(u) - v*cphiRoad);
+        var xCenterPix=scale*(this.axis_x(u) + v*sphiRoad);
+        var yCenterPix=-scale*(this.axis_y(u) - v*cphiRoad);
 
 
         // transform coordinates such that pixel coordinate = (0,0) at veh center
@@ -1467,4 +1481,137 @@ road.prototype.updateExportString=function(){
   }
 }
  
+
+//#############################################################
+// TrafficObjects interactions/helper functions
+//#############################################################
+
+
+/*############################################################# 
+TrafficObjects: get nearest distance of the road axis (center)
+to an external physical position
+   
+@param physical mouse coords xUser, yUser
+@return [dist[m], u[m],v [m] ]  (notice that distance to axis dist=|v|)
+
+Notice: u discretized to this.draw_nSegm drawing segments; these and the
+associated arrays this.draw_x[iSegm], this.draw_y[iSegm] denoting
+the discretized road axis will be used
+#############################################################*/
+
+road.prototype.findNearestDistanceTo=function(xUser,yUser){
+  var dist2_min=1e9;
+  var uReturn,dxReturn,dyReturn;
+  for(var iSegm=0; iSegm<=this.draw_nSegm; iSegm++){
+    var u=this.roadLen*(iSegm+0.5)/this.draw_nSegm;
+    var dx=xUser-this.draw_x[iSegm];
+    var dy=yUser-this.draw_y[iSegm];
+    var dist2=dx*dx+dy*dy;
+    if(dist2<dist2_min){
+      dist2_min=dist2;
+      uReturn=u;
+      dxReturn=dx;
+      dyReturn=dy;
+    }
+  }
+
+  // determine sign of v: positive if (-cosphi,sinphi).dr>0
+
+  var phiNorm=this.get_phi(uReturn)-0.5*Math.PI; // angle in v direction
+  var sign_v=(Math.cos(phiNorm)*dxReturn
+	      +Math.sin(phiNorm)*dyReturn > 0) ? 1 : -1;
+  var distReturn=Math.sqrt(dist2_min);
+  var vReturn=sign_v*distReturn; // v parallel to distance vector
+
+  if(true){
+	console.log("end road.findNearestDistanceTo:",
+		    " roadID=",this.roadID,
+		    " xUser=",xUser, " yUser=",yUser,
+		    " distReturn=",distReturn,
+		    " uReturn=",uReturn,
+		    " vReturn=",vReturn
+		   );
+  }
+  return [distReturn,uReturn,vReturn];
+}
+
+/*############################################################# 
+ TrafficObjects: dropObject
+
+#############################################################*/
+
+road.prototype.dropObject=function(trafficObj){
+  var u=trafficObj.u;
+  var v=trafficObj.v
+  console.log("itime=",itime,
+	      " in road.dropObject: trafficObj.u=",u,
+	      " trafficObj.v=",trafficObj.v);
+
+
+  // construct normal road vehicle/obstacle from depot object
+  // if id=50...99
+
+  if(trafficObj.type==='obstacle'){
+    var roadVehicle=new vehicle("obstacle",trafficObj.len,
+				trafficObj.width,
+				u, v, 0,0,mixedModelObstacle);
+
+      //!! id ctrls veh image: 50=black obstacle,
+      // 51=constructionVeh1.png etc. Attribute veh.imgNumber defined only
+      // for vehicles in depot!
+      
+    roadVehicle.id=trafficObj.id;
+    roadVehicle.image=trafficObj.image;
+    // insert vehicle (array position does not matter since sorted anyway)
+
+    this.veh.push(roadVehicle);
+    this.sortVehicles();
+    //this.updateEnvironment(); // needed here??!!
+    console.log("  end road.dropObject: dropped obstacle at uDrop=",u,
+		" v=",v," id=",roadVehicle.id,
+		" imgNumber=",roadVehicle.imgNumber);
+  }
+
+  // position a traffic light if depot object id=100 ... 199
+  // NOTICE: traffic light has its sorting/pushing/splicing methods
+
+
+  else if(trafficObj.type==='trafficLight'){
+    this.addTrafficLight(trafficObj);
+    console.log("  end road.dropObject: added traffic light");
+  }
+
+  else {
+    ; // speedlimit signs are taken care of automatically in update step
+    // setting isActive=true in TrafficObjects.activate is enough
+  }
+}// dropObject
+
+
+/*
+#############################################################
+TrafficObjects: remove obstacle object with given id
+#############################################################
+
+@param id:     unique id in [50,99]
+
+@return:       removes the obstacle if id is found in road.veh
+*/
+road.prototype.removeObstacle= function(id) {
+    // change value of trafficLight object
+
+  console.log("in road.removeObstacle: id=",id);
+  var success=false;
+  var iDel=-1;
+  for(var i=0; (!success)&&(i<this.veh.length); i++){
+    if(this.veh[i].id===id){
+      success=true;
+      iDel=i;
+    }
+  }
+  if(iDel===-1) console.log("road.removeObstacle: no id ",id," found!");
+  else this.veh.splice(iDel,1);
+}
+
+
 
