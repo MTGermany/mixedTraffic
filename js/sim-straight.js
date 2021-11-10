@@ -32,8 +32,9 @@ var background_srcFile='figs/backgroundGrass.jpg';
 
 
 var displayForcefield=true; // can be changed interactively -> gui.js
-var displayForceStyle=2;  // 0: with probe, 1: arrow field arround veh,
-                          // 2: moving arrows at veh
+var displayForceStyle=2;    // 0: with probe, 1: arrow field arround veh,
+                            // 2: moving arrows at veh
+var displayScatterplots=false;
 var hasChanged=true; // physical dim have changed (e.g. by window resize)
 var canvas=document.getElementById("canvas_mixed");
 var ctx=canvas.getContext("2d"); // graphics context
@@ -313,7 +314,7 @@ var umax=250;    // downstream boundary of sampled region [m];
 
 
 // TrafficObjects(canvas,nTL,nLimit,xRelDepot,yRelDepot,nRow,nCol)
-var trafficObjs=new TrafficObjects(canvas,1,4,0.62,0.22,1,8);
+var trafficObjs=new TrafficObjects(canvas,2,3,0.62,0.22,1,9);
 
 // also needed to just switch the traffic lights
 // (then args xRelEditor,yRelEditor not relevant)
@@ -494,7 +495,9 @@ function drawSim() {
   // (3a) draw boundaries of detection region [umin:umax] for
   // scatter plot  MT 2021
 
-  mainroad.drawScatterPlotBoundaries(scale,umin,umax);
+  if(displayScatterplots){
+    mainroad.drawScatterPlotBoundaries(scale,umin,umax);
+  }
  
     // (4) draw vehicles (obstacleImg here empty, only needed for interface)
 
@@ -574,8 +577,8 @@ function drawSim() {
 
     // (8) draw flow-speed-density scatter plots data of selected region
 
-  if((itime%ndtSample==0)||(itime%10==0)
-    ||trafficObjZooms||trafficObjIsDragged){ 
+  if(displayScatterplots&&((itime%ndtSample==0)||(itime%10==0)
+			   ||trafficObjZooms||trafficObjIsDragged)){ 
 
 
         // determine overall rel dimensions 

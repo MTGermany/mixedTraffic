@@ -1803,7 +1803,7 @@ from the traffic objects:
 
 road.prototype.updateSpeedlimits=function(trafficObjects){
 
-  console.log("\nin road.updateSpeedlimits");
+  //console.log("\nin road.updateSpeedlimits");
 
   // start by removing all speedlimits
 
