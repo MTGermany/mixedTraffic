@@ -816,10 +816,22 @@ function myFloorFieldToggle(){
 }
 
 
-
 //################################################################
 // html5 sliders callback routines
 //#################################################################
+
+// value in units displayed by slider, generally not SI
+// round => commaDigits=0
+
+function setSlider(slider, sliderHTMLval, value, commaDigits, str_units){
+  var formattedValue=value.toFixed(commaDigits);
+  slider.value=value;
+  sliderHTMLval.innerHTML=formattedValue+" "+str_units; // +" " DOS=>str_units
+  console.log("setSlider: value=",value
+	      ," innerHTML=",sliderHTMLval.innerHTML);
+}
+
+
 
 // html5 sliders initialized in html file by "value" field of html5 input tag
 // oninput fires whenever value changed

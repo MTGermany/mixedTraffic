@@ -177,8 +177,11 @@ var mixedModelObstacle=new ModelObstacle();
 // initial traffic flow and composition settings ctrl by sliders
 //#############################################################
 
+qIn=6300./3600; 
+commaDigits=2;
+setSlider(slider_inflow, slider_inflowVal, qIn, commaDigits, "veh./s");
 
-var qIn=parseFloat(slider_inflow.value);
+//var qIn=parseFloat(slider_inflow.value);
 var fracTruck=parseFloat(slider_fracTruck.value); // !! otherwise string
 var fracBike=parseFloat(slider_fracBike.value);  // frac+frac=e.g.0.20.2!!
 var speedMax=20;    // overridden by slider_speedmax if it exists => html

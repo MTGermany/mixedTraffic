@@ -1,11 +1,15 @@
-<head>
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
     <meta http-equiv="content-type" content="text/html; charset=iso-8859-1">
     <link href="./css/styleMixed.css" rel="stylesheet" type="text/css"/>
 
     <title>Information on the mixed traffic flow simulation</title> 
+    <meta charset="UTF-8">
 </head>
 
-
+<body>
 <div id="backLink">
  <a href="index.html">Back to the simulation</a>
 </div> 
@@ -18,6 +22,7 @@
 <div id="infotext">
 
 <center><h1> Information on the<br>mixed traffic flow simulation</h1></center>
+
 
 This is an interactive simulation of the fully two-dimensional model
 which is fully 
@@ -216,37 +221,62 @@ past vehicles and past obstacles and bottlenecks when a new
 IC file is loaded but the other slider settings are unchanged. <br>
 
 As examples and templates for further modification, you
-can download following initial 
-configurations:
+can download several template initial 
+configurations.
+
+<br><br><i>Hint:</i> The filename indicates that the configurations work
+as intended for a road width of 3.5 m times the given number of lanes.
+furthermore, you should deactivate the "Var width*" geometry
+settings and set the inflow to zero because, otherwise, the additional
+inflow vehicles will interfere. You can also try if a given
+configuration works better with lanes (floorfield on) or without)
+
 <ul>
-  <li> <a href="IC_resolveStalemate.txt">Five trucks in parallel and one
-  car</a>. Is it possible for the car to eventually overtake? With
-    lanes (floor field on) not, without, yes.</li>
+  <li> <a href="IC-configurations/IC_5lanes_bigObstacles.txt">A car
+  navigating through a big obstacle parcours</a>. The obstacles are
+  virtual standing vehicles</li>
     
-  <li> <a href="IC_collisionDanger.txt">A car and a truck just touching
-  each other while driving at the beginning</a>. How will the situation be
-  resolved? For this, it is useful to set the timewarp to very low
-  values before loading the file. </li>
-    
- <li> <a href="IC_obstacles.txt">A single car moving through a
-  parcours of obstacles and road narrowings</a>. This demonstrates what
-  can be done with several objects of type obstacle. </li>
-    
-<li> <a href="IC_overtakingBetweenTrucks.txt">A car and a bike
+        
+<li> <a href="IC-configurations/IC_5lanes_overtakingBetwTrucks.txt">A car and a bike
   overtaking some slower trucks in the middle</a>. This is more effective
   with lanes since, otherwise, the space between the trucks is quite
   narrow. Without lanes, it is only possible if the lateral pushing
   factor  is
-  above about <i>push<sub>lat</sub>=0.1</i> since, otherwise, the
+  above about <i>push<sub>lat</sub>=0.3</i> since, otherwise, the
   trucks in front do 
-  not care and the initial space is too low.</li>
+  not care and the initial space is too low. Also with lanes, lateral
+  pushing helps. Can also be done with a width of 10.5 m (3 lanes)</li>
     
-<li> <a href="IC_zipper2.txt">A very strong road narrowing down to one
+<li> <a href="IC-configurations/IC_2lanes_zipper.txt">A very strong road narrowing down to one
   lane</a>. Some cooperation is necessary so that everyone can pass the
-  bottleneck. </li>
+  bottleneck. This brings the model to its limits since no explicit
+  cooperation is built into the drivers, so quite a chaos
+  occurs. Best (i.e., shortest time for all vehicles traversing the
+  simulation) is with lanes and longitudinal and lateral pushing activated</li>
+
+<li> <a href="IC-configurations/IC_2lanes_4carsParallel.txt"> This
+    visualizes the amount of stochasticity</a> (in form of acceleration
+    noise) that is built into the simulator because, without noise,
+    the two pairs should drive exactly in parallel. Obviously, very
+    little noise is needed to resolve stalemates </li>
+
+<li> <a href="IC-configurations/IC_2lanes_2trucks2carsParallel.txt"> Here, the
+    pushing effect should resolve the stalemate</a>, so, finally, the car
+    can overtake. For some reason, this does not yet work</li>
+
+<li> <a href="IC-configurations/IC_3lanes1.txt">Two cars
+symmetrically behind a symmetrical 3-to-1 lane drop</a> </li>
     
-<li> <a href="IC_zipper2.txt">2-to-one narrowing with more vehicles</a>. </li>
+<li> <a href="IC-configurations/IC_3lanes3.txt">An obstacle
+parcours</a>. You can also add some external inflow and look what happens</li>
     
+    
+  <li> <a href="IC-configurations/IC_collisionDanger.txt">A car and a truck just touching
+  each other while driving at the beginning</a>. How will the situation be
+  resolved? For this, it is useful to set the timewarp to very low
+  values before loading the file. </li>
 
 
 </div>
+</body>
+</html>
