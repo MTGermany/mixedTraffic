@@ -1018,9 +1018,10 @@ road.prototype.drawVehicles=function(carImg, truckImg, bikeImg, obstacleImg,
     var uCenterPhys=this.veh[i].u-0.5*this.veh[i].len;
     var vCenterPhys=this.veh[i].v; // incr left -> right, 0 @ road center
 
+    var vxmin=2; //!!!
     var phiRoad=this.get_phi(uCenterPhys);
-      var dvdu=this.veh[i].speedLat/(Math.max(this.veh[i].speed,0.0001));
-    var phiVehRel=(Math.abs(dvdu)<0.00001) 
+    var dvdu=this.veh[i].speedLat/(Math.max(this.veh[i].speed,vxmin));
+    var phiVehRel=(this.veh[i].speed<1)  // 
 	  ? 0 : - Math.atan(dvdu);
     var phiVeh=phiRoad
 	+ Math.max(-phiVehRelMax, Math.min(phiVehRelMax,phiVehRel));
@@ -1448,6 +1449,8 @@ road.prototype.drawVehIDs=function(scale,fontHeight){
 
 //######################################################################
 // simple write vehicle info to file
+// all the data stored in this.exportString 
+// in each record interval gui.dt_export are saved
 //######################################################################
 
 

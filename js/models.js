@@ -433,7 +433,7 @@ restrictions, and noise in higher-level road.js
 // widens in the direction of the road boundary)
 // assuming road boundaries y=+/- 05 wRoad
 
-// !!! Introduce a ban to move back to ending lanes if mandatory LC
+// !! Introduce a ban to move back to ending lanes if mandatory LC
 // need from road additional flag mandatory: 0=not, 1=toRight, -1=toLeft
 // test: IC_2lanes_zipper.txt
 
@@ -450,12 +450,17 @@ MTM.prototype.calcAccLatInt=function(x,xl,y,yl,vx,vxl,vy,vyl,axl,
   var overlap=(Math.abs(dy)<Wavg);
 
   // normalized lateral desire alpha in [-1,1]
-  
-  var alpha=-sign_dy*((overlap) // sqrt decrease if |dy|<Wavg
+
+  // !!! sqrt decrease if |dy|<Wavg
+  var alpha=-sign_dy*((overlap) 
 		      ? Math.sqrt(Math.abs(dy)/Wavg)
+		      //? Math.pow(Math.abs(dy)/Wavg, 0.3)
 		      : Math.exp(-(Math.abs(dy)-Wavg)/this.s0yLat));
-  //var alpha=(Math.abs(dy)<Wavg) // lin decrease if |dy|<Wavg
-     // ? -dy/Wavg : -sign_dy*Math.exp(-(Math.abs(dy)-Wavg)/this.s0yLat);
+
+  // !!! lin decrease if |dy|<Wavg
+  //var alpha=(overlap) 
+   //   ? -dy/Wavg
+   //   : -sign_dy*Math.exp(-(Math.abs(dy)-Wavg)/this.s0yLat);
 
 
 
@@ -478,7 +483,8 @@ MTM.prototype.calcAccLatInt=function(x,xl,y,yl,vx,vxl,vy,vyl,axl,
     var tooNarrowRight=(sylbRight<Wveh+this.s0yLatB);
     var tooNarrowLeft=(sylbLeft<Wveh+this.s0yLatB);
 
-    if(!(tooNarrowRight&&tooNarrowLeft)){    // no influence for too narrow road
+    if(!(tooNarrowRight&&tooNarrowLeft)){    // no infl for too narrow rd
+    //if(false){
       if(tooNarrowRight&&(y>yl)){alpha=-1;}  // alpha=alphaB
       if(tooNarrowLeft&&(y<yl)){alpha=1;}    // alpha=alphaB
     }
@@ -677,6 +683,10 @@ MTM.prototype.calcAccB=function(widthLeft,widthRight,x,y,vx,vy,Wveh){
   var accLongB =this.accLongBRef*( - alphaLongLeftMax - alphaLongRightMax);
   var accLatB0  =this.accLatBRef *( + alphaLatLeftMax  - alphaLatRightMax);
 
+  //!!!
+  accLongB *=vx/v0max; 
+
+  
   // add OVM like effect
   // active if boundaries induce lateral component of desired velocity 
   // ! no -vy/tauLatOVM since already taken care of at accFree
@@ -698,7 +708,7 @@ MTM.prototype.calcAccB=function(widthLeft,widthRight,x,y,vx,vy,Wveh){
     console.log("accLatB=",formd(accLatB));
     console.log("accLatBrestr=",formd(accLatBrestr));
 
-    //clearInterval(myRun);//!!! then stepwise with go button!
+    //clearInterval(myRun);//!! then stepwise with go button!
   }
 
 

@@ -1,0 +1,6 @@
+Mit Aufzeichnen-Funktionalitaet Trajektorien fuer z.B. RoadWidth11.5 m + lane floor field + 50% bikes, 10% trucks aufzeichnen
+
+mv ~/Downloads/*txt mixedTraffOutput3.txt
+analyze mixedTraffOutput3
+gnuplot mixedTraffOutput3.gnu
+

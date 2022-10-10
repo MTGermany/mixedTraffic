@@ -1026,7 +1026,7 @@ slider_speedProbeVal.innerHTML=slider_speedProbe.value;
 //#################################################################
 
 var downloadActive=false; // initialisation
-var dt_export=1;          // every dt_export seconds stored in exportString
+var dt_export=0.01;          // every dt_export seconds stored in exportString
 
 function downloadCallback(){ // MT 2021-11
   if(downloadActive){
@@ -1043,8 +1043,9 @@ function downloadCallback(){ // MT 2021-11
   }
 }
 
+// writes trajectories recorded every gui.dt_export to file
 
-function performDownload(){
+function performDownload(){  
   var present=new Date();
   var day=("0" + present.getDate()).slice(-2);// prepend 0 if single-digit day
   var month=("0" + (present.getMonth()+1)).slice(-2);// months start with 0

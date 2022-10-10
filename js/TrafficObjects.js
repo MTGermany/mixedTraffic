@@ -110,10 +110,10 @@ function TrafficObjects(canvas,nTL,nLimit,xRelDepot,yRelDepot,nRow,nCol){
   this.sizeRel=0.08;         // relative size of passive graphical objects
   this.active_scaleFact=1.0; // pixel size factor active/passive objects
                              // other than obstacles (phys length relevant)
-  this.lenPhys=15;       // physical length[m] of active obstacles
+  this.lenPhys=5;       // physical length[m] of active obstacles
                              // (drawn by the road.draw methods)
-  this.wPhys=4;         // Physical width [m]
-
+  this.wPhys=2;         // Physical width [m]
+//roadWidthRef
   
   // variable size variables (updated in this.calcDepotPositions)
   

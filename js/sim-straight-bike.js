@@ -35,7 +35,7 @@ var displayForcefield=false; // can be changed interactively -> gui.js
 var displayForceStyle=2;    // 0: with probe, 1: arrow field arround veh,
                             // 2: moving arrows at veh
 var displayScatterplots=false;
-var displayVehIDs=false;  // debugging
+var displayVehIDs=false; // debugging
 
 var hasChanged=true; // physical dim have changed (e.g. by window resize)
 var canvas=document.getElementById("canvas_mixed");
@@ -60,8 +60,8 @@ var car_length=5;
 var car_width=2.0;
 var truck_length=10;
 var truck_width=2.5; 
-var bike_length=2; // bicycles or motorbikes, depending on parameterisation
-var bike_width=0.7;
+var bike_length=1.5; //!!! bicycles or motorbikes, depending on parameteris
+var bike_width=0.5;
 var obstacle_length=10;
 var obstacle_width=1.5;
 
@@ -70,7 +70,7 @@ var obstacle_width=1.5;
 // (initial) parameterisation and creation of underlying longmodels
 //#############################################################
 
-var v0=25;
+var v0=5;  //!!! 25->5
 var Tgap=1;
 var s0=2;
 var amax=2;
@@ -82,7 +82,7 @@ var s0Truck=2;
 var amaxTruck=1;
 var bcomfTruck=2;
 
-var v0Bike=25;
+var v0Bike=5; //!!! bicycles, not motobikes
 var TgapBike=0.5;
 var s0Bike=1.5;
 var amaxBike=3;
@@ -96,7 +96,7 @@ var v0max=Math.max(v0,v0Truck,v0Bike); // to define max dist range of neigbors
 
 
 var speedmap_min=0; // min speed for speed colormap (drawn in red)
-var speedmap_max=Math.max(v0, v0Truck, v0Bike); // max speed (fixed in sim)
+var speedmap_max=v0Bike; // !!! max speed (fixed in sim)
 
 
 
@@ -117,14 +117,14 @@ var dvdumax=0.3;       // tan of maximum angle with respect to road axis
                        // if long speed is very small/zero)
 var dotdvdumax=0.3;    // max change rate of angle to road axis
 var phiVehRelMax=0.10; // only drawing: maximum visual angle to road axis
-var speedLatStuck=1.2;   // max lateral speed if long speed low!!DOS!!!
+var speedLatStuck=0.2;   // max lateral speed if long speed low!!DOS!!!
 
 
 // lateral force constants
 // s0yLat: cars should be straight in lane in 
 var s0y=0.15;       // lat. attenuation scale [m] long veh-veh interact [0.15]
-var s0yLat=0.60;    // lat. attenuation scale [m] lat veh-veh interact  [0.3]
-var sensLat=1.0;    // sensitivity (max des lat speed)/(long accel) [s] [1.4]
+var s0yLat=0.20;    // !!! scale [m] lat veh-veh interact [0.60]
+var sensLat=0.2;    // !!! sensit (max des lat speed)/(long accel) [s] [1.0]
 
 var accBiasRightTruck=0.8;  //MT 2021-11 
 var accBiasRightOthers=0;
@@ -136,10 +136,10 @@ var accFloorMax=0.5;        //MT 2021-11 reduced from 6.5
 
 var glob_accLatBMax=20;   //max boundary lat accel, of the order of bmax
 var glob_accLatBRef=15;    //lateral acceleration if veh touches boundary
-var glob_accLongBRef=0.2; //longitudinal acceleration if veh touches boundary
+var glob_accLongBRef=150; //!!!long acceleration if veh touches boundary
 var glob_anticFactorB=2;  //antic time for boundary response (multiples of T)
-var s0yB=0.15;            // long. attenuation scale [m] wall-veh interact
-var s0yLatB=0.20;         // lat. attenuation scale [m] wall-veh interact
+var s0yB=0.05;            //!!! long. attenuation scale [m] wall-veh interact
+var s0yLatB=0.10;         //!!! lat. attenuation scale [m] wall-veh interact
 
 
 // (2) variable slider params
@@ -179,11 +179,12 @@ var mixedModelObstacle=new ModelObstacle();
 // initial traffic flow and composition settings ctrl by sliders
 //#############################################################
 
-qIn=6300./3600; 
 commaDigits=2;
-setSlider(slider_inflow, slider_inflowVal, qIn, commaDigits, "veh./s");
 
-//var qIn=parseFloat(slider_inflow.value);
+//setSlider(slider_inflow, slider_inflowVal, qIn, commaDigits, "veh./s");
+//  qIn=6300./3600; 
+
+var qIn=parseFloat(slider_inflow.value); //!!! instead of the above
 var fracTruck=parseFloat(slider_fracTruck.value); // !! otherwise string
 var fracBike=parseFloat(slider_fracBike.value);  // frac+frac=e.g.0.20.2!!
 var speedMax=20;    // overridden by slider_speedmax if it exists => html
@@ -209,11 +210,11 @@ var densityInit=0.0;
 // etc changes due to responsive design )
  
 var roadID=1;
-var roadLen=600; //300
+var roadLen=200; //300
 
 //20 MT 2021 !!! BUG floorfield only uneven number
 
-var wLane=3.5;  // lane width if floorField is on
+var wLane=3.0;  // lane width if floorField is on
 var roadWidthRef=parseFloat(slider_roadWidth.value);
 var nLanes=Math.round(roadWidthRef/wLane);
 
@@ -333,16 +334,14 @@ function updateSim(dt){    // called here by main_loop()
 
 
     // update times
-    time +=dt; // dt depends on initial html and timewarp slider (fps=const)
-    itime++;
+  time +=dt; // dt depends on initial html and timewarp slider (fps=const)
+  itime++;
     //console.log("\nbegin updateSim: itime=",itime);
-    if(itime==1){ // initializeMicro(types, len, w, u, v,speed,speedLat)
-	mainroad.initializeMicro( ["car"], [car_length],
-				  [car_width], [150], [0], 
-				 [20], [0]);
-	//mainroad.initializeMicro( ["obstacle"], [20], //!!! TEST pointer err
-	//			  [20], [120], [0], 
-	//                        [0], [0]);
+  if(itime==1){ // initializeMicro(types, len, w, u, v,speed,speedLat)
+    //!!!
+	mainroad.initializeMicro( ["bike"], [bike_length],
+				  [bike_width], [150], [0], 
+				 [5], [0]);
 
 
         Math.seedrandom(42); //!! start reproducibly (see docu at onramp.js)
@@ -374,7 +373,7 @@ function updateSim(dt){    // called here by main_loop()
   pushLat=parseFloat(slider_pushLat.value);
 
 
-  nLanes=Math.round(roadWidthRef/wLane);
+  nLanes=Math.max(1, Math.round(roadWidthRef/wLane));
   roadImgLanes.src=roadLanes_srcFileArr[nLanes-1]; // MT 2021
   hasChanged=(roadWidthOld!=roadWidthRef); // redef scale and r to fit window
 
@@ -391,7 +390,7 @@ function updateSim(dt){    // called here by main_loop()
 	mixedModelBikeRef.sensDvy=sensDvy;
   }
 
-  // !!! distribute new models to the vehicles
+  // !! distribute new models to the vehicles
   mainroad.updateSpeedlimits(trafficObjs); // !!! not yet impl. MT 2021-11
   mainroad.calcAccelerations();  
   mainroad.updateSpeedPositions(dt);
@@ -642,7 +641,7 @@ function drawSim() {
 
 function showLogicalCoords(xPixUser,yPixUser){
 
-  //!!! use Road.findNearestDistanceTo
+  //!! use Road.findNearestDistanceTo
 
    // get (x,y) physical coordinates of these pixel coordinates
 
