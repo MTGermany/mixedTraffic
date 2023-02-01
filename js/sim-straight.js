@@ -52,21 +52,6 @@ var showMouseCoords=false;
 
 
 //#############################################################
-// specification of vehicle types and dimensions [SI units]
-// (the actual vehicles are constructed in the road cstr)
-//#############################################################
-
-var car_length=5; 
-var car_width=2.0;
-var truck_length=10;
-var truck_width=2.5; 
-var bike_length=2; // bicycles or motorbikes, depending on parameterisation
-var bike_width=0.7;
-var obstacle_length=10;
-var obstacle_width=1.5;
-
-
-//#############################################################
 // (initial) parameterisation and creation of underlying longmodels
 //#############################################################
 
@@ -127,7 +112,8 @@ var s0yLat=0.60;    // lat. attenuation scale [m] lat veh-veh interact  [0.3]
 var sensLat=1.0;    // sensitivity (max des lat speed)/(long accel) [s] [1.4]
 
 var accBiasRightTruck=0.8;  //MT 2021-11 
-var accBiasRightOthers=0;
+var accBiasRightBike=0.0;  // MT 2023-01
+var accBiasRightOthers=0.0;   // including cars
 var accFloorMax=0.5;        //MT 2021-11 reduced from 6.5
 //  sensDvy in sliders; default 1s/m
 
@@ -184,9 +170,11 @@ commaDigits=2;
 setSlider(slider_inflow, slider_inflowVal, qIn, commaDigits, "veh./s");
 
 //var qIn=parseFloat(slider_inflow.value);
-var fracTruck=parseFloat(slider_fracTruck.value); // !! otherwise string
-var fracBike=parseFloat(slider_fracBike.value);  // frac+frac=e.g.0.20.2!!
-var speedMax=20;    // overridden by slider_speedmax if it exists => html
+var fracTruck=0.01*parseFloat(slider_fracTruck.value); // !! otherwise string
+var fracBike=0.01*parseFloat(slider_fracBike.value);  // frac+frac=e.g.0.20.2!!
+
+// overridden by slider_speedmax if it exists => html
+var speedMax=Math.max(v0,v0Truck,v0Bike);
 var relOutflow=1.;  // outflow/maxflow,
                     //overridden by slider_outflowVal if it exists
 
@@ -194,6 +182,23 @@ var relOutflow=1.;  // outflow/maxflow,
 
 var speedInit=20;
 var densityInit=0.0; 
+
+
+
+
+//#############################################################
+// specification of vehicle types and dimensions/geometry [SI units]
+// (the actual vehicles are constructed in the road cstr)
+//#############################################################
+
+var car_length=5; 
+var car_width=2.0;
+var truck_length=10;
+var truck_width=2.5; 
+var bike_length=2; // bicycles or motorbikes, depending on parameterisation
+var bike_width=0.7;
+var obstacle_length=10;
+var obstacle_width=1.5;
 
 
 

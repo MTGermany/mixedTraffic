@@ -1,3 +1,11 @@
+
+
+//!! v logical coordinate positive towards the RIGHT right
+//!! v logical coordinate negative towards the LEFT left
+
+//!! different from extractPNEUMA !!
+
+
 /**
 ##########################################################
 road segment (link): logic-geometrical properties (u,v),  
@@ -537,12 +545,12 @@ road.prototype.calcAccelerationsOfVehicle=function(i){
     }
 
     //(1a) experimental !!! : Longitudinal push from behind
-    //  just chose the single LEADER
+    //  just chose the single FOLLOWER
     //  with strongest interaction 
     //  initialize with no interaction (nLeaders=0)
 
   if(true){ // pushLong. -lat external slider
-    var gammax=1; //!!! only info purposes; corresponds to pushing/repuslive ratio gamma_x in Papa
+    var gammax=1; //!!! only info purposes; corresponds to pushing/repulsive ratio gamma_x in Papa
     var accLongPush=0;
     for(var ifollow=0; ifollow<nFollowers; ifollow++){
       var j=iFollowers[ifollow];
@@ -615,13 +623,14 @@ road.prototype.calcAccelerationsOfVehicle=function(i){
   // (6) add bias acceleration to the right
 
   var accBiasRight=(this.veh[i].type==="truck")
-      ? accBiasRightTruck : accBiasRightOthers;
+      ? accBiasRightTruck : (this.veh[i].type==="bike")
+      ? accBiasRightBike : accBiasRightOthers;
   this.veh[i].accLat += accBiasRight;
 
 
-  // (7) add lateral accel noise to break some symmetry artifacts
+  // (7) add long and lateral accel noise to break some symmetry artifacts
 
-  var accNoiseAmplLong=1.0; // sig_speedFluct=noiseAcc*sqrt(t*dt/12)  //0.3
+  var accNoiseAmplLong=1.0; // sig_speedFluct=noiseAcc*sqrt(t*dt/12)  //1.0
   var accNoiseAmplLat=0.3; // sig_speedFluct=noiseAcc*sqrt(t*dt/12)  //0.3
 
   var accRnd=accNoiseAmplLong*(Math.random()-0.5);
@@ -1483,7 +1492,7 @@ road.prototype.updateExportString=function(){
         + "\t"+this.veh[i].len.toFixed(2)
         + "\t"+this.veh[i].width.toFixed(2)
         + "\t"+this.veh[i].u.toFixed(2)
-        + "\t"+this.veh[i].v.toFixed(2)
+        + "\t"+(this.veh[i].v).toFixed(3)
         + "\t"+this.veh[i].speed.toFixed(2)
         + "\t"+this.veh[i].speedLat.toFixed(2)
         + "\t"+this.veh[i].accLong.toFixed(2)

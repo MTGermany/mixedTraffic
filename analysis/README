@@ -1,6 +1,31 @@
-Mit Aufzeichnen-Funktionalitaet Trajektorien fuer z.B. RoadWidth11.5 m + lane floor field + 50% bikes, 10% trucks aufzeichnen
 
+chromium ../mixed3lanesTGF22.html &
+start download <simulate> finish download
 mv ~/Downloads/*txt mixedTraffOutput3.txt
-analyze mixedTraffOutput3
+analyze mixedTraffOutput3 10
 gnuplot mixedTraffOutput3.gnu
+
+
+chromium ../bicycle_TGF22.html
+
+# set width to 1.2 m
+mv ~/Downloads/*txt mixedBicycle_w1_2.txt
+analyze mixedBicycle_w1_2 2
+gnuplot mixedBicycle.gnu
+
+# set width to 2 m
+mv ~/Downloads/*txt mixedBicycle_w2_0.txt
+analyze mixedBicycle_w2_0 2
+gnuplot mixedBicycle.gnu
+
+# set width to 2.6 m
+mv ~/Downloads/*txt mixedBicycle_w2_6.txt
+analyze mixedBicycle_w2_6 2
+gnuplot mixedBicycle.gnu
+
+# set width to 3.2 m
+mv ~/Downloads/*txt mixedBicycle_w3_2.txt
+analyze mixedBicycle_w3_2 2.6
+gnuplot mixedBicycle.gnu
+
 

@@ -580,13 +580,13 @@ TrafficObjects.prototype.pickObject=function(xPixUser, yPixUser, distCritPix){
 
 @param obj:         the object to be dropped
 @param road:        a road (traffic-sim.de: network) obj as target of dropping
-@param xPixUser:    users pixel coordinates ((0,0)=left top)
-@param yPixUser:
+@param xUser:    users physical coordinates
+@param yUser:
 @param distCritPix: drop on a road successful if distPix to nearest 
                     road less than distCritPix
 */
 
-// needs global physical coordinates xUser yUser,scale [pix/m]
+
 TrafficObjects.prototype.dropObject=function(obj, road, 
 				    xUser, yUser, distCritPix, scale){
 

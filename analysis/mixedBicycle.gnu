@@ -50,62 +50,85 @@ set term post eps enhanced color solid "Helvetica" 20
 
 
 ##############################################################
-set out "mixedTraffOutput3_histograms.eps"
-print "plotting mixedTraffOutput3_histograms.eps"
+set out "mixedBicycle_w2_0_histograms.eps"
+print "plotting mixedBicycle_w2_0_histograms.eps"
 ##############################################################
 
 set key top left
 
-halfWidth=5.
-
-set xlabel "lateral position y to the right [m]"
-set xrange [-halfWidth:halfWidth]
+set xlabel "lateral position y [m]"
+set xrange [-1.5:1.5]
 set ylabel "\#Vehicles"
 set boxwidth 0.9 relative
 plot\
-  "mixedTraffOutput3.hist" u 1:2 t "Motorcycles"\
+  "mixedBicycle_w2_0.hist" u 1:2 t "Bicycles"\
      w boxes lc rgb "#aa4477ff" lw 2 fs solid 0.50,\
-  "mixedTraffOutput3.hist" u 1:3 t "Other Vehicles"\
+  "mixedBicycle_w2_0.hist" u 1:3 t "Other Vehicles"\
+     w boxes lc rgb "#44000000" lw 3 fs transparent
+
+##############################################################
+set out "mixedBicycle_w2_6_histograms.eps"
+print "plotting mixedBicycle_w2_6_histograms.eps"
+##############################################################
+
+plot\
+  "mixedBicycle_w2_6.hist" u 1:2 t "Bicycles"\
+     w boxes lc rgb "#aa4477ff" lw 2 fs solid 0.50,\
+  "mixedBicycle_w2_6.hist" u 1:3 t "Other Vehicles"\
+     w boxes lc rgb "#44000000" lw 3 fs transparent
+
+##############################################################
+set out "mixedBicycle_w3_2_histograms.eps"
+print "plotting mixedBicycle_w3_2_histograms.eps"
+##############################################################
+
+plot\
+  "mixedBicycle_w3_2.hist" u 1:2 t "Bicycles"\
+     w boxes lc rgb "#aa4477ff" lw 2 fs solid 0.50,\
+  "mixedBicycle_w3_2.hist" u 1:3 t "Other Vehicles"\
      w boxes lc rgb "#44000000" lw 3 fs transparent
 
 
 ##############################################################
-set out "mixedTraffOutput3_xy.eps"
-print "plotting mixedTraffOutput3_xy.eps"
+set out "mixedBicycle_w1_2_histograms.eps"
+print "plotting mixedBicycle_w1_2_histograms.eps"
+##############################################################
+
+plot\
+  "mixedBicycle_w1_2.hist" u 1:2 t "Bicycles"\
+     w boxes lc rgb "#aa4477ff" lw 2 fs solid 0.50,\
+  "mixedBicycle_w1_2.hist" u 1:3 t "Other Vehicles"\
+     w boxes lc rgb "#44000000" lw 3 fs transparent
+
+
+
+
+##############################################################
+set out "mixedBicycle_w2_0_xy.eps"
+print "plotting mixedBicycle_w2_0_xy.eps"
 ##############################################################
 
 set xlabel "longitudinal x [m]"
 set auto x
-set ylabel "lateral y to the right [m]"
-set yrange [-halfWidth:halfWidth]
+set ylabel "lateral y [m]"
 plot\
-  "mixedTraffOutput3.traj" u (filterData($2,0)*$3):($4)\
-    t "Motorcycles" w p ls 7 ps 0.15,\
-  "mixedTraffOutput3.traj" u (filterDataInverse($2,0)*$3):($4)\
-    t "Other vehicles" w p ls 1 ps 0.2
+  "mixedBicycle_w2_0.traj" u (filterData($2,0)*$3):($4)\
+    t "Bicycles" w p ls 7 ps 0.3
 
 
 
 ##############################################################
-set out "mixedTraffOutput3_xt_laneMiddle.eps"
-print "plotting mixedTraffOutput3_xt_laneMiddle.eps"
+set out "mixedBicycle_w2_0_xt_lane2.eps"
+print "plotting mixedBicycle_w2_0_xt_lane2.eps"
 ##############################################################
- 
+
 set xlabel "time [s]"
 set ylabel "longitudinal x [m]"
-set yrange [0:400]
-
-wLane=3.2
+wLane=1.5
 ymin=-0.5*wLane
 ymax=0.5*wLane
 
 plot\
-  "mixedTraffOutput3.traj" u\
+  "mixedBicycle_w2_0.traj" u\
    (filterData($2,0)*selectRange($4,ymin,ymax)*$1):($3)\
-    t "Motorcycles" w p ls 7 ps 0.1,\
-  "mixedTraffOutput3.traj" u\
-   (filterDataInverse($2,0)*selectRange($4,ymin,ymax)*$1):($3)\
-    t "Other vehicles" w p ls 1 ps 0.1,\
-  "mixedTraffOutput3.traj" u\
-   (filterData($2,3)*selectRange($4,ymin,ymax)*$1):($3)\
-    t "red TL" w p ls 12 ps 0.4
+    t "Bicycles" w p ls 7 ps 0.3

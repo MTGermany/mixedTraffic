@@ -70,13 +70,14 @@ int main(int argc, char* argv[]) {
   // ##############################
 
   char   projectName[MAXSTR];
-  if (argc!=2){
-    cerr <<"\nUsage: analyze <projName>\n";
+  if (argc!=3){
+    cerr <<"\nUsage: analyze <projName> <roadWidth_m>\n";
     exit(-1);
   }
-  else {
-    sprintf(projectName,"%s",argv[1]);
- }
+
+  sprintf(projectName,"%s",argv[1]);
+  double roadWidth=atof(argv[2]);
+
 
 
  
@@ -121,28 +122,59 @@ int main(int argc, char* argv[]) {
   int nbike=0;
   int nrest=0;
   for(int i=0; i<nData; i++){
-    if(type[i]=="bike"){
-      y_bike[nbike]=y[i];
-      nbike++;
-    }
-    else{
-      y_rest[nrest]=y[i];
-      nrest++;
+    bool inRange=((x[i]>50)&&(x[i]<400));
+    if(inRange){
+      if(type[i]=="bike"){
+        y_bike[nbike]=y[i];
+        nbike++;
+      }
+      else if(type[i]!="obstacle"){
+        y_rest[nrest]=y[i];
+        nrest++;
+      }
     }
   }
   nbike--;
   nrest--;
   cout<<"nbike="<<nbike<<" nrest="<<nrest<<endl;
 
+  if(false){
+    for(int i=0; i<nrest; i++){
+      cout<<"i="<<i<<" y_rest[i]="<<y_rest[i]<<endl;
+    }
+  }
+  
   int nClass=sqrt(0.5*(nbike+nrest));
   double hist_bikes[nClass];  // double: compatibility write_array
   double hist_rest[nClass];
   double yc[nClass];
-  double roadWidth=11;
   stat.calculate_histogram(y_bike, nbike, -0.5*roadWidth, roadWidth/nClass,
 			   nClass, hist_bikes);
   stat.calculate_histogram(y_rest, nrest, -0.5*roadWidth, roadWidth/nClass,
 			   nClass, hist_rest);
+
+  if(false){// test; overrides stat.histogram
+    double dy=roadWidth/nClass;
+    for(int i=0; i<nrest; i++){
+      int iy=int(nClass/2+round(y_rest[i]/dy));
+      if((iy>=0)&&(iy<nClass)){
+	hist_rest[iy]++;
+      }
+    }
+  }
+
+  if(false){// test the fucking zero accumulation!!! HEUREKA: obstacles as TL!
+    int nPlus=0; int nMinus=0; int nZero=0;
+    double dy=0.06;
+    for(int i=0; i<nrest; i++){
+      if(fabs(y_rest[i])<=0.5*dy){nZero++;}
+      else if((y_rest[i]>-1.5*dy)&&(y_rest[i]<-0.5*dy)){nMinus++;}
+      else if((y_rest[i]<1.5*dy)&&(y_rest[i]>0.5*dy)){nPlus++;}
+    }
+    cout<<"nMinus="<<nMinus<<" nZero="<<nZero<<" nPlus="<<nPlus<<endl;
+    //exit(0);
+  }
+  
   for(int ic=0; ic<nClass; ic++){
     yc[ic]=-0.5*roadWidth+(ic+0.5)*roadWidth/nClass;
     cout<<"y="<<yc[ic]<<" hist_bikes="<<hist_bikes[ic]

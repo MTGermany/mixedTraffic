@@ -911,30 +911,30 @@ slider_outflow.oninput = function() {
 slider_outflowVal.innerHTML=parseInt(100*slider_outflow.value)+" %";
 
 
-// fracTruck slider
+// fracTruck slider (value=fraction, displayed value=%)
 
 var slider_fracTruck = document.getElementById('slider_fracTruck');
 var slider_fracTruckVal = document.getElementById("slider_fracTruckVal");
 slider_fracTruck.oninput = function() {
     console.log("in slider_fracTruck.oninput: this.value="
 		+ slider_fracTruck.value);
-    slider_fracTruckVal.innerHTML = this.value;
+    slider_fracTruckVal.innerHTML = parseInt(100*this.value)+" %";
 }
 
-slider_fracTruckVal.innerHTML=slider_fracTruck.value;
+slider_fracTruckVal.innerHTML=parseInt(100*slider_fracTruck.value)+" %";
 
 
-// fracBike slider
+// fracBike slider  (value=fraction, displayed value=%)
 
 var slider_fracBike = document.getElementById('slider_fracBike');
 var slider_fracBikeVal = document.getElementById("slider_fracBikeVal");
 slider_fracBike.oninput = function() {
     console.log("in slider_fracBike.oninput: this.value="
 		+ slider_fracBike.value);
-    slider_fracBikeVal.innerHTML = this.value;
+    slider_fracBikeVal.innerHTML = parseInt(100*this.value)+" %";
 }
 
-slider_fracBikeVal.innerHTML=slider_fracBike.value;
+slider_fracBikeVal.innerHTML=parseInt(100*slider_fracBike.value)+" %";
 
 
 
@@ -1026,7 +1026,7 @@ slider_speedProbeVal.innerHTML=slider_speedProbe.value;
 //#################################################################
 
 var downloadActive=false; // initialisation
-var dt_export=0.01;          // every dt_export seconds stored in exportString
+var dt_export=0.1;          // every dt_export seconds stored in exportString
 
 function downloadCallback(){ // MT 2021-11
   if(downloadActive){

@@ -7,7 +7,7 @@
 <head>
     <link href="css/styleMixed.css" rel="stylesheet" type="text/css"/>
     <link rel="icon" type="image/x-icon" href="figs/favicon.ico">
-    <title>Mixed Traffic Flow</title> 
+    <title>Bicycle Flow</title> 
 </head>
 
 
@@ -21,7 +21,8 @@
 <!-- ############################################## -->
 
 <div id="header"> 
- Mixed Traffic Flow 
+ Bicycle Flow 
+  <!--<img class="title" src="figs/Mixed_Traffic_Flow.png"  width="100%"/>-->
 </div> 
 
 <div id="infoLink">
@@ -52,9 +53,7 @@
           onclick="myForcefieldToggle()">Display Forces</button>
 
 
-  <!-- can control toggles here in html file! -->
 
-<!--
   <button id="varWidthLeftToggle" 
           onclick="myVarWidthLeftToggle()">Var. width left</button>
   <script> var varWidthLeft=false; </script>
@@ -63,8 +62,15 @@
           onclick="myVarWidthRightToggle()">Var. width right</button>
   <script> var varWidthRight=false; </script>
 
-   -->
+  <!--
+  <button id="floorFieldToggle"
+          onclick="myFloorFieldToggle()">Floor field off</button>
+  <script> var floorField=true; </script>
+  -->
 
+
+
+  <!--
  
   <button id="varWidthLeftToggle" 
           onclick="myVarWidthLeftToggle()">Var. width left off</button>
@@ -73,15 +79,12 @@
   <button id="varWidthRightToggle" 
           onclick="myVarWidthRightToggle()">Var. width right off</button>
   <script> var varWidthRight=true; </script>
-
-
-
-  
+  -->
   
   <button id="floorFieldToggle"
          onclick="myFloorFieldToggle()">Floor field</button>
   <script> var floorField=false; </script>
- 
+
 
 
   
@@ -133,17 +136,17 @@
 <!-- !! ">Density<", not "> Density <" etc because of engl2ger. bash-->
 
 <tr>
-  <td> Timelapse </td>
-  <td> <input id="sliderTimewarp" type="range" min="0" max="10" step="0.05" value="3"></td>
+  <td> Timewarp </td>
+  <td> <input id="sliderTimewarp" type="range" min="0" max="10" step="0.05" value="4"></td>
   <td> <div id="sliderTimewarpVal"></div></td>
 </tr>
 
 
 
 <tr>
-  <td> Road width </td>
+  <td> RoadWidth </td>
   <td> <input id="slider_roadWidth" type="range" 
-              min="2.5" max="21" step="0.5" value="20.5"></td> <!--3*3.5-->
+              min="1.0" max="4.0" step="0.1" value="2"></td> <!--3*3.5-->
   <td> <div id="slider_roadWidthVal"></div></td>
 </tr>
 
@@ -151,7 +154,7 @@
 <tr>
   <td> Inflow </td>
   <td> <input id="slider_inflow" type="range" 
-              min="0" max="2" step="0.01" value="1.7"></td> <!--1.8-->
+              min="0" max="2" step="0.01" value="0.5"></td> <!--1.8-->
   <td> <div id="slider_inflowVal"></div></td>
 </tr>
 
@@ -172,11 +175,13 @@
 </tr>
 -->
 
+
+
 <!-- internal value=fraction, only display is %!  (->gui.js)-->
 <tr>
   <td> Truck perc</td>
   <td> <input id="slider_fracTruck" type="range" 
-              min="0" max="1" step="0.01" value="0.15"></td>
+              min="0" max="1" step="0.01" value="0.00"></td>
   <td> <div id="slider_fracTruckVal"></div></td>
 </tr>
 
@@ -184,13 +189,13 @@
 <tr>
   <td> Bike perc </td>
   <td> <input id="slider_fracBike" type="range" 
-              min="0" max="1" step="0.01" value="0.30"></td> <!--0.2-->
+              min="0" max="1" step="0.01" value="1.00"></td> <!--0.2-->
   <td> <div id="slider_fracBikeVal"></div></td>
 </tr>
 
 
 <tr>
-  <td> tau<sub>latOVM</sub> </td>
+  <td> tau<sub>lat,SFM</sub> </td>
   <td> <input id="slider_tauLatOVM" type="range" 
               min="0.2" max="3" step="0.1" value="1.0"></td> <!--0.8-->
   <td> <div id="slider_tauLatOVMVal"></div></td>
@@ -279,7 +284,7 @@
 <script src="js/road.js"></script>
 
 <script src="js/gui.js" type="text/javascript"></script>
-<script src="js/sim-straight.js"></script>
+<script src="js/sim-straight-bike.js"></script>
 
 
 </body>

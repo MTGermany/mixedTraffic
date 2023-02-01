@@ -18,6 +18,16 @@ README_link
 *.bash
 *.fig
 
+## figure files of analysis folder
+
+analysis/*.eps
+analysis/*.png
+
+## generated data files by download
+
+analysis/*.hist
+analysis/*.traj
+analysis/*.txt
 
 
 *_ger.js

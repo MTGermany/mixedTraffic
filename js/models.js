@@ -364,7 +364,7 @@ MTM.prototype.calcAccLong=function(dx,dy,vx,vxl,axl,Ll,Wavg){
     var alpha=Math.min(Math.exp(-sy/this.s0y), 1);
 
     // reduce longInt if parallel (dx<Ll) and no collision (sy>0)
-    if((dx<Ll)&&(sy>0)){ alpha*=this.longParReductFactor;}  
+    if((dx<Ll)&&(sy>0)){ alpha*=this.longParReductFactor;} // factor=0 
 
 
     // tests (set stochasticity noiseAcc in this.longModel.calcAcc=0 
