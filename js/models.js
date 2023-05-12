@@ -641,8 +641,8 @@ MTM.prototype.calcAccB=function(widthLeft,widthRight,x,y,vx,vy,Wveh){
   for(var j=0; j<this.nj; j++){
     var TTC=j*dTantic;
     var weight=Math.exp(-TTC/Tantic);
-    var syLeft =widthLeft(x+vx*TTC) +y-0.5*Wveh;
-    var syRight=widthRight(x+vx*TTC)-y-0.5*Wveh;
+    var syLeft =widthLeft(x+vx*TTC) +y-0.5*Wveh; // y positive to right
+    var syRight=widthRight(x+vx*TTC)-y-0.5*Wveh; // y corresp to vehicle.v
 
     // calculate locally implied v0yB to avoid B-collisions
     // only active if syLeft<0 => v0yB>0 or syRight<0 => v0yB<0

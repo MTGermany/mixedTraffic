@@ -4,6 +4,15 @@
 // Gloal var definitions and initial settings
 //#############################################################
 
+// (0) project-specific tweaks in
+// ~/versionedProjects/mixedTraffic/analysis/analyze.cpp
+
+
+// record data only after some distance from the upstream end
+// var startRecording_at_u=40;  
+
+
+
 // (1) running the simulation
 
 var fps=30;  // frames per second (unchanged during runtime)

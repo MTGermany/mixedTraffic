@@ -49,77 +49,71 @@ set term post eps enhanced color solid "Helvetica" 20
 #set term pngcairo enhanced color notransparent crop font "Helvetica,12" #better
 
 
-##############################################################
-set out "mixedBicycle_w2_0_histograms.eps"
-print "plotting mixedBicycle_w2_0_histograms.eps"
-##############################################################
+set key box top right
+unset key
+set size 0.7,1
 
-set key top left
-
-set xlabel "lateral position y [m]"
-set xrange [-1.5:1.5]
-set ylabel "\#Vehicles"
+set xlabel "lateral position y [m]" 
+set xrange [-1.1:1.1]
+set ylabel "\#Vehicles" offset 1,0
 set boxwidth 0.9 relative
-plot\
-  "mixedBicycle_w2_0.hist" u 1:2 t "Bicycles"\
+
+##############################################################
+set out "mixedBicycle_w1_0_histograms.eps"
+print "plotting mixedBicycle_w1_0_histograms.eps"
+##############################################################
+
+plot[t=0:1]\
+  "mixedBicycle_w1_0.hist" u 1:2 t "Bicycles"\
      w boxes lc rgb "#aa4477ff" lw 2 fs solid 0.50,\
-  "mixedBicycle_w2_0.hist" u 1:3 t "Other Vehicles"\
-     w boxes lc rgb "#44000000" lw 3 fs transparent
+   -0.5, 1200*t w l ls 11,\
+   0.5, 1200*t w l ls 11
+
 
 ##############################################################
-set out "mixedBicycle_w2_6_histograms.eps"
-print "plotting mixedBicycle_w2_6_histograms.eps"
+set out "mixedBicycle_w1_6_histograms.eps"
+print "plotting mixedBicycle_w1_6_histograms.eps"
 ##############################################################
 
-plot\
-  "mixedBicycle_w2_6.hist" u 1:2 t "Bicycles"\
+plot[t=0:1]\
+  "mixedBicycle_w1_6.hist" u 1:2 t "Bicycles"\
      w boxes lc rgb "#aa4477ff" lw 2 fs solid 0.50,\
-  "mixedBicycle_w2_6.hist" u 1:3 t "Other Vehicles"\
-     w boxes lc rgb "#44000000" lw 3 fs transparent
+   -0.8, 800*t w l ls 11,\
+   0.8, 800*t w l ls 11
+     
 
 ##############################################################
-set out "mixedBicycle_w3_2_histograms.eps"
-print "plotting mixedBicycle_w3_2_histograms.eps"
+set out "mixedBicycle_w2_4_histograms.eps"
+print "plotting mixedBicycle_w2_4_histograms.eps"
 ##############################################################
 
-plot\
-  "mixedBicycle_w3_2.hist" u 1:2 t "Bicycles"\
+plot[t=0:1]\
+  "mixedBicycle_w2_4.hist" u 1:2 t "Bicycles"\
      w boxes lc rgb "#aa4477ff" lw 2 fs solid 0.50,\
-  "mixedBicycle_w3_2.hist" u 1:3 t "Other Vehicles"\
-     w boxes lc rgb "#44000000" lw 3 fs transparent
-
-
-##############################################################
-set out "mixedBicycle_w1_2_histograms.eps"
-print "plotting mixedBicycle_w1_2_histograms.eps"
-##############################################################
-
-plot\
-  "mixedBicycle_w1_2.hist" u 1:2 t "Bicycles"\
-     w boxes lc rgb "#aa4477ff" lw 2 fs solid 0.50,\
-  "mixedBicycle_w1_2.hist" u 1:3 t "Other Vehicles"\
-     w boxes lc rgb "#44000000" lw 3 fs transparent
-
+   -1.2, 800*t w l ls 11,\
+   1.2, 800*t w l ls 11
 
 
 
 ##############################################################
-set out "mixedBicycle_w2_0_xy.eps"
-print "plotting mixedBicycle_w2_0_xy.eps"
+set out "mixedBicycle_w1_6_xy.eps"
+print "plotting mixedBicycle_w1_6_xy.eps"
 ##############################################################
+
+set size 1,1
 
 set xlabel "longitudinal x [m]"
 set auto x
 set ylabel "lateral y [m]"
 plot\
-  "mixedBicycle_w2_0.traj" u (filterData($2,0)*$3):($4)\
+  "mixedBicycle_w1_6.traj" u (filterData($2,0)*$3):($4)\
     t "Bicycles" w p ls 7 ps 0.3
 
 
 
 ##############################################################
-set out "mixedBicycle_w2_0_xt_lane2.eps"
-print "plotting mixedBicycle_w2_0_xt_lane2.eps"
+set out "mixedBicycle_w1_6_xt_lane2.eps"
+print "plotting mixedBicycle_w1_6_xt_lane2.eps"
 ##############################################################
 
 set xlabel "time [s]"
@@ -129,6 +123,6 @@ ymin=-0.5*wLane
 ymax=0.5*wLane
 
 plot\
-  "mixedBicycle_w2_0.traj" u\
+  "mixedBicycle_w1_6.traj" u\
    (filterData($2,0)*selectRange($4,ymin,ymax)*$1):($3)\
     t "Bicycles" w p ls 7 ps 0.3

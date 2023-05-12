@@ -55,7 +55,7 @@ function road(roadID, isRing, roadLen, axis_x, axis_y, widthLeft, widthRight,
                          // ObstacleTLDepot objects)
   
   
-  // MT 2021-11 assume roadWidthRef is multiple of wLane
+  // !!! MT 2021-11 assume roadWidthRef is multiple of wLane
   // wLane top-level var
 
   console.log("road cstr: wLane=",wLane," this.widthLeft=",this.widthLeft);
@@ -618,8 +618,27 @@ road.prototype.calcAccelerationsOfVehicle=function(i){
 	: (this.veh[i].type=="bike")
 	? + accFloorMax*Math.sin(phase) : 0;
 	this.veh[i].accLat += accFloor;
+
+    // (5a) Tweak to forbid bikes to go to the utter left space as observed
+    // in the Athens pNEUMA d8* data
+    // (js guaranteed to stop evaluation if first cond of an AND is false)
+    // to right is positive in mixed traffic sim
+
+    if( (!(typeof bikesNoLeftSpace === 'undefined'))
+	&& bikesNoLeftSpace  && (this.veh[i].type=="bike")){
+      var widthLeftLocal=this.widthLeft(this.veh[i].u);
+      var dyLeft=widthLeftLocal-0.5*this.veh[i].width+this.veh[i].v;
+      var accTweak=42*Math.exp(-dyLeft/0.6); // numbers here OK
+      this.veh[i].accLat += accTweak; 
+      if(accTweak>1){
+	console.log("bikesNoLeftSpace=true: this.veh[i].v=",this.veh[i].v,
+		    " dyLeft=",dyLeft,
+		    " accAddtl=",42*Math.exp(-dyLeft/0.3));
+      }
+    }
   }
 
+  
   // (6) add bias acceleration to the right
 
   var accBiasRight=(this.veh[i].type==="truck")

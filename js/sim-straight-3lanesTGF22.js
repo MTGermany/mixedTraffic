@@ -5,6 +5,14 @@
 // see also gui -> dt_export for time interval download
 //#############################################################
 
+// (0) project-specific tweaks
+
+
+// in the Athens d8* data, the bikes did not use the space
+// left lane - boundary
+var bikesNoLeftSpace=true;  
+
+
 // (1) running the simulation
 
 var fps=30;  // frames per second (unchanged during runtime)
@@ -59,13 +67,13 @@ var showMouseCoords=false;
 
 var v0=16;
 var Tgap=1;
-var s0=2;
+var s0=3;
 var amax=2;
 var bcomf=2;
 
 var v0Truck=12;
 var TgapTruck=1.5;
-var s0Truck=2;
+var s0Truck=3;
 var amaxTruck=1;
 var bcomfTruck=2;
 
@@ -111,12 +119,12 @@ var speedLatStuck=1.2;   // max lateral speed if long speed low!!DOS!!!
 // s0yLat: cars should be straight in lane in 
 var s0y=0.15;       // lat. attenuation scale [m] long veh-veh interact [0.15]
 var s0yLat=0.20;    // lat. attenuation scale [m] lat veh-veh interact  [0.3]
-var sensLat=1.0;    // sensitivity (max des lat speed)/(long accel) [s] [1.4]
+var sensLat=0.5;    // sensitivity (max des lat speed)/(long accel) [s] [1.4]
 
-var accBiasRightTruck=0.8;  // MT 2021-11 
-var accBiasRightBike=-0.3;  // MT 2023-01
-var accBiasRightOthers=0.0; // including cars
-var accFloorMax=1.0;        // MT 2023-01 standard 0.5
+var accBiasRightTruck=0.2;  // MT 2021-11 
+var accBiasRightBike=-0.4;  // MT 2023-01
+var accBiasRightOthers=0.1; // including cars
+var accFloorMax=0.5;        // MT 2023-01 standard 0.5
 //  sensDvy in sliders; default 1s/m
 
 
@@ -167,7 +175,7 @@ var mixedModelObstacle=new ModelObstacle();
 // initial traffic flow and composition settings ctrl by sliders
 //#############################################################
 
-qIn=6300./3600; 
+qIn=1.5; 
 commaDigits=2;
 setSlider(slider_inflow, slider_inflowVal, qIn, commaDigits, "veh./s");
 
@@ -188,20 +196,28 @@ var densityInit=0.0;
 // traffic light presets
 //#############################################################
 
-var cycleTL=45; // drone d1 setting
-var greenMain=25;
-var TL0_u=50;
-var TL1_u=296;
-var TL1_phaseshift=(TL1_u-TL0_u)/(0.65*speedMax);
+var cycleTL=90; // drone d1 setting
+var greenMain0=90-42;
+var greenMain1=90-50;
+var greenMain2=30; // fake TL to make spillover effect of data
+var TL0_u=198;  //as the .trafficLights<n> file of extractTraj_pNEUMA
+var TL1_u=340;
+var TL2_u=395;
+//var TL1_phaseshift=(TL1_u-TL0_u)/(0.65*speedMax);
+var TL1_phaseshift=8;
+var TL2_phaseshift=0;
 var TL0_pastState="red";
 var TL1_pastState="red";
+var TL2_pastState="red";
 
 function nextTLphase(){
   //console.log("in nextTLphase: time=",time);
   var TL0_phase=(time%cycleTL);
   var TL1_phase=((time+cycleTL-TL1_phaseshift)%cycleTL);
-  var TL0_state=(TL0_phase<greenMain) ? "green" : "red";
-  var TL1_state=(TL1_phase<greenMain) ? "green" : "red";
+  var TL2_phase=((time+cycleTL-TL2_phaseshift)%cycleTL);
+  var TL0_state=(TL0_phase<greenMain0) ? "green" : "red";
+  var TL1_state=(TL1_phase<greenMain1) ? "green" : "red";
+  var TL2_state=(TL2_phase<greenMain2) ? "green" : "red";
 
 
   // if condition because, for some strange reason, setTrafficLight
@@ -214,6 +230,10 @@ function nextTLphase(){
   if(TL1_state!=TL1_pastState){
     trafficObjs.setTrafficLight(TL[1], TL1_state);
     TL1_pastState=TL1_state;
+  }
+  if(TL2_state!=TL2_pastState){
+    trafficObjs.setTrafficLight(TL[2], TL2_state);
+    TL2_pastState=TL2_state;
   }
 
 
@@ -251,9 +271,13 @@ var roadLen=400; //300
 
 //20 MT 2021 !!! BUG floorfield only uneven number
 
-var wLane=3.4;  // lane width if floorField is on
-var roadWidthRef=parseFloat(slider_roadWidth.value);
-var nLanes=Math.round(roadWidthRef/wLane);
+var wLane=3.2;  // lane width if floorField is on
+var nLanes=3;
+var roadWidthRef=wLane*nLanes;
+var nDigits=1;
+setSlider(slider_roadWidth, slider_roadWidthVal, roadWidthRef, nDigits, "m");
+
+
 
 // if isRing, inflow automatically ignored and road geom not implemented
 
@@ -357,7 +381,7 @@ var umax=250;    // downstream boundary of sampled region [m];
 
 
 // TrafficObjects(canvas,nTL,nLimit,xRelDepot,yRelDepot,nRow,nCol)
-var nTL=2;
+var nTL=3;
 var trafficObjs=new TrafficObjects(canvas,nTL,3,0.62,0.22,1,9);
 var TL=trafficObjs.trafficObj.slice(0,nTL);  // last index not included
 
@@ -391,7 +415,9 @@ function updateSim(dt){    // called here by main_loop()
 			    axis_x(TL0_u), axis_y(TL0_u), 20, scale);
       trafficObjs.dropObject(TL[1], mainroad,
 			    axis_x(TL1_u), axis_y(TL1_u), 20, scale);
-      
+      trafficObjs.dropObject(TL[2], mainroad,
+			    axis_x(TL2_u), axis_y(TL2_u), 20, scale);
+     
       Math.seedrandom(42); //!! start reproducibly (see docu at onramp.js)
 
     }
