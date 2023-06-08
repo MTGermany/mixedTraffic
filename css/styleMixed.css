@@ -359,15 +359,29 @@ input[type="file"] {
 }
 
 
-/* (5) position of the copyright: left bottom of simCanvas */
+/* (5a) position of the links, e.g., traffic-simulation.de */
+#links{ 
+  position: absolute;
+  top: 10.5vmin;
+  left: 1vw;
+  background-color: rgba(255,255,255,0.7);
+  padding-left: 0.5vmin;
+  padding-right: 0.5vmin;
+  border: 1px solid black;
+  font-size: 2vmin;
+  z-index: 1; /* the higher the integer, the more on top */
+}
+
+/* (5b) position of the copyright: left bottom of simCanvas */
 
 #impressum{ 
   position: absolute;
   bottom: 1vmin;
-  height: 2.5vmin;
   left: 1vw;
-  width: 10vw;
-  background-color: rgba(255,255,255,0.5);
+  background-color: rgba(255,255,255,0.6);
+  padding-left: 0.5vmin;
+  padding-right: 0.5vmin;
+  border: 1px solid black;
   font-size: 2vmin;
   z-index: 1; /* the higher the integer, the more on top */
 }
@@ -393,7 +407,7 @@ TR{
   height: 34vh;
   left: 35vmin; 
   width: 30vw;
-  background-color: rgba(255,255,255,0.4);
+  background-color: rgba(255,255,255,0.6);
   z-index: 2; /* the higher the integer, the more on top */
 }
 
