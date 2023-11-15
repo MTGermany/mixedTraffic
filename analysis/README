@@ -8,7 +8,11 @@ gnuplot mixedTraffOutput3.gnu
 
 rm ~/Downloads/*txt
 
+#########################################################################
+# bicycles
 # analyze <projName> <roadWidth_m>  [<startHist_at_u>]  [<endHist_at_u>]
+#########################################################################
+
 chromium ../bicycle_TGF22.html
 
 # set width to 1.0 m and apply end bottleneck
@@ -22,7 +26,12 @@ mv ~/Downloads/*txt mixedBicycle_w1_6.txt
 analyze mixedBicycle_w1_6 1.6 80 170
 gnuplot mixedBicycle.gnu
 
-# set width to 2.4 m
+# set width to 2.0 m and apply end bottleneck
+mv ~/Downloads/*txt mixedBicycle_w2_0.txt
+analyze mixedBicycle_w2_0 1.8 80 170
+gnuplot mixedBicycle.gnu
+
+# set width to 2.4 m (or 2.6 m, then 3 lanes)
 mv ~/Downloads/*txt mixedBicycle_w2_4.txt
 analyze mixedBicycle_w2_4 2.0 80 170
 gnuplot mixedBicycle.gnu

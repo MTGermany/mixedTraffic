@@ -75,14 +75,14 @@ print "plotting mixedTraffOutput3_xy.eps"
 ##############################################################
 
 set xlabel "Distance x [m]"
-set auto x
+set xrange [200:300]
 set ylabel "Distance y to the right [m]"
 set yrange [-halfWidth:halfWidth]
 plot\
   "mixedTraffOutput3.traj" u (filterData($2,0)*$3):($4)\
-    t "Motorcycles" w p ls 7 ps 0.15,\
+    t "Motorcycles" w p ls 7 ps 0.6,\
   "mixedTraffOutput3.traj" u (filterDataInverse($2,0)*$3):($4)\
-    t "Other vehicles" w p ls 1 ps 0.2
+    t "Other vehicles" w p ls 1 ps 0.8
 
 
 

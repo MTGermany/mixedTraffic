@@ -109,6 +109,25 @@ plot\
   "mixedBicycle_w1_6.traj" u (filterData($2,0)*$3):($4)\
     t "Bicycles" w p ls 7 ps 0.3
 
+##############################################################
+set out "mixedBicycle_w2_0_xy.eps"
+print "plotting mixedBicycle_w2_0_xy.eps"
+##############################################################
+
+plot\
+  "mixedBicycle_w2_0.traj" u (filterData($2,0)*$3):($4)\
+    t "Bicycles" w p ls 7 ps 0.3
+
+##############################################################
+set out "mixedBicycle_w2_4_xy.eps"
+print "plotting mixedBicycle_w2_4_xy.eps"
+############################################# habe 2.6m statt 2.4m gewaehlt
+
+set xrange [10:190]
+plot\
+  "mixedBicycle_w2_4.traj" u (filterData($2,0)*$3):($4)\
+    t "Bicycles" w p ls 7 ps 0.3
+set auto x
 
 
 ##############################################################
@@ -118,6 +137,7 @@ print "plotting mixedBicycle_w1_6_xt_lane2.eps"
 
 set xlabel "time [s]"
 set ylabel "longitudinal x [m]"
+set yrange [0:200]
 wLane=1.5
 ymin=-0.5*wLane
 ymax=0.5*wLane
@@ -126,3 +146,47 @@ plot\
   "mixedBicycle_w1_6.traj" u\
    (filterData($2,0)*selectRange($4,ymin,ymax)*$1):($3)\
     t "Bicycles" w p ls 7 ps 0.3
+
+##############################################################
+set out "mixedBicycle_w1_0_xt_lane2.eps"
+print "plotting mixedBicycle_w1_0_xt_lane2.eps"
+##############################################################
+
+wLane=1.0
+ymin=-0.5*wLane
+ymax=0.5*wLane
+
+plot\
+  "mixedBicycle_w1_0.traj" u\
+   (filterData($2,0)*selectRange($4,ymin,ymax)*$1):($3)\
+    t "Bicycles" w p ls 7 ps 0.3
+
+##############################################################
+set out "mixedBicycle_w2_0_xt_lane2.eps"
+print "plotting mixedBicycle_w2_0_xt_lane2.eps"
+##############################################################
+
+wLane=2.0
+ymin=-0.5*wLane
+ymax=0.5*wLane
+
+plot\
+  "mixedBicycle_w2_0.traj" u\
+   (filterData($2,0)*selectRange($4,ymin,ymax)*$1):($3)\
+    t "Bicycles" w p ls 7 ps 0.3
+
+##############################################################
+set out "mixedBicycle_w2_4_xt_lane2.eps"
+print "plotting mixedBicycle_w2_4_xt_lane2.eps"
+##############################################################
+
+wLane=2.4
+ymin=-0.5*wLane
+ymax=0.5*wLane
+
+plot\
+  "mixedBicycle_w2_4.traj" u\
+   (filterData($2,0)*selectRange($4,ymin,ymax)*$1):($3)\
+    t "Bicycles" w p ls 7 ps 0.3
+
+
