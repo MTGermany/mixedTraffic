@@ -31,11 +31,11 @@ Driver Model, or variants thereof.
 
 This simulation uses JavaScript together with html5.
 
-The master html file index.html, starts the actual simulation by the canvas tag:
+The master html file index.html contains the canvas which contains the visual simulation and essentially covers the whole viewport
 ```html
 <canvas id="canvas_mixed"...> ...  </canvas>
 ```
-What to do with this canvas is specified in the _init()_ procedure of sim-straight.js which starts the simulation and is assocoated with this canvas by the first command of the init procedure,
+What to do with this canvas is specified in the _init()_ procedure of sim-straight.js which assocoates this canvas with a JavaScript object by the first command of the init procedure,
 
 ```
  canvas = document.getElementById("canvas_mixed");
@@ -57,13 +57,6 @@ The javascript code is organized in a main file _sim-straight.js_
 controlling the whole simulation, into pseudo objects in appropriately
 named files, and into files providing helper functions as follows:
 
-### gui.js
-
-Callbacks for all the interactive elements (mouseover, sliders,
-buttons) including a possibility to load own initial configurations in
-form of external files. See
-[www.mtreiber.de/mixedTraffic/info.html](http://www.mtreiber.de/mixedTraffic/info.html)
-for more details.
 
 ### road.js
 
@@ -109,6 +102,14 @@ a collection of pseudo-classes for the underlying longitudinal
 car-following models, presently, the IDM and the ACC model (see Ref[2]
 for details) as well as the MTM (Ref [1]) generalizing the longitudinal models
 to a fully twodimensional dynamics.
+
+### gui.js
+
+Callbacks for all the interactive elements (mouseover, sliders,
+buttons) including a possibility to load own initial configurations in
+form of external files. See
+[www.mtreiber.de/mixedTraffic/info.html](http://www.mtreiber.de/mixedTraffic/info.html)
+for more details.
 
 ### plotxy.js
 
