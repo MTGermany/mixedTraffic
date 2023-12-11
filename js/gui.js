@@ -845,9 +845,10 @@ function setSlider(slider, sliderHTMLval, value, commaDigits, str_units){
 var sliderTimewarp = document.getElementById('sliderTimewarp');
 var sliderTimewarpVal = document.getElementById("sliderTimewarpVal");
 sliderTimewarp.oninput = function() {
-    console.log("in sliderTimewarp.onchange: this.value="
-		+ sliderTimewarp.value);
-    sliderTimewarpVal.innerHTML = this.value+" times";
+  console.log("in sliderTimewarp.onchange: this.value="
+	      + sliderTimewarp.value);
+  sliderTimewarpVal.innerHTML = this.value+" times";
+  dt=parseFloat(sliderTimewarp.value)/fps;
 }
 
 sliderTimewarpVal.innerHTML=sliderTimewarp.value+" times";
@@ -1026,8 +1027,8 @@ slider_speedProbeVal.innerHTML=slider_speedProbe.value;
 //#################################################################
 
 var downloadActive=false; // initialisation
-var dt_export=0.1;          // every dt_export seconds stored in exportString
-
+var dt_export=0.05;          // every dt_export seconds stored in exportString
+                           // actual storing triggered in road.js
 function downloadCallback(){ // MT 2021-11
   if(downloadActive){
     performDownload();

@@ -628,7 +628,7 @@ road.prototype.calcAccelerationsOfVehicle=function(i){
 	&& bikesNoLeftSpace  && (this.veh[i].type=="bike")){
       var widthLeftLocal=this.widthLeft(this.veh[i].u);
       var dyLeft=widthLeftLocal-0.5*this.veh[i].width+this.veh[i].v;
-      var accTweak=42*Math.exp(-dyLeft/0.6); // numbers here OK
+      var accTweak=42*Math.exp(-dyLeft/0.4); // numbers here OK
       this.veh[i].accLat += accTweak; 
       if(accTweak>1){
 	console.log("bikesNoLeftSpace=true: this.veh[i].v=",this.veh[i].v,
@@ -1501,9 +1501,9 @@ road.prototype.writeVehiclesToFile= function(filename) {
 
 road.prototype.updateExportString=function(){
 
-  var rest=time/dt_export-Math.floor((time+0.0001)/dt_export);
-  
-  if(rest<dt-0.0001){
+  var ditime=Math.floor(dt_export/dt+1);
+  console.log("road.updateExportString: time=",time.toFixed(2)," dt=",dt.toFixed(2)," ditime=",ditime,"(itime%ditime==0)=",((itime%ditime==0) ? "true" : "false"));
+  if(itime%ditime==0){
     for(var i=0; i<this.veh.length; i++){
       this.exportString=this.exportString+"\n"+time.toFixed(2)
         + "\t"+this.veh[i].id

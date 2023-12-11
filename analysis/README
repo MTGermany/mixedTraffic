@@ -1,12 +1,35 @@
 
-chromium ../mixed3lanesTGF22.html &
-start download <simulate> finish download
+master file at
+~/versionedProjects/mixedTraffic/analysis
 
-mv ~/Downloads/*txt mixedTraffOutput3.txt
-analyze mixedTraffOutput3 10
-gnuplot mixedTraffOutput3.gnu
+Final data and plot files copied tp paper:
+~/papers/2023_IntellAgentModel_TGF-TRL/data/
+
+#########################################################################
+# 3-lane road:
+# analyze <projName> <roadWidth_m>  [<startHist_at_u>]  [<endHist_at_u>]
+#########################################################################
+
 
 rm ~/Downloads/*txt
+chromium ../mixed3lanesTGF22_xt.html &
+<start download at t=140, simulate, finish download at t=300>
+
+mv ~/Downloads/*txt mixedTraffOutput3_xt.txt
+ulimit -s unlimited
+analyze mixedTraffOutput3_xt 10
+#analyze <projName> <roadWidth_m> [<startHist_at_u>] [<endHist_at_u>]
+
+
+
+chromium ../mixed3lanesTGF22_xy.html &
+<timelapse at 1>  (shorter time interval for save)
+<start download at t=10, simulate, finish download at t=100>
+mv ~/Downloads/*txt mixedTraffOutput3_xy.txt
+analyze mixedTraffOutput3_xy 10
+
+gnuplot mixedTraffOutput3.gnu
+ 
 
 #########################################################################
 # bicycles

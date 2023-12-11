@@ -500,6 +500,8 @@ MTM.prototype.calcAccLatInt=function(x,xl,y,yl,vx,vxl,vy,vyl,axl,
   var mult_dv_factor=(overlap)
 	? 1 : Math.max(0., 1.-this.sensDvy*sign_dy*(vyl-vy));
 
+  // !!sensDvy can be set=0 in sliders =>  mult_dv_factor=1
+  
   var accLatInt=v0LatInt/this.tauLatOVM*mult_dv_factor;
 
   
@@ -568,7 +570,7 @@ where
 sStop=s0+vT+v^2/(2b):             stopping distance
 lam=1/sStop:                      long attenuation scale
 ayB(x,y)=-accRef*f(w_rB(x)-y-W/2)  local lat accel induced by right boundary
-ayB(x,y)=+accRef*f(w_lB(x)+y-W/2)  local lat accel induced by right boundary
+ayB(x,y)=+accRef*f(w_lB(x)+y-W/2)  local lat accel induced by left boundary
 f(sy)=exp(-sy/syLatB)              fraction ayB(sy)/ayB(sy=0) for sy>0
 f(sy)=1                            fraction ayB(sy)/ayB(sy=0) for sy<=0
 accRef=b                           max lat acceleration by boundary
@@ -612,13 +614,15 @@ MTM.prototype.alphaLatBfun=function(sy){
 
 MTM.prototype.calcAccB=function(widthLeft,widthRight,x,y,vx,vy,Wveh){
 
+  // Look at the !!! sections. I deactivated most of the complications
+  // and the result was even better for the standard situation
+  // (even hard to get a jam at full input)
 
-
-  //var log=true; MT 2019-08
   var log=false;
   
   var Tantic=this.anticFactorB*(this.longModel.T);
-  var dTantic=2*Tantic/this.nj; // sampling width (weight=0 ... exp(-2))
+  //var dTantic=1*Tantic/this.nj; // sampling width (weight=0 ... exp(-2))
+  var dTantic=0; // !!! Test: no boundary anticipation. Reduces lateral wiggling
   //var denom=1./(1-Math.exp(-dTantic/Tantic)); // geom series 1/(1-q)
 
   var alphaLongLeftMax=0; // multiplication alpha(sy)*alpha(sx)
@@ -683,15 +687,16 @@ MTM.prototype.calcAccB=function(widthLeft,widthRight,x,y,vx,vy,Wveh){
   var accLongB =this.accLongBRef*( - alphaLongLeftMax - alphaLongRightMax);
   var accLatB0  =this.accLatBRef *( + alphaLatLeftMax  - alphaLatRightMax);
 
-  //!!!
-  accLongB *=vx/v0max; 
+  accLongB *=vx/v0max; //OK
 
   
   // add OVM like effect
   // active if boundaries induce lateral component of desired velocity 
   // ! no -vy/tauLatOVM since already taken care of at accFree
   
-  accLatB =accLatB0+v0y/this.tauLatOVM;  
+  //accLatB =accLatB0+v0y/this.tauLatOVM;  
+  accLatB =accLatB0; //!!!
+  accLatB *=(0.2+0.8*vx/v0max); //!!!
 
 
   // apply restrictions (rarely in effect)

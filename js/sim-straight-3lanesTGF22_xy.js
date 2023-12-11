@@ -194,6 +194,7 @@ var densityInit=0.0;
 
 //#############################################################
 // traffic light presets
+// already active if later on trafficObjs.dropObject not commented out
 //#############################################################
 
 var cycleTL=90; // drone d1 setting
@@ -410,14 +411,14 @@ function updateSim(dt){    // called here by main_loop()
 
 
       // trafficObs.dropObject(road,obj,xPhys, yPhys,distCritPix, scale)
-
-      trafficObjs.dropObject(TL[0], mainroad,
+      if(false){// do not activate TL for xy plots
+        trafficObjs.dropObject(TL[0], mainroad,
 			    axis_x(TL0_u), axis_y(TL0_u), 20, scale);
-      trafficObjs.dropObject(TL[1], mainroad,
+        trafficObjs.dropObject(TL[1], mainroad,
 			    axis_x(TL1_u), axis_y(TL1_u), 20, scale);
-      trafficObjs.dropObject(TL[2], mainroad,
+        trafficObjs.dropObject(TL[2], mainroad,
 			    axis_x(TL2_u), axis_y(TL2_u), 20, scale);
-     
+      }
       Math.seedrandom(42); //!! start reproducibly (see docu at onramp.js)
 
     }
