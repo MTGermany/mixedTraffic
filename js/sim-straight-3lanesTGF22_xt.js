@@ -67,21 +67,21 @@ var showMouseCoords=false;
 //#############################################################
 
 var v0=12;
-var Tgap=1.2;
+var Tgap=1.5;
 var s0=3;
-var amax=2;
+var amax=1.5;
 var bcomf=2;
 
-var v0Truck=11;
-var TgapTruck=1.5;
+var v0Truck=10;
+var TgapTruck=1.8;
 var s0Truck=3;
-var amaxTruck=1;
-var bcomfTruck=2;
+var amaxTruck=0.8;
+var bcomfTruck=1;
 
-var v0Bike=13;
-var TgapBike=0.6;
+var v0Bike=14;
+var TgapBike=0.8;
 var s0Bike=1.5;
-var amaxBike=3;
+var amaxBike=2;
 var bcomfBike=2;
 var v0Obstacle=0;
 
@@ -107,20 +107,19 @@ var speedmap_max=Math.max(v0, v0Truck, v0Bike); // max speed (fixed in sim)
 // (1) model constants (behavioural and graphical)
 
 // lateral kinematics restrictions
+// (var accNoiseAmplLong=1; and accNoiseAmplLat=0.3; in road, before restr)
 
-var dvdumax=0.3;       // tan of maximum angle with respect to road axis
-                       // (overridden by MTM.v0LatEvadeObstacles
-                       // if long speed is very small/zero)
-var dotdvdumax=0.3;    // max change rate of angle to road axis
-var phiVehRelMax=0.10; // only drawing: maximum visual angle to road axis
-var speedLatStuck=1.2;   // max lateral speed if long speed low!!DOS!!!
+var dvdumax=0.3;       // 0.3 tan of maximum angle with respect to road axis
+var dotdvdumax=0.3;    // 0.3 max change rate of angle to road axis
+var phiVehRelMax=0.1;  // 0.1 OK only drawing: max visual angle to road axis
+var speedLatStuck=1.2; // 1.2 OK lift angle restriction if obstacle ahead
 
 
 // lateral force constants
 // s0yLat: cars should be straight in lane in 
 var s0y=0.15;       // lat. attenuation scale [m] long veh-veh interact [0.15]
-var s0yLat=0.20;    // lat. attenuation scale [m] lat veh-veh interact  [0.3]
-var sensLat=0.5;    // sensitivity (max des lat speed)/(long accel) [s] [1.4]
+var s0yLat=0.15;    // lat. attenuation scale [m] lat veh-veh interact  [0.3]
+var sensLat=0.5;    // sensit. sigma (max des speedLat)/accLong [s] [0.5]
 
 var accBiasRightTruck=0.2;  // MT 2021-11 
 var accBiasRightBike=-0.4;  // MT 2023-01

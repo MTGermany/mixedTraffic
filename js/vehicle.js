@@ -29,6 +29,7 @@ function vehicle(type, len, width, u, v, speedLong, speedLat, mixedModel){
   this.speedLat=speedLat;
   this.dvdu=speedLat/(Math.max(speedLong,0.0001)); //tan angle to road axis
   this.mixedModel=mixedModel;
+  this.leaderType="car"; // init, needed to check if speedLatStuck applied
   if(this.type=="obstacle"){
 	this.speed=0;
 	this.speedLat=0;

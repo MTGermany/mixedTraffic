@@ -356,6 +356,8 @@ MTM longitudinal acceleration function effected by one vehicle (only if dx>0)
 @return:  acceleration ax [m/s^2]
 */
 
+// addition of accRnd in road.js
+
 MTM.prototype.calcAccLong=function(dx,dy,vx,vxl,axl,Ll,Wavg){ 
     var sx=Math.max(0,dx-Ll);
     var sy=Math.abs(dy)-Wavg;
@@ -437,6 +439,9 @@ restrictions, and noise in higher-level road.js
 // need from road additional flag mandatory: 0=not, 1=toRight, -1=toLeft
 // test: IC_2lanes_zipper.txt
 
+// addition of accRnd in road.js,
+// restrictions dudv->dvdu<dvdumax, |dvdu/dt|<dotdvdumax in road.js
+// restrictions speedLat<max(speedLatStuck,dvdu*speed) in road.js
 MTM.prototype.calcAccLatInt=function(x,xl,y,yl,vx,vxl,vy,vyl,axl,
 				     Lveh,Ll,Wveh,Wl,Wroad,logging){
   var dx=xl-x;

@@ -108,8 +108,6 @@ var speedmap_max=v0Bike; // !!! max speed (fixed in sim)
 // lateral kinematics restrictions
 
 var dvdumax=0.3;       // tan of maximum angle with respect to road axis
-                       // (overridden by MTM.v0LatEvadeObstacles
-                       // if long speed is very small/zero)
 var dotdvdumax=0.3;    // max change rate of angle to road axis
 var phiVehRelMax=0.10; // only drawing: maximum visual angle to road axis
 var speedLatStuck=0.2;   // max lateral speed if long speed low!!DOS!!!

@@ -619,14 +619,17 @@ road.prototype.calcAccelerationsOfVehicle=function(i){
     //  with strongest interaction 
     //  initialize with no interaction (nLeaders=0)
  
-    var accLongTraffic=this.veh[i].calcAccLongFree();
-    for(var ilead=0; ilead<nLeaders; ilead++){
-	var j=iLeaders[ilead];
-	var accLongLeader=this.veh[i].calcAccLong(this.veh[j]);
-	if(accLongLeader<accLongTraffic){accLongTraffic=accLongLeader;}
+  var accLongTraffic=this.veh[i].calcAccLongFree();// just init
+  for(var ilead=0; ilead<nLeaders; ilead++){
+    var j=iLeaders[ilead];
+    var accLongLeader=this.veh[i].calcAccLong(this.veh[j]);
+    if(accLongLeader<accLongTraffic){
+      accLongTraffic=accLongLeader;
+      this.veh[i].leaderType=this.veh[j].type;
     }
+  }
 
-    //(1a) experimental !!! : Longitudinal push from behind
+    //(1a) Longitudinal push from behind
     //  just chose the single FOLLOWER
     //  with strongest interaction 
     //  initialize with no interaction (nLeaders=0)
@@ -733,14 +736,16 @@ road.prototype.calcAccelerationsOfVehicle=function(i){
 
   // (7) add long and lateral accel noise to break some symmetry artifacts
 
-  var accNoiseAmplLong=1.0; // sig_speedFluct=noiseAcc*sqrt(t*dt/12)  //1.0
+  var accNoiseAmplLong=1.; // sig_speedFluct=noiseAcc*sqrt(t*dt/12)  //1.0
   var accNoiseAmplLat=0.3; // sig_speedFluct=noiseAcc*sqrt(t*dt/12)  //0.3
 
+  var relspeed_v0=this.veh[i].speed/this.veh[i].mixedModel.longModel.v0;
+
   var accRnd=accNoiseAmplLong*(Math.random()-0.5);
-  this.veh[i].accLong += accRnd;
+  this.veh[i].accLong += accRnd*relspeed_v0; //!!! *relspeed_v0
 
   accRnd=accNoiseAmplLat*(Math.random()-0.5);
-  this.veh[i].accLat += accRnd;
+  this.veh[i].accLat += accRnd*relspeed_v0;
   
 
     //################################
@@ -812,58 +817,60 @@ road.prototype.calcAccelerationsOfVehicle=function(i){
 
 road.prototype.updateSpeedPositions=function(dt){
   for(var i=0; i<this.veh.length; i++){
-
-    //!!! check if vehicle models are per vehicle or by reference!
-    //=> they are by reference!
-    //if((i>5)&&(this.veh[i].type==="car")){this.veh[i].mixedModel.longModel.v0=2;}
-    // end check
     
     var accLong=this.veh[i].accLong;
-	var speedOld=this.veh[i].speed;
+    var speedOld=this.veh[i].speed;
 
-	var du=speedOld*dt+0.5*accLong*dt*dt;
-	this.veh[i].speed = speedOld + accLong*dt;
-	if(this.veh[i].speed<-1e-6){
+    var du=speedOld*dt+0.5*accLong*dt*dt;
+    this.veh[i].speed = speedOld + accLong*dt;
+    if(this.veh[i].speed<-1e-6){
 	    this.veh[i].speed=0;
 	    du=-0.5*speedOld*speedOld/accLong;
-	}
-	this.veh[i].u += du;
-
-	var dv=this.veh[i].speedLat*dt+0.5*this.veh[i].accLat*dt*dt;
-	this.veh[i].v += dv;
-
-	this.veh[i].speedLat += this.veh[i].accLat*dt;
-
-        // restrict speedLat
-
-        //(i) restrict change of angle to road axis
-        // local dvdu: new; this.veh[i].dvdu: old+saved
-
-	var dvdu=this.veh[i].speedLat/(Math.max(this.veh[i].speed,0.0001));
-	var sign_dvdu=(dvdu-this.veh[i].dvdu>0) ? 1 : -1;
-	if(Math.abs(dvdu-this.veh[i].dvdu)>dt*dotdvdumax){
-	  this.veh[i].dvdu +=sign_dvdu*dotdvdumax*dt;
-	}
-
-      // (ii) restrict angle itself and value of speedLat
-      // speedLatMax, speedLatStuck always >0
-      
-      this.veh[i].dvdu=Math.max(-dvdumax, Math.min(dvdumax,this.veh[i].dvdu));
-      var speedLatMax=Math.max(speedLatStuck,
-			       Math.abs(this.veh[i].dvdu*this.veh[i].speed));
-      this.veh[i].speedLat
-	=Math.max(-speedLatMax,Math.min(speedLatMax,this.veh[i].speedLat));
-
-        // close ring if isRing
-
-        if((this.isRing)&&(this.veh[i].u>this.roadLen)){
+    }
+    this.veh[i].u += du;
+    if((this.isRing)&&(this.veh[i].u>this.roadLen)){ // close ring if isRing
 	    this.veh[i].u -= this.roadLen;
-	}
+    }
 
-        // debug (dvdumax, speedLatStuck etc in top-level sim-straight.js)
+    var dv=this.veh[i].speedLat*dt+0.5*this.veh[i].accLat*dt*dt;
+    this.veh[i].v += dv;
 
-        if(false){
-        //if(this.veh[i].type!="obstacle"){
+    this.veh[i].speedLat += this.veh[i].accLat*dt;
+
+    // restrict speedLat (1)
+    // restrict change rate of angle to road axis by dotdvdumax
+    // local dvdu: new; this.veh[i].dvdu: old+saved
+
+    var dvdu=this.veh[i].speedLat/(Math.max(this.veh[i].speed,0.0001));
+    var sign_dotdvdu=(dvdu-this.veh[i].dvdu>0) ? 1 : -1;
+    if(Math.abs(dvdu-this.veh[i].dvdu)>dt*dotdvdumax){
+	  this.veh[i].dvdu +=sign_dotdvdu*dotdvdumax*dt;
+    }
+
+    // restrict speedLat (2)
+    // restrict angle itself to dvdumax
+      
+    this.veh[i].dvdu=Math.max(-dvdumax, Math.min(dvdumax,this.veh[i].dvdu));
+
+    // restrict speedLat (3)
+    // restrict speedLat itself by angle this.veh[i].dvdu;
+    // lift dvdu restriction and only apply speedLatMax restrction
+    // if obstacle ahead
+    // speedLatMax, speedLatStuck always >0
+
+    var speedLatMax=Math.abs(this.veh[i].dvdu*this.veh[i].speed);
+    if(this.veh[i].leaderType=="obstacle"){
+      speedLatMax=Math.max(speedLatStuck,speedLatMax);
+    }
+    this.veh[i].speedLat
+      =Math.max(-speedLatMax,Math.min(speedLatMax,this.veh[i].speedLat));
+
+ 
+    // debug dvdumax, dotdvdumax, speedLatStuck (all def @ top level)
+    // in top-level sim-straight*.js
+
+    if(false){
+      //if(this.veh[i].type!="obstacle"){
           console.log("road.updateSpeedPositions: t=",formd(time),
 		      " veh ID ",this.veh[i].id,
 		      " dvdu=",formd(dvdu),
@@ -878,8 +885,8 @@ road.prototype.updateSpeedPositions=function(dt){
 		      " speedLatMax=",formd(speedLatMax),
 		      " speedLatStuck=",formd(speedLatStuck),
 		     "");
-	}
     }
+  }
 
   this.sortVehicles(); // positional update may have disturbed sorting
   if(downloadActive){this.updateExportString();} // MT 2021-11

@@ -97,20 +97,19 @@ var speedmap_max=Math.max(v0, v0Truck, v0Bike); // max speed (fixed in sim)
 // (1) model constants (behavioural and graphical)
 
 // lateral kinematics restrictions
+// (var accNoiseAmplLong=1; and accNoiseAmplLat=0.3; in road, before restr)
 
-var dvdumax=0.3;       // tan of maximum angle with respect to road axis
-                       // (overridden by MTM.v0LatEvadeObstacles
-                       // if long speed is very small/zero)
-var dotdvdumax=0.3;    // max change rate of angle to road axis
-var phiVehRelMax=0.10; // only drawing: maximum visual angle to road axis
-var speedLatStuck=1.2;   // max lateral speed if long speed low!!DOS!!!
+var dvdumax=0.3;       // 0.3 tan of maximum angle with respect to road axis
+var dotdvdumax=0.3;    // 0.3 max change rate of angle to road axis
+var phiVehRelMax=0.1;  // 0.1 OK only drawing: max visual angle to road axis
+var speedLatStuck=1.2; // 1.2 OK lift angle restriction if obstacle ahead
 
 
 // lateral force constants
 // s0yLat: cars should be straight in lane in 
 var s0y=0.20;       // lat. attenuation scale [m] long veh-veh interact [0.15]
 var s0yLat=0.40;    // lat. attenuation scale [m] lat veh-veh interact  [0.3]
-var sensLat=1.0;    // sensitivity (max des lat speed)/(long accel) [s] [1.4]
+var sensLat=1.0;    // sensit. sigma (max des speedLat)/accLong [s] [1.0]
 
 var accBiasRightTruck=0.8;  //MT 2021-11 
 var accBiasRightBike=0.0;  // MT 2023-01
