@@ -579,7 +579,7 @@ function drawSim() {
   // scatter plot  MT 2021
 
   if(displayScatterplots){
-    mainroad.drawScatterPlotBoundaries(scale,umin,umax);
+    mainroad.displayMacroRegion(scale,umin,umax);
   }
  
     // (4) draw vehicles (obstacleImg here empty, only needed for interface)

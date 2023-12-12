@@ -43,8 +43,9 @@ var background_srcFile='figs/backgroundGrass.jpg';
 var displayForcefield=false; // can be changed interactively -> gui.js
 var displayForceStyle=2;    // 0: with probe, 1: arrow field arround veh,
                             // 2: moving arrows at veh
-var displayScatterplots=false;
-var displayVehIDs=false;  // debugging
+var displayScatterplots=true;   // scatterplots of macroProperties
+var displayMacroProperties=true; // displays where macroProperties taken from
+var displayVehIDs=false;         // debugging
 
 var hasChanged=true; // physical dim have changed (e.g. by window resize)
 var canvas=document.getElementById("canvas_mixed");
@@ -65,20 +66,20 @@ var showMouseCoords=false;
 // (initial) parameterisation and creation of underlying longmodels
 //#############################################################
 
-var v0=16;
-var Tgap=1;
+var v0=12;
+var Tgap=1.2;
 var s0=3;
 var amax=2;
 var bcomf=2;
 
-var v0Truck=12;
+var v0Truck=11;
 var TgapTruck=1.5;
 var s0Truck=3;
 var amaxTruck=1;
 var bcomfTruck=2;
 
-var v0Bike=16;
-var TgapBike=0.5;
+var v0Bike=13;
+var TgapBike=0.6;
 var s0Bike=1.5;
 var amaxBike=3;
 var bcomfBike=2;
@@ -175,7 +176,7 @@ var mixedModelObstacle=new ModelObstacle();
 // initial traffic flow and composition settings ctrl by sliders
 //#############################################################
 
-qIn=1.5; 
+qIn=1.2; 
 commaDigits=2;
 setSlider(slider_inflow, slider_inflowVal, qIn, commaDigits, "veh./s");
 
@@ -198,9 +199,9 @@ var densityInit=0.0;
 //#############################################################
 
 var cycleTL=90; // drone d1 setting
-var greenMain0=90-42;
-var greenMain1=90-50;
-var greenMain2=30; // fake TL to make spillover effect of data
+var greenMain0=90-42; // 90-42
+var greenMain1=90-50; // 90-50
+var greenMain2=30; // 30 fake TL to make spillover effect of data
 var TL0_u=198;  //as the .trafficLights<n> file of extractTraj_pNEUMA
 var TL1_u=340;
 var TL2_u=395;
@@ -366,14 +367,23 @@ var mainroad=new road(roadID, isRing, roadLen,
 
 
 
- 
+//############################################
 // data for evaluation
+//############################################
+
+// visual detectors
+
+var detectors=[];
+detectors[0]=new stationaryDetector(mainroad,0.75*roadLen,10);
+
+// region [umin,umax] for downloaded flow-density data
+// every ndtSample timestep will be sampled in macroProperties[] vector
 
 var macroProperties=[];
-var ndtSample=60; // every ndtSample timestep will be sampled for macroProperties
+var ndtSample=60; 
 
-var umin=150;    // upstream boundary of sampled region [m];
-var umax=250;    // downstream boundary of sampled region [m];
+var umin=0.74*roadLen;    // upstream boundary of sampled region [m];
+var umax=0.76*roadLen;    // downstream boundary of sampled region [m];
 
 
 //############################################
@@ -476,15 +486,24 @@ function updateSim(dt){    // called here by main_loop()
   mainroad.updateBCdown();
   mainroad.updateBCup(qIn,fracTruck,fracBike,dt); 
   // !! later: array vehCompos[] instead of *frac*
+  if(itime<2){mainroad.writeVehicles();}
 
 
-    if(itime<2){mainroad.writeVehicles();}
+  
+  // updateSim (4): update detector readings
+  // and macroProperties for file download
 
-    mainroad.updateSpeedStatistics(umin,umax);
-    if(itime%ndtSample==0){
+  for(var iDet=0; iDet<detectors.length; iDet++){
+	detectors[iDet].update(time,dt);
+  }
+
+  
+  mainroad.updateSpeedStatistics(umin,umax);
+  if(itime%ndtSample==0){
 	var iSample=Math.max(0,itime/ndtSample-1);
 	macroProperties[iSample]=mainroad.calcMacroProperties(ndtSample);
-    }
+  }
+
 
   // activate at begin if needed
 }//updateSim
@@ -567,19 +586,20 @@ function drawSim() {
   
  
 
-    // (3) draw mainroad
-    // (always drawn; changedGeometry only triggers building a new lookup table)
+  // (3) draw mainroad
+  // (always drawn; changedGeometry only triggers
+  // building a new lookup table)
 
-    
     var changedGeometry=hasChanged||(itime<=1);
     var roadImg=(floorField) ? roadImgLanes : roadImgNoLanes
     mainroad.draw(roadImg,scale,changedGeometry);
 
+
   // (3a) draw boundaries of detection region [umin:umax] for
   // scatter plot  MT 2021
 
-  if(displayScatterplots){
-    mainroad.drawScatterPlotBoundaries(scale,umin,umax);
+  if(displayMacroProperties){
+    mainroad.displayMacroRegion(scale,umin,umax);
   }
  
     // (4) draw vehicles (obstacleImg here empty, only needed for interface)
@@ -650,6 +670,13 @@ function drawSim() {
                  center_yPix,
                  0.1*refSizePix, 0.2*refSizePix,
 		 speedmap_min,speedmap_max,0,speedmaxDisplay);
+
+  // drawSim (6a) show simulation time and detector displays
+
+  for(var iDet=0; iDet<detectors.length; iDet++){
+	detectors[iDet].display(textsize);
+  }
+  
 
 
     // (7) display the logical coordinates if mouse inside canvas

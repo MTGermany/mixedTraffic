@@ -173,6 +173,9 @@ vehicle.prototype.calcAccB=function(widthLeft,widthRight){
 }
 
 
+vehicle.prototype.isRegularVeh=function(){
+    return (this.id>=200)&&(this.type !== "obstacle");
+} 
 
 
 //#####################################################

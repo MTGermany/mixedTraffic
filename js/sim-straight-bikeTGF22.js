@@ -43,7 +43,8 @@ var background_srcFile='figs/backgroundGrass.jpg';
 var displayForcefield=false; // can be changed interactively -> gui.js
 var displayForceStyle=2;    // 0: with probe, 1: arrow field arround veh,
                             // 2: moving arrows at veh
-var displayScatterplots=false;
+var displayScatterplots=true;
+var displayMacroProperties=true;
 var displayVehIDs=false; // debugging
 
 var hasChanged=true; // physical dim have changed (e.g. by window resize)
@@ -65,8 +66,8 @@ var showMouseCoords=false;
 //#############################################################
 
 var v0=5;  //!!! 25->5
-var Tgap=1;
-var s0=2;
+var Tgap=0.6;
+var s0=1;
 var amax=2;
 var bcomf=2;
 
@@ -116,8 +117,8 @@ var speedLatStuck=0.2;   // max lateral speed if long speed low!!DOS!!!
 
 // lateral force constants
 // s0yLat: cars should be straight in lane in 
-var s0y=0.15;       // lat. attenuation scale [m] long veh-veh interact [0.15]
-var s0yLat=0.20;    // !!! scale [m] lat veh-veh interact [0.60]
+var s0y=0.10;       // lat. attenuation scale [m] long veh-veh interact [0.15]
+var s0yLat=0.10;    // !!! scale [m] lat veh-veh interact [0.60]
 var sensLat=0.2;    // !!! sensit (max des lat speed)/(long accel) [s] [1.0]
 
 var accBiasRightTruck=0.8;  //MT 2021-11 
@@ -133,8 +134,8 @@ var glob_accLatBMax=20;   //max boundary lat accel, of the order of bmax
 var glob_accLatBRef=15;    //lateral acceleration if veh touches boundary
 var glob_accLongBRef=150; //!!!long acceleration if veh touches boundary
 var glob_anticFactorB=2;  //antic time for boundary response (multiples of T)
-var s0yB=0.05;            //!!! long. attenuation scale [m] wall-veh interact
-var s0yLatB=0.10;         //!!! lat. attenuation scale [m] wall-veh interact
+var s0yB=0.0;            //!!! long. attenuation scale [m] wall-veh interact
+var s0yLatB=0.05;         //!!! lat. attenuation scale [m] wall-veh interact
 
 
 // (2) variable slider params
@@ -203,8 +204,8 @@ var car_length=5;
 var car_width=2.0;
 var truck_length=10;
 var truck_width=2.5; 
-var bike_length=1.5; //!!! bicycles or motorbikes, depending on parameteris
-var bike_width=0.5;
+var bike_length=1.4; //!!! bicycles or motorbikes, depending on parameteris
+var bike_width=0.4;
 var obstacle_length=10;
 var obstacle_width=1.5;
 
@@ -255,58 +256,26 @@ function axis_y(u){ // physical coordinates
 
 function widthLeft(u){ // width left boundary - road axis
     if((!varWidthLeft)&&(relOutflow>=0.9999)){return 0.5*roadWidthRef;}
-    var u1_1=0.20*roadLen; // begin narrowing Bottl 1
-    var u1_2=0.30*roadLen; // end narrowing 1 (begin minimum capacity)
-    var u1_3=0.40*roadLen; // begin widening 1
-    var u1_4=0.45*roadLen; // end widening 1 (restore original capacity)
-    var u2_1=0.70*roadLen; // begin narrowing Bottl 2
-    var u2_2=0.75*roadLen; // end narrowing 2 (begin minimum capacity)
-    var u2_3=0.80*roadLen; // begin widening 2
-    var u2_4=0.85*roadLen; // end widening 2 (restore original capacity)
-    var u3_1=0.85*roadLen; // begin narrowing for outflow restriction
-    var u3_2=0.95*roadLen; // end narrowing for outflow restriction
+    var u1_1=0.55*roadLen; // begin narrowing Bottl 1
+    var u1_2=0.65*roadLen; // end narrowing 1 (begin minimum capacity)
+    var u1_3=0.80*roadLen; // begin widening 1
+    var u1_4=0.80*roadLen; // end widening 1 (restore original capacity)
 
     var wLeftRef=0.5*roadWidthRef;
-    var wNarrow1=(varWidthLeft)? 0.2*roadWidthRef : wLeftRef;
-    var wNarrow2=(varWidthLeft)? 0.3*roadWidthRef : wLeftRef;
-    var wNarrow3=0.5*roadWidthRef*relOutflow;
+    var wNarrow1=(varWidthLeft)? 0.25*roadWidthRef : wLeftRef;
 
 
     return (u<u1_1) ? wLeftRef
 	: (u<u1_2) ? wLeftRef+(wNarrow1-wLeftRef)*(u-u1_1)/(u1_2-u1_1)
 	: (u<u1_3) ? wNarrow1
 	: (u<u1_4) ? wNarrow1+(wLeftRef-wNarrow1)*(u-u1_3)/(u1_4-u1_3)
-	: (u<u2_1) ? wLeftRef
-	: (u<u2_2) ? wLeftRef+(wNarrow2-wLeftRef)*(u-u2_1)/(u2_2-u2_1)
-	: (u<u2_3) ? wNarrow2
-	: (u<u2_4) ? wNarrow2+(wLeftRef-wNarrow2)*(u-u2_3)/(u2_4-u2_3)
-	: (u<u3_1) ? wLeftRef
-	: (u<u3_2) ? wLeftRef+(wNarrow3-wLeftRef)*(u-u3_1)/(u3_2-u3_1)
-	: wNarrow3;
+	: wLeftRef;
 }
 
-function widthRight(u){ // width road axis - right boundary
-    if((!varWidthRight)&&(relOutflow>=0.9999)){return 0.5*roadWidthRef;}
-    var u1_1=0.45*roadLen; // begin narrowing Bottl 1
-    var u1_2=0.70*roadLen; // end narrowing 1 (begin minimum capacity)
-    var u1_3=0.75*roadLen; // begin widening 1
-    var u1_4=0.75*roadLen; // end widening 1 (restore original capacity)
-    var u3_1=0.85*roadLen; // begin narrowing for outflow restriction
-    var u3_2=0.95*roadLen; // end narrowing for outflow restriction
-
-    var wRightRef=0.5*roadWidthRef;
-    var wNarrow1=(varWidthRight)  ? 0.10*roadWidthRef : wRightRef;
-    var wNarrow3=0.5*roadWidthRef*relOutflow;
-
-
-    return (u<u1_1) ? wRightRef
-	: (u<u1_2) ? wRightRef+(wNarrow1-wRightRef)*(u-u1_1)/(u1_2-u1_1)
-	: (u<u1_3) ? wNarrow1
-	: (u<u1_4) ? wNarrow1+(wRightRef-wNarrow1)*(u-u1_3)/(u1_4-u1_3)
-	: (u<u3_1) ? wRightRef
-	: (u<u3_2) ? wRightRef+(wNarrow3-wRightRef)*(u-u3_1)/(u3_2-u3_1)
-    	: wNarrow3;
+function widthRight(u){ // width road axis - right boundary - symmetric here
+  return widthLeft(u);
 }
+
 
 
 var mainroad=new road(roadID, isRing, roadLen,
@@ -317,13 +286,24 @@ var mainroad=new road(roadID, isRing, roadLen,
 
 
  
+//############################################
 // data for evaluation
+//############################################
+
+// visual detectors
+
+var detectors=[];
+detectors[0]=new stationaryDetector(mainroad,0.40*roadLen,10);
+detectors[1]=new stationaryDetector(mainroad,0.90*roadLen,10);
+
+// region [umin,umax] for downloaded flow-density data
+// every ndtSample timestep will be sampled in macroProperties[] vector
 
 var macroProperties=[];
-var ndtSample=60; // every ndtSample timestep will be sampled for macroProperties
+var ndtSample=60; 
 
-var umin=150;    // upstream boundary of sampled region [m];
-var umax=250;    // downstream boundary of sampled region [m];
+var umin=0.38*roadLen;    // upstream boundary of sampled region [m];
+var umax=0.42*roadLen;    // downstream boundary of sampled region [m];
 
 
 //############################################
@@ -345,7 +325,8 @@ function updateSim(dt){    // called here by main_loop()
 //#################################################################
 
 
-    // update times
+  // updateSim (1): update times
+  
   time +=dt; // dt depends on initial html and timewarp slider (fps=const)
   itime++;
     //console.log("\nbegin updateSim: itime=",itime);
@@ -370,7 +351,7 @@ function updateSim(dt){    // called here by main_loop()
     }
 
 
-    // implement slider changes 
+  // updateSim (2): implement slider changes
 
   dt=parseFloat(sliderTimewarp.value)/fps;
   roadWidthOld=roadWidthRef;
@@ -402,6 +383,8 @@ function updateSim(dt){    // called here by main_loop()
 	mixedModelBikeRef.sensDvy=sensDvy;
   }
 
+  // updateSim (3):  Actual vehicle update
+  
   // !! distribute new models to the vehicles
   mainroad.updateSpeedlimits(trafficObjs); // !!! not yet impl. MT 2021-11
   mainroad.calcAccelerations();  
@@ -409,15 +392,22 @@ function updateSim(dt){    // called here by main_loop()
   mainroad.updateBCdown();
   mainroad.updateBCup(qIn,fracTruck,fracBike,dt); 
   // !! later: array vehCompos[] instead of *frac*
+  if(itime<2){mainroad.writeVehicles();}
 
 
-    if(itime<2){mainroad.writeVehicles();}
+  // updateSim (4): update detector readings
+  // and macroProperties for file download
 
-    mainroad.updateSpeedStatistics(umin,umax);
-    if(itime%ndtSample==0){
+  for(var iDet=0; iDet<detectors.length; iDet++){
+	detectors[iDet].update(time,dt);
+  }
+
+
+  mainroad.updateSpeedStatistics(umin,umax);
+  if(itime%ndtSample==0){
 	var iSample=Math.max(0,itime/ndtSample-1);
 	macroProperties[iSample]=mainroad.calcMacroProperties(ndtSample);
-    }
+  }
 
   // activate at begin if needed
 }//updateSim
@@ -511,8 +501,8 @@ function drawSim() {
   // (3a) draw boundaries of detection region [umin:umax] for
   // scatter plot  MT 2021
 
-  if(displayScatterplots){
-    mainroad.drawScatterPlotBoundaries(scale,umin,umax);
+  if(displayMacroProperties){
+    mainroad.displayMacroRegion(scale,umin,umax);
   }
  
     // (4) draw vehicles (obstacleImg here empty, only needed for interface)
@@ -561,7 +551,8 @@ function drawSim() {
 		 timeStr_ylb-0.2*textsize);
 
     
-    var scaleStr="scale="+Math.round(10*scale)/10;
+  var scaleStr="scale="+Math.round(10*scale)/10;
+
     var scaleStr_xlb=8*textsize;
     var scaleStr_ylb=timeStr_ylb;
     var scaleStr_width=5*textsize;
@@ -584,6 +575,12 @@ function drawSim() {
                  0.1*refSizePix, 0.2*refSizePix,
 		 speedmap_min,speedmap_max,0,speedmaxDisplay);
 
+  // drawSim (6a) show simulation time and detector displays
+
+  for(var iDet=0; iDet<detectors.length; iDet++){
+	detectors[iDet].display(textsize);
+  }
+  
 
     // (7) display the logical coordinates if mouse inside canvas
     // set/controlled in gui.js; sets ctx.setTransform(1,0,0,1,0,0) at end 
@@ -621,11 +618,11 @@ function drawSim() {
 
       var rhoSpec=[0,1000,200,"Density [veh/km]"];
       var QSpec=[1,3600,3600,"Flow [veh/h]"];
-      var VSpec=[2,3.6,50,"Speed [km/h]"];
+      var VSpec=[2,3.6,20,"Speed [km/h]"];
       var boxSpec=[3,4,5,6,7];
 
         // define scatter plots instance and do the plotting (new necessary!)
-
+      // macroProperties from mainroad.updateSpeedStatistics(umin,umax)
       var plot1=new plotxy(wPix,hPix,xPixLeft,yPixTop); // lower diagr
       plot1.scatterplot(ctx,macroProperties,rhoSpec,QSpec); // lower
 

@@ -276,8 +276,11 @@ road.prototype.calcMacroProperties= function(nt) {
 
     // copy speeds into separate array to do sorting w/respect to speed 
     // (the vehicles need to be sorted in decreasing u order)
- 
-    var nveh=this.speed.length;  // nveh/nt=time-averaged vehicle number in aggr interval
+
+  // nveh is the sum of all vehicle snapshots in n[umin,umax] over all times!
+  // nveh/nt=time-averaged vehicle number in aggr interval
+  
+    var nveh=this.speed.length;  
     var speedsum=0;
     for(var i=0; i<nveh; i++){
 	speedsum +=this.speed[i];
@@ -382,6 +385,85 @@ road.prototype.sortVehicles=function(){
 	})
     };
 }
+
+
+
+/*
+#############################################################
+(aug17) find nearest regular leaders or followers 
+at position u on a given lane (use in stationaryDetector)
+#############################################################
+
+@param  longitudinal physical position
+@return the nearest vehicle to this position, regardless of lane 
+        (id=-1 if none)
+*/
+
+road.prototype.findLeaderAt=function(u){
+    //console.log("in road.findLeaderAt");
+
+
+    // initialize virt veh for "no success"
+
+    var vehLead=new vehicle(0,0,0,0,0,"car"); // new necessary here![];
+    vehLead.id=-1;
+
+
+    // do the actual finding
+
+    var i=0;
+    while ((i<this.veh.length) && (this.veh[i].u>u)){
+	if(this.veh[i].isRegularVeh()){
+	    vehLead=this.veh[i];
+	}
+	i++; 
+    }
+
+
+    //if(vehLead.id==-1){
+  if(false){
+	console.log("road.findLeadersAt: warning: no leader found");
+    }
+
+    return vehLead;
+}
+
+
+
+//################################################################
+// nearest followers on any lane (only use in stationary detectors)
+//################################################################
+
+road.prototype.findFollowerAt=function(u){
+
+    //console.log("in road.findFollowerAt");
+
+
+    // initialize virt veh for "no success"
+
+    var vehFollow=new vehicle(0,0,0,0,0,"car"); // new necessary here!
+
+
+    // do the actual finding
+
+    var i=this.veh.length-1;
+    while ((i>=0) && (this.veh[i].u<u)){
+	if(this.veh[i].isRegularVeh()){
+	    vehFollow=this.veh[i];
+	}
+	i--; 
+    }
+
+    if(vehFollow.id==-1){
+      console.log("road.findFollowersAt: warning: no follower at position ",u,
+		  " on any lane");
+    }
+
+    return vehFollow;
+}
+
+
+
 
 
 //#####################################################
@@ -630,10 +712,12 @@ road.prototype.calcAccelerationsOfVehicle=function(i){
       var dyLeft=widthLeftLocal-0.5*this.veh[i].width+this.veh[i].v;
       var accTweak=42*Math.exp(-dyLeft/0.4); // numbers here OK
       this.veh[i].accLat += accTweak; 
-      if(accTweak>1){
-	console.log("bikesNoLeftSpace=true: this.veh[i].v=",this.veh[i].v,
-		    " dyLeft=",dyLeft,
-		    " accAddtl=",42*Math.exp(-dyLeft/0.3));
+      if(false){
+      //if(accTweak>1){
+	console.log("bikesNoLeftSpace=true: this.veh[i].v=",
+		    this.veh[i].v.toFixed(1),
+		    " dyLeft=",dyLeft.toFixed(2),
+		    " accAddtl=",accTweak.toFixed(2));
       }
     }
   }
@@ -909,7 +993,6 @@ road.prototype.updateBCup=function(Qin,fracTruck,fracBike,dt){
 */
 
 road.prototype.get_phi=function(u){
-  //console.log("road.get_phi: axis_x(10)=",this.axis_x(10));
 
     var smallVal=0.0000001;
 
@@ -932,8 +1015,8 @@ road.prototype.get_phi=function(u){
 */
 
 road.prototype.get_xPix=function(u,v,scale){
-    var phi=this.get_phi(u);
-    return scale*(this.axis_x(u)+v*Math.sin(phi));
+  var phi=this.get_phi(u);
+  return scale*(this.axis_x(u)+v*Math.sin(phi));
 }
 
 //######################################################################
@@ -1119,15 +1202,16 @@ road.prototype.drawVehicles=function(carImg, truckImg, bikeImg, obstacleImg,
 
 
 
-road.prototype.drawScatterPlotBoundaries=function(scale,umin,umax){
-  var bLen=2; // graphical boundary width [m] = length of graphical virt vehicle
-  var bLenPix=scale*bLen;
-  var ub=[umin,umax];
-  for(var i=0; i<ub.length; i++){
+road.prototype.displayMacroRegion=function(scale,umin,umax){
+  var lSegmPrelim=5; // length of white segments visualized on road
+  var nSegm=Math.floor((umax-umin)/lSegmPrelim+1);
+  var lSegm=(umax-umin)/nSegm;
+  var lSegmPix=scale*lSegm;
+  for(var i=0; i<nSegm; i++){
 
     // widthLeft(u), widthRight(u) road geom functions
-    var u=ub[i];
-    var bWidthPix=scale*(this.widthLeft(u)+this.widthRight(u));
+    var u=umin+(i+0.5)*lSegm; 
+    var wSegmPix=scale*(this.widthLeft(u)+this.widthRight(u));
     var phiRoad=this.get_phi(u);
     var cphiRoad=Math.cos(phiRoad);
     var sphiRoad=Math.sin(phiRoad);
@@ -1137,9 +1221,9 @@ road.prototype.drawScatterPlotBoundaries=function(scale,umin,umax){
     ctx.setTransform(cphiRoad, -sphiRoad, +sphiRoad, 
 		     cphiRoad, xCenterPix, yCenterPix);
     ctx.fillStyle="rgb(255,255,255)";
-    ctx.fillRect(-0.5*bLenPix,-scale*this.widthLeft(u),bLenPix,bWidthPix);
+    ctx.fillRect(-0.5*lSegmPix,-scale*this.widthLeft(u),lSegmPix,wSegmPix);
   }
-} // road.prototype.drawScatterPlotBoundaries
+} // road.prototype.displayMacroRegion
 
 
 
@@ -1502,7 +1586,6 @@ road.prototype.writeVehiclesToFile= function(filename) {
 road.prototype.updateExportString=function(){
 
   var ditime=Math.floor(dt_export/dt+1);
-  console.log("road.updateExportString: time=",time.toFixed(2)," dt=",dt.toFixed(2)," ditime=",ditime,"(itime%ditime==0)=",((itime%ditime==0) ? "true" : "false"));
   if(itime%ditime==0){
     for(var i=0; i<this.veh.length; i++){
       this.exportString=this.exportString+"\n"+time.toFixed(2)

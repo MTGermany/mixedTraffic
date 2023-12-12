@@ -7,7 +7,7 @@ Final data and plot files copied tp paper:
 
 #########################################################################
 # 3-lane road:
-# analyze <projName> <roadWidth_m>  [<startHist_at_u>]  [<endHist_at_u>]
+# analyze_mixedSim <projName> <roadWidth_m>  [<startHist_at_u>]  [<endHist_at_u>]
 #########################################################################
 
 
@@ -15,10 +15,10 @@ rm ~/Downloads/*txt
 chromium ../mixed3lanesTGF22_xt.html &
 <start download at t=140, simulate, finish download at t=300>
 
-mv ~/Downloads/*txt mixedTraffOutput3_xt.txt
-ulimit -s unlimited
-analyze mixedTraffOutput3_xt 10
-#analyze <projName> <roadWidth_m> [<startHist_at_u>] [<endHist_at_u>]
+mv ~/Downloads/mixedTrafficRecord*.txt mixedTraffOutput3_xt.txt
+mv ~/Downloads/Detector0_road1_x300_*.txt mixedTraffOutput3_xt_x300.fund
+analyze_mixedSim mixedTraffOutput3_xt 10
+#analyze_mixedSim <projName> <roadWidth_m> [<startHist_at_u>] [<endHist_at_u>]
 
 
 
@@ -26,14 +26,14 @@ chromium ../mixed3lanesTGF22_xy.html &
 <timelapse at 1>  (shorter time interval for save)
 <start download at t=10, simulate, finish download at t=100>
 mv ~/Downloads/*txt mixedTraffOutput3_xy.txt
-analyze mixedTraffOutput3_xy 10
+analyze_mixedSim mixedTraffOutput3_xy 10
 
 gnuplot mixedTraffOutput3.gnu
  
 
 #########################################################################
 # bicycles
-# analyze <projName> <roadWidth_m>  [<startHist_at_u>]  [<endHist_at_u>]
+# analyze_mixedSim <projName> <roadWidth_m>  [<startHist_at_u>]  [<endHist_at_u>]
 #########################################################################
 
 chromium ../bicycle_TGF22.html
@@ -41,22 +41,22 @@ chromium ../bicycle_TGF22.html
 # set width to 1.0 m and apply end bottleneck
 
 mv ~/Downloads/*txt mixedBicycle_w1_0.txt
-analyze mixedBicycle_w1_0 1.0 80 170  # 1/3 of curve till bottleneck
+analyze_mixedSim mixedBicycle_w1_0 1.0 80 170  # 1/3 of curve till bottleneck
 gnuplot mixedBicycle.gnu
 
 # set width to 1.6 m and apply end bottleneck
 mv ~/Downloads/*txt mixedBicycle_w1_6.txt
-analyze mixedBicycle_w1_6 1.6 80 170
+analyze_mixedSim mixedBicycle_w1_6 1.6 80 170
 gnuplot mixedBicycle.gnu
 
 # set width to 2.0 m and apply end bottleneck
 mv ~/Downloads/*txt mixedBicycle_w2_0.txt
-analyze mixedBicycle_w2_0 1.8 80 170
+analyze_mixedSim mixedBicycle_w2_0 1.8 80 170
 gnuplot mixedBicycle.gnu
 
 # set width to 2.4 m (or 2.6 m, then 3 lanes)
 mv ~/Downloads/*txt mixedBicycle_w2_4.txt
-analyze mixedBicycle_w2_4 2.0 80 170
+analyze_mixedSim mixedBicycle_w2_4 2.0 80 170
 gnuplot mixedBicycle.gnu
 
 

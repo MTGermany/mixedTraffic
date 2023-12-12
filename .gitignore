@@ -6,7 +6,7 @@
 README_js_demo
 README_link
 
-## Core latex/pdflatex auxiliary files:
+## Core latex/pdflatex/c++ auxiliary files:
 *.aux
 *.lof
 *.log
@@ -17,17 +17,20 @@ README_link
 *.dvi
 *.bash
 *.fig
+*.o
 
 ## figure files of analysis folder
 
 analysis/*.eps
 analysis/*.png
+figs/
 
 ## generated data files by download
 
 analysis/*.hist
 analysis/*.traj
 analysis/*.txt
+analysis/*.fund*
 
 
 *_ger.js
@@ -55,6 +58,7 @@ testfile
 documentation
 competition/2017_10_18_notWon
 *save.*
+analyze_pneumaTraj_nowIn_extractTraj_pNEUMA.cpp
 
 # eclipse settings
 /.settings/

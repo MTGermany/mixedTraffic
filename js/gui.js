@@ -1038,7 +1038,19 @@ function downloadCallback(){ // MT 2021-11
   
   else{
     mainroad.exportString
-        ="#time\tid\ttype\tlen[m]\tw[m]\tx[m]\ty[m]\tvx[m/s]\tvy[m/s]\tax[ms2]\tay[ms2]";
+      ="#time\tid\ttype\tlen[m]\tw[m]\tx[m]\ty[m]\tvx[m/s]\tvy[m/s]\tax[ms2]\tay[ms2]";
+    
+    if(typeof detectors!=="undefined"){
+      for (var iDet=0; iDet<detectors.length; iDet++){
+        var det=detectors[iDet];
+        console.log("det=",det);
+        det.exportString="#Detector "+iDet
+ 	  +" at road "+det.road.roadID+" at position x="+det.u.toFixed(0)
+	  + " aggregation time [s]="+det.dtAggr
+	  +"\n#time[s]\tflow[veh/h]\tspeed[km/h]";
+      }
+    }
+
     downloadActive=true;
     document.getElementById("download").src="figs/iconDownloadFinish_small.png";
   }
@@ -1047,6 +1059,7 @@ function downloadCallback(){ // MT 2021-11
 // writes trajectories recorded every gui.dt_export to file
 
 function performDownload(){  
+  var msg="";
   var present=new Date();
   var day=("0" + present.getDate()).slice(-2);// prepend 0 if single-digit day
   var month=("0" + (present.getMonth()+1)).slice(-2);// months start with 0
@@ -1061,10 +1074,20 @@ function performDownload(){
       +minutes+"m"
       +seconds+"s"
     +".txt";
-  var msg="wrote file "+filename+" to default folder (Downloads)";
+  msg=msg+filename+" ";
+
   mainroad.writeVehiclesToFile(filename);
+  if(typeof detectors!=="undefined"){
+    for (var iDet=0; iDet<detectors.length; iDet++){
+      var filename="Detector"+iDet
+        +"_road"+detectors[iDet].road.roadID
+        +"_x"+detectors[iDet].u.toFixed(0)+"_time"+time.toFixed(0)+".txt";
+      msg=msg+filename+" ";
+      detectors[iDet].writeToFile(filename);
+    }
+  }
+  msg="wrote files "+msg+" to default folder (Downloads)";
   downloadActive=false;
-  console.log("filename=",filename);
   alert(msg);
 }
 

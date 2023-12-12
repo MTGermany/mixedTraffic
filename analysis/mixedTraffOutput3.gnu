@@ -14,7 +14,7 @@ set style line 3 lt 1 lw 1 pt 4 ps 1.2 dt 1 lc rgb "#FF3300" #closedSquare
 set style line 4 lt 1 lw 1 pt 4 ps 1.5 dt 1 lc rgb "#FFAA00" #gelb,
 set style line 5 lt 1 lw 1 pt 5 ps 1.5 dt 1 lc rgb "#00DD22" #gruen,
 set style line 6 lt 1 lw 1 pt 4 ps 1.5 dt 1 lc rgb "#00AAAA"
-set style line 7 lt 1 lw 1 pt 4 ps 2.0 dt 7 lc rgb "#4477FF" #blau,
+set style line 7 lt 1 lw 1 pt 4 ps 2.0 dt 7 lc rgb "#1100FF" #blau,
 set style line 8 lt 1 lw 1 pt 8 ps 1.5 dt 1 lc rgb "#220088"
 set style line 9 lt 1 lw 1 pt 9 ps 1.5 dt 9 lc rgb "#999999" #grau
 
@@ -50,8 +50,8 @@ set term post eps enhanced color solid "Helvetica" 20
 
 
 ##############################################################
-set out "mixedTraffOutput3_histograms.eps"
-print "plotting mixedTraffOutput3_histograms.eps"
+set out "../figs/mixedTraffOutput3_histograms.eps"
+print "plotting ../figs/mixedTraffOutput3_histograms.eps"
 ##############################################################
 
 set key opaque box top right
@@ -65,30 +65,57 @@ set boxwidth 0.9 relative
 plot\
   "mixedTraffOutput3_xy.hist" u 1:2 t "Motorcycles"\
      w boxes lc rgb "#aa4477ff" lw 2 fs solid 0.50,\
-  "mixedTraffOutput3_xy.hist" u 1:3 t "Other Vehicles"\
+  "mixedTraffOutput3_xy.hist" u 1:3 t "Cars and trucks"\
      w boxes lc rgb "#44000000" lw 3 fs transparent
 
+##############################################################
+set out "../figs/mixedTraffOutput3_x300_fund.eps"
+print "plotting ../figs/mixedTraffOutput3_x300_fund.eps"
+##############################################################
+
+set key box top right
+
+set xlabel "Density Q/V [veh./km]"
+set xrange [0:800]
+set ylabel "Flow [veh./h]"
+
+plot\
+  "mixedTraffOutput3_xt_x300.fund"\
+  u (($3==0) ? 0 : $2/$3) : ($2) t "x=300 m" w p ls 1
 
 ##############################################################
-set out "mixedTraffOutput3_xy.eps"
-print "plotting mixedTraffOutput3_xy.eps"
+set out "../figs/mixedTraffOutput3_x300_fundEdie.eps"
+print "plotting ../figs/mixedTraffOutput3_x300_fundEdie.eps"
+##############################################################
+plot\
+  "mixedTraffOutput3_xt_x300.fundEdie"\
+  u ($2) : ($3) t "x=300 m" w p ls 1
+
+
+quit
+
+##############################################################
+set out "../figs/mixedTraffOutput3_xy.eps"
+print "plotting ../figs/mixedTraffOutput3_xy.eps"
 ##############################################################
 
 set xlabel "Distance x [m]"
 set xrange [200:300]
 set ylabel "Distance y to the right [m]"
-set yrange [-halfWidth:halfWidth]
-plot\
+set yrange [-4.5:5.5]
+plot[t=0:1]\
   "mixedTraffOutput3_xy.traj" u (filterData($2,0)*$3):($4)\
-    t "Motorcycles" w p ls 7 ps 0.3,\
+    t "" w p ls 7 ps 0.3,\
+    t,t t "Motorcycles" w l ls 17,\
   "mixedTraffOutput3_xy.traj" u (filterDataInverse($2,0)*$3):($4)\
-    t "Other vehicles" w p ls 1 ps 0.3
+    t "" w p ls 1 ps 0.3,\
+    t,t t "Cars and trucks" w l ls 11
 
 
 
 ##############################################################
-set out "mixedTraffOutput3_xt_laneMiddle.eps"
-print "plotting mixedTraffOutput3_xt_laneMiddle.eps"
+set out "../figs/mixedTraffOutput3_xt_laneMiddle.eps"
+print "plotting ../figs/mixedTraffOutput3_xt_laneMiddle.eps"
 ##############################################################
 
 set key opaque box bottom right
@@ -112,6 +139,10 @@ ymaxOthers=0.425*wLane
 
 plot[t=0:1]\
   "mixedTraffOutput3_xt.traj" u\
+   (filterDataInverse($2,0)*selectRange($4,yminOthers,ymaxOthers)*$1+tshift):($3-4)\
+    t "" w p ls 1 ps 0.08,\
+    t,t t "Cars and trucks" w l ls 1,\
+  "mixedTraffOutput3_xt.traj" u\
    (filterData($2,0)*selectRange($4,yminMotoLeft,ymaxMotoLeft)*$1+tshift):($3-2)\
     t "" w p ls 5 ps 0.08,\
     t,t t "Motos left" w l ls 15,\
@@ -119,10 +150,6 @@ plot[t=0:1]\
    (filterData($2,0)*selectRange($4,yminMotoRight,ymaxMotoRight)*$1+tshift):($3-2)\
     t "" w p ls 7 ps 0.08,\
     t,t t "Motos right" w l ls 17,\
-  "mixedTraffOutput3_xt.traj" u\
-   (filterDataInverse($2,0)*selectRange($4,yminOthers,ymaxOthers)*$1+tshift):($3-4)\
-    t "" w p ls 1 ps 0.08,\
-    t,t t "Other vehicles" w l ls 1,\
   "mixedTraffOutput3_xt.traj" u\
    (filterData($2,3)*selectRange($4,yminOthers,ymaxOthers)*$1+tshift):($3)\
     t "" w p ls 12 ps 0.12,\

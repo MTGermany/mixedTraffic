@@ -275,7 +275,7 @@ function MTM(longModel,s0y,s0yLat,s0yB,s0yLatB,sensLat,tauLatOVM,sensDvy){
   // fixed values within MTM (acc noise at longModels, v0LatMax at road!)
 
   this.accLatIntMax=4*longModel.b; // max lat interact accel = x*comf decel 
-  this.longParReductFactor=0.0;    // !!! reduce longInt if parallel (dx<Ll)
+  this.longParReductFactor=0.5;    // !!! reduce longInt if parallel (dx<Ll)
                                    //  and no collision (sy>0)
 
   // fixed boundary parameters (see sim_straight.js for explanation)
