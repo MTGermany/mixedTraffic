@@ -1,0 +1,17 @@
+#!/bin/bash
+if (($#!=1)); then
+    echo "usage: sim_bicycles_IAM.run <width_m_cm>"
+    echo "example:"
+    echo "sim_bicycles_IAM.run 1_25"
+    exit 0:
+fi
+
+width=$1
+umin=130
+umax=160
+mv ~/Downloads/mixedTrafficRecord*.txt sim_bicycles_IAM_w$width.txt
+rm ~/Downloads/Detector*txt
+analyze_mixedSim sim_bicycles_IAM_w$width 2.4 $umin $umax
+
+perl -i -p -e "s/^width_str=.*$/width_str=\"$width\"/g" sim_bicycles_IAM.gnu
+gnuplot sim_bicycles_IAM.gnu

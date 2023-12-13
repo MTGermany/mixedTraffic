@@ -1,0 +1,6 @@
+#!/bin/bash
+
+mv ~/Downloads/mixedTrafficRecord*.txt sim_lanes_IAM.txt
+mv ~/Downloads/Detector0_road1_x300_*.txt sim_lanes_IAM_x300.fund
+analyze_mixedSim sim_lanes_IAM 10
+gnuplot sim_lanes_IAM.gnu

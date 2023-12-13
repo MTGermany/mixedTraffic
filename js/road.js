@@ -696,13 +696,15 @@ road.prototype.calcAccelerationsOfVehicle=function(i){
   //  vPhase0: first potential minimum of vehs 0.6*wLane from right (+) boundary
 
   if(floorField){
-    var vPhase0=0.5*roadWidthRef-0.6*wLane; 
+    var vPhase0=0.5*roadWidthRef-0.5*wLane; // roadWidthRef global slider var
     var phase=2*Math.PI*(this.veh[i].v-vPhase0)/wLane; // phase=0: center of lane
     var accFloor=((this.veh[i].type=="car")||(this.veh[i].type=="truck"))
 	? -accFloorMax*Math.sin(phase)   
 	: (this.veh[i].type=="bike")
-	? + accFloorMax*Math.sin(phase) : 0;
-	this.veh[i].accLat += accFloor;
+	? + accFloorMax*Math.sin(phase)
+	: 0;
+    accFloor *= 2*(1-2*Math.abs(this.veh[i].v/roadWidthRef)); //!!!
+    this.veh[i].accLat += accFloor;
 
     // (5a) Tweak to forbid bikes to go to the utter left space as observed
     // in the Athens pNEUMA d8* data
@@ -929,7 +931,7 @@ road.prototype.updateBCup=function(Qin,fracTruck,fracBike,dt){
     var success=false; // false initially
     var sNew=0; // =0 just initializer
     var uNew=0; 
-    var smin=10; // filter accept upstream vehicle
+    var smin=10; // =10 filter accept upstream vehicle //
     var speedmin=2; // altern. filter accept upstream vehicle
 
     if(this.veh.length<2){success=true; } //length of ARRAY
@@ -943,7 +945,7 @@ road.prototype.updateBCup=function(Qin,fracTruck,fracBike,dt){
     // insert trucks only at positiv v (right part of the road)
 
     if(success){
-      var roadWidthLoc=this.widthLeft(0)+this.widthRight(0); // roadwidth at u=0
+      var roadWidthLoc=this.widthLeft(0)+this.widthRight(0); // width at u=0
       // create array of possible entry positions (also lane based if mixed)
       var vNewRel=[];
       for(var k=0; k<nLanes; k++){vNewRel[k]=-0.5 + (0.5+k)/nLanes;}

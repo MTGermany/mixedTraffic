@@ -59,7 +59,7 @@ times lateral attenuation with scale=max(model.s0y, model.s0yLat)
 
 @param   leadveh: instance of the vehicle
 @return: interaction in terms of modified long acceleration 
-         (this.accLong not automatically updated!)
+         (only used for selecting neighbor candidates, not for actual accel)
 */
 
 vehicle.prototype.calcLeaderInteraction=function(leadveh){

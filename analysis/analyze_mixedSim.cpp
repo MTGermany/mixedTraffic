@@ -73,7 +73,7 @@ int main(int argc, char* argv[]) {
   double startHistogram_at_u=50;
   double endHistogram_at_u=400;
   char   projectName[MAXSTR];
-  
+  cout<<"argc="<<argc<<endl;
   if ((argc<3)||(argc>5)){
     cerr <<"\nUsage: analyze_mixedSim <projName> <roadWidth_m> "
 	 <<" [<startHistogram_at_u>]  [<endHistogram_at_u>]"<<endl;
@@ -86,8 +86,8 @@ int main(int argc, char* argv[]) {
 
   sprintf(projectName,"%s",argv[1]);
   double roadWidth=atof(argv[2]);
-  if(argc==4){startHistogram_at_u=atof(argv[3]);}
-  if(argc==5){endHistogram_at_u=atof(argv[4]);}
+  if(argc>=4){startHistogram_at_u=atof(argv[3]);}
+  if(argc>=5){endHistogram_at_u=atof(argv[4]);}
 
 
  
@@ -254,7 +254,7 @@ int main(int argc, char* argv[]) {
   double tmin=times[0];
   double tmax=times[nData-1];
   double dtAggr=10;
-  double dxAggr=10;
+  double dxAggr=20;
   double dt=0;
   for(int i=1; (i<int(times.size())&&(dt<1e-10)); i++){
     dt=times[i]-times[i-1];
@@ -301,7 +301,7 @@ int main(int argc, char* argv[]) {
   }
   outfile2<<endl;
 
-
+  cout<<"startHistogram_at_u="<<startHistogram_at_u<<" endHistogram_at_u="<<endHistogram_at_u<<endl;
   
   cout<<"\nanalyze_mixedSim finished ... \n\n";
   return(0);

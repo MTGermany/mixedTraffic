@@ -135,17 +135,23 @@ function getMouseCoordinates(event){
 }
 
 // activate display in simulator "log coords u= ..., v= ..."
+// if true (overridden in main js) mouse coords shown one activated
+// ("onmousemove")
 
+var mouseCoordsActivated=false;
+var showMouseCoords=false; 
 function activateCoordDisplay(event){
-  getMouseCoordinates(event); // => xPixUser, xPixUser, xUser, yUser
-  showMouseCoords=true; // => sim-straight.showLogicalCoords
+  if(showMouseCoords){
+    mouseCoordsActivated=true;  // => sim-straight.showLogicalCoords
+    getMouseCoordinates(event); // => xPixUser, xPixUser, xUser, yUser
+  }
 }
 
 
 // called in html file whenever onmouseout=true
 
 function deactivateCoordDisplay(event){
-    showMouseCoords=false;
+  mouseCoordsActivated=false;
 }
 
 
@@ -490,18 +496,21 @@ function myStartStopFunction(){
 
 
 function myRestartFunction(){ 
+  //Math.seedrandom(42); console.log("in Math.seedrandom(42) myRestartFunction"); 
+
   time=0;
-  itime=0;
+  itime=0;  // itime==0 takes care of all the vehicle cleaning
+            // (calling initializeMicro)
   hasChanged=true;
   macroProperties=[]; // to reset data for the scatterplot commands
-  mainroad=new road(roadID, isRing, roadLen,
-		    widthLeft, widthRight, axis_x, axis_y,
-		    densityInit, speedInit, fracTruck, fracBike,
-		    v0max, dvdumax);
-  //plot1=new plotxy(wPix,hPix,xPixLeft,yPixTop);
-  //plot2=new plotxy(wPix,hPix,xPixLeft,yPixTop-hPix-vertSpacePix);
 
-  // activate thread if stopped
+  // reset all detectors (each detector knows which road it is at)
+
+  if(!(typeof detectors === 'undefined')){
+    for(var iDet=0; iDet<detectors.length; iDet++){
+      detectors[iDet].reset();
+    }
+  }
 
   if(isStopped){
     isStopped=false;
@@ -511,43 +520,6 @@ function myRestartFunction(){
 
 }
 
-
-
-/*
-//################################################################
-// Start/Stop button callback as text
-// (triggered by "onclick" callback in html file)
-//#################################################################
-
-// in any case need first to stop;
-// otherwise multiple processes after clicking 2 times start
-// define no "var myRun" but use that of sim_straight.js; 
-// otherwise new local instance started whenever myRun is inited
-
-// isStopped is defined/initialized in sim-straight.js
-
-
-document.getElementById('startStop').innerHTML=
-    (isStopped) ? "Start" : "Stop";
-
-
-function myStartStopFunction(){ 
-
-    clearInterval(myRun);
-
-    if(isStopped){
-	isStopped=false;
-	document.getElementById('startStop').innerHTML="Stop";
-	myRun=init();
-    }
-    else{
-	document.getElementById('startStop').innerHTML="Resume";
-	isStopped=true;
-    }
-
-}
-// end Start/Stop button callback as text
-*/
 
 
 
@@ -827,8 +799,6 @@ function setSlider(slider, sliderHTMLval, value, commaDigits, str_units){
   var formattedValue=value.toFixed(commaDigits);
   slider.value=value;
   sliderHTMLval.innerHTML=formattedValue+" "+str_units; // +" " DOS=>str_units
-  console.log("setSlider: value=",value
-	      ," innerHTML=",sliderHTMLval.innerHTML);
 }
 
 

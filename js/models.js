@@ -275,8 +275,6 @@ function MTM(longModel,s0y,s0yLat,s0yB,s0yLatB,sensLat,tauLatOVM,sensDvy){
   // fixed values within MTM (acc noise at longModels, v0LatMax at road!)
 
   this.accLatIntMax=4*longModel.b; // max lat interact accel = x*comf decel 
-  this.longParReductFactor=0.5;    // !!! reduce longInt if parallel (dx<Ll)
-                                   //  and no collision (sy>0)
 
   // fixed boundary parameters (see sim_straight.js for explanation)
   
@@ -307,9 +305,20 @@ MTM.prototype.copy=function(mixedModel){
 NEW nov17
 calculate strength of longitudinal interaction as CF acceleration (<=0) 
 times lateral attenuation with scale=max(model.s0y, model.s0yLat)
+
+!!! Only used to select interacting candidates, not for actual acceleration
+
 only nonzero if partner is leader (dx>=0)
-need to calculate accCFint as difference total-free 
-since not all models easily separable (IDM is, OVM and ACC not)
+
+NOTE: Identical to MTM.prototype.calcAccLong apart 
+      (i) w/o accFree
+      (ii) take the maximum of long and lat attenuation because I select
+           partners just on long acceleration!
+      (iii) no special provision for laterally neighboring vehs:
+           global.longParReductFactor
+           (for selecting neighbors, just assume full long force)
+      (iv) with the maximum of long and lat attenuation (because I only
+           have the long accel as criterion for selection!)
 ###########################################################################
 
 @param dx:   longitudinal distance =u[other vehicle]-u [m] (u=front)
@@ -322,14 +331,15 @@ since not all models easily separable (IDM is, OVM and ACC not)
 */
 
 MTM.prototype.calcLeaderInteraction=function(dx,dy,vx,vxl,axl,Ll,Wavg){ 
-    var sx=Math.max(0,dx-Ll);
-    var sy=Math.abs(dy)-Wavg;
+  var sx=Math.max(0,dx-Ll);
+  var sy=Math.abs(dy)-Wavg;
 
-    var accCFint= this.longModel.calcAccInt(sx,vx,vxl,axl)
-    var s0ymax=Math.max(this.s0y, this.s0yLat);
-    var alpha=Math.min(Math.exp(-sy/s0ymax), 1); // =1 if sy<0
+  
+  var accCFint= this.longModel.calcAccInt(sx,vx,vxl,axl);
+  var s0yLarger=Math.max(this.s0y, this.s0yLat);
+  var alpha=Math.min(Math.exp(-sy/s0yLarger), 1); // =1 if sy<0
 
-    return alpha*accCFint;
+  return alpha*accCFint;
 }
 
 
@@ -359,29 +369,18 @@ MTM longitudinal acceleration function effected by one vehicle (only if dx>0)
 // addition of accRnd in road.js
 
 MTM.prototype.calcAccLong=function(dx,dy,vx,vxl,axl,Ll,Wavg){ 
-    var sx=Math.max(0,dx-Ll);
-    var sy=Math.abs(dy)-Wavg;
-    var accFree= this.longModel.calcAccFree(vx);
-    var accCFint=this.longModel.calcAccInt(sx,vx,vxl,axl);
-    var alpha=Math.min(Math.exp(-sy/this.s0y), 1);
+  var sx=Math.max(0,dx-Ll);
+  var sy=Math.abs(dy)-Wavg;
 
-    // reduce longInt if parallel (dx<Ll) and no collision (sy>0)
-    if((dx<Ll)&&(sy>0)){ alpha*=this.longParReductFactor;} // factor=0 
+  var accFree= this.longModel.calcAccFree(vx);
+  var accCFint=this.longModel.calcAccInt(sx,vx,vxl,axl);
+  var alpha=Math.min(Math.exp(-sy/this.s0y), 1);
+
+  // reduce longInt if parallel (dx<Ll) and no collision (sy>0)
+  if((dx<Ll)&&(sy>0)){ alpha*=longParReductFactor;} // factor=0 =>no interact
 
 
-    // tests (set stochasticity noiseAcc in this.longModel.calcAcc=0 
-    // for comparisons !!)
-
-    if(false){
-      console.log("alpha=",alpha," s=",s," vx=",vx," vxl=",vxl," axl=",axl,
-		" accFree=",accFree,
-		" accCFint=",accCFint,
-		" accFree+alpha*longModelAccInt=",accFree+alpha*accCFint,
-		" longModelAcc=",this.longModel.calcAcc(s,vx,vxl,axl),
-		"");
-    }
-
-    return accFree+alpha*accCFint;
+  return accFree+alpha*accCFint;
 }//MTM.calcAccLong
 
 
