@@ -187,9 +187,10 @@ input[type=range]::-webkit-slider-thumb {
   -webkit-appearance: none;
   margin-top: -0.5vh; /* 0.5 (trackWidth - thumbWidth) */
 }
-input[type=range]:focus::-webkit-slider-runnable-track {
-  background: #ddddee;
-}
+
+/* width of ICmicro file selection button at .custom-file-upload */
+
+
 
 /*#############################################################*/
 /*@media all and  (min-aspect-ratio: 6/5){*/
@@ -289,13 +290,22 @@ input[type=range]:focus::-webkit-slider-runnable-track {
   z-index: 1;
 }
 
+/* (3) Links to other simulations (width=DOS) */
 
-/* (3) scenarios: wether display force field, use floorField etc */
+#simulations{  /* wether display force field, use floorField etc */
+  position: absolute;
+  left: calc(99vw - 15vmin);
+  top:     33vmin;
+  z-index: 3;
+}
+
+
+/* (4) scenarios: wether display force field, use floorField etc */
 
 #scenarios{  /* wether display force field, use floorField etc */
   position: absolute;
-  left: calc(99vw - 14vmin);
-  top:     40vmin;
+  left: calc(99vw - 15vmin);
+  top:     50vmin;
   z-index: 3;
   /*height:  30vmin;
   width: 30vmin;
@@ -318,16 +328,12 @@ button{
   width: 14vmin;
 }
 
-label{
-  display: inline-block; 
-  width: 14vmin;
-}
 
 /* file dialog (tricky styling) */
 
 input{
   font-size: calc( 6px + (18 - 6) * ( (100vmin - 300px) / ( 900 - 300) ));
-  width: 17vmin;
+  width: 17vmin; /* possibly not used */
 }
 
 /* otherwise, addtl box "choose file" appears, unflexible */
@@ -336,7 +342,7 @@ input[type="file"] {
 }
 
 .custom-file-upload {
-    width: 17vmin;
+    width: 11.8vmin;
     border: 1px solid #ddf;
     display: inline-block;
     padding: 3px 6px;
@@ -348,7 +354,7 @@ input[type="file"] {
 
 
 
-/* (4) position of the flags for language selection: right top of simCanvas */
+/* (5) position of the flags for language selection: right top of simCanvas */
 
 #infoFlags{
   position: absolute;
@@ -359,7 +365,7 @@ input[type="file"] {
 }
 
 
-/* (5a) position of the links, e.g., traffic-simulation.de */
+/* (6a) position of the links, e.g., traffic-simulation.de */
 #links{ 
   position: absolute;
   top: 10.5vmin;
@@ -372,7 +378,7 @@ input[type="file"] {
   z-index: 1; /* the higher the integer, the more on top */
 }
 
-/* (5b) position of the copyright: left bottom of simCanvas */
+/* (6b) position of the copyright: left bottom of simCanvas */
 
 #impressum{ 
   position: absolute;
@@ -399,7 +405,7 @@ TR{
 }
 
 
-/* (6) slider field sliders */
+/* (7) slider field sliders */
 
 #sliders1{ /* table elements relevant for font size */
   position: absolute;
