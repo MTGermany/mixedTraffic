@@ -319,7 +319,12 @@ MTM longitudinal interaction acceleration by one vehicle (only if dx>0)
 @param Ll:   length leading car [m]
 @param Wavg: 1/2(W+Wl) avg. vehicle width [m]
 
-NOTE: addition of accRnd in road.js
+NOTE:  addition of accRnd in road.js
+NOTE2: reduction factors:
+       Front, sy<0: 1
+       Front parallel, sx<0 AND sy>0: lambda
+       Back sy<0, sx<0 AND sy>0: longParReductFactor (=lambda)
+       Back sy<0parallel, sxBack<0 AND syBack>0: lambda*longParReductFactor
 
 @return:  acceleration ax [m/s^2]
 */
@@ -332,6 +337,9 @@ MTM.prototype.calcAccLongInt=function(dx,dy,vx,vxl,axl,Ll,Wavg){
   var alpha=Math.min(Math.exp(-sy/this.s0y), 1);
 
   // reduce longInt if parallel (dx<Ll) and no collision (sy>0)
+  // NOTE: calcAccLatInt does not have such a factor, only gamma for back veh
+  // see at the definition headers of calcAccLongInt, calcAccLatInt
+
   if((dx<Ll)&&(sy>0)){ alpha*=longParReductFactor;} // factor=0 =>no interact
 
   return alpha*accCFint;
@@ -387,7 +395,7 @@ MTM.prototype.calcAccLong=function(dx,dy,vx,vxl,axl,Ll,Wavg){
 */
 
 
-/**
+/*
 ###########################################################################
 MTM free lateral acceleration 
 ###########################################################################
@@ -401,7 +409,7 @@ MTM.prototype.calcAccLatFree=function(vy){
 
 
 
-/**
+/*
 ###########################################################################
 MTM lateral interaction acceleration effected by one vehicle 
 ###########################################################################
@@ -420,30 +428,16 @@ MTM lateral interaction acceleration effected by one vehicle
 
 @return:  desired lateral acceleration [m/s^2] (including sign)
 
-!! minor performance improvement would be to reuse accLongFree, accCFint
-   by adding these state variables to the vehicle class 
-   (defined in prior vehicle.calcAccLong call) 
-   and to the function param list but more obscure information flow 
-   (I have checked it!)  and
-   less flexible to accLong with multiple leaders=> forget it
-
-Notice: addition of accLatInt for several vehs, floorFields, 
-restrictions, and noise in higher-level road.js
+NOTE:  addition of accRnd in road.js
+NOTE2: reduction factors:
+       Front, sy<0: 1
+       Front parallel, sx<0 AND sy>0: lambda
+       Back sy<0, sx<0 AND sy>0: longParReductFactor (=lambda)
+       Back sy<0parallel, sxBack<0 AND syBack>0: lambda*longParReductFactor
+NOTE3: addition of accLatInt for several vehs, floorFields, 
+       restrictions, and noise in higher-level road.js
 */
 
-// logging useful to filter debug output for vehID etc in road.js
-// need abs coord y,wRoad for virtually changing dy and Wavg
-// if leader near boundary (such that leader virtually
-// widens in the direction of the road boundary)
-// assuming road boundaries y=+/- 05 wRoad
-
-// !! Introduce a ban to move back to ending lanes if mandatory LC
-// need from road additional flag mandatory: 0=not, 1=toRight, -1=toLeft
-// test: IC_2lanes_zipper.txt
-
-// addition of accRnd in road.js,
-// restrictions dudv->dvdu<dvdumax, |dvdu/dt|<dotdvdumax in road.js
-// restrictions speedLat<max(speedLatStuck,dvdu*speed) in road.js
 
 MTM.prototype.calcAccLatInt=function(x,xl,y,yl,vx,vxl,vy,vyl,axl,
 				     Lveh,Ll,Wveh,Wl,Wroad,logging){
@@ -459,10 +453,18 @@ MTM.prototype.calcAccLatInt=function(x,xl,y,yl,vx,vxl,vy,vyl,axl,
 
   // normalized lateral desire alpha in [-1,1]
 
-  // !!! sqrt decrease if |dy|<Wavg
+  // !!! Experiment with several powers
+  // power -> 0 => fixed lateral repulsion away from center
+  // good for lane free, bad lane-based because lateral instabilities if
+  // approaching slower objects
+  // power =1 => good for lane-based traffic
+  // power =2 => theoretiall gradient zero in lane center but still wobbling
+
   var alpha=-sign_dy*((overlap) 
-		      ? Math.sqrt(Math.abs(dy)/Wavg)
-		      //? Math.pow(Math.abs(dy)/Wavg, 0.3)
+		      ? Math.abs(dy)/Wavg 
+		      //? Math.sqrt(Math.abs(dy)/Wavg)
+		      //? Math.pow(Math.abs(dy)/Wavg, 0.01)
+		      //? Math.pow(Math.abs(dy)/Wavg, 2)
 		      : Math.exp(-(Math.abs(dy)-Wavg)/this.s0yLat));
 
   // !!! lin decrease if |dy|<Wavg
@@ -472,7 +474,8 @@ MTM.prototype.calcAccLatInt=function(x,xl,y,yl,vx,vxl,vy,vyl,axl,
 
 
 
-  // alphaB in {-1,0,1} replaces normalized lateral desire alpha if overlap with
+  // alphaB in {-1,0,1} replaces normalized lateral desire alpha
+  // if overlap with
   // leaders that are too close to the boundaries to pass on that side
   // introduced to avoid trapped cars behind slow vehs at boundaries
 

@@ -125,7 +125,8 @@ var dotdvdumax=0.3;    // 0.3 max change rate of angle to road axis
 var phiVehRelMax=0.1;  // 0.1 OK only drawing: max visual angle to road axis
 var speedLatStuck=1.2; // 1.2 OK lift angle restriction if obstacle ahead
 
-var longParReductFactor=0.2; // long interaction reduced if completely lateral
+var longParReductFactor=0.1; // long interaction reduced if completely lateral
+                             // =lambda to save parameters
 
 // IAM parameterisation
 // (apart from tau->LatOVM, lambda=pushLong=pushLat in sliders)

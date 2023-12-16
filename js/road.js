@@ -634,7 +634,6 @@ road.prototype.calcAccelerationsOfVehicle=function(i){
   var accLongInt=0; 
   for(var ilead=0; ilead<nLeaders; ilead++){
     var j=iLeaders[ilead];
-    //!!! optimize performance in models now in-tot-free and very sim IAM-int
     var accLongLeader=this.veh[i].calcAccLongInt(this.veh[j]);
     if(accLongLeader<accLongInt){
       if(!useSeveralLeaders){accLongInt=accLongLeader;}
@@ -683,9 +682,8 @@ road.prototype.calcAccelerationsOfVehicle=function(i){
   var logging=false;
   
   for(var ilead=0; ilead<nLeaders; ilead++){
-	var j=iLeaders[ilead];
-	accLatInt
-	    += this.veh[i].calcAccLatInt(this.veh[j],logging);
+    var j=iLeaders[ilead];
+    accLatInt += this.veh[i].calcAccLatInt(this.veh[j],logging);
   }
 
     // followers (actio=reactio => "-=" instead of "+=" !)
@@ -727,7 +725,7 @@ road.prototype.calcAccelerationsOfVehicle=function(i){
 	: (this.veh[i].type=="bike")
 	? + accFloorMax*Math.sin(phase)
 	: 0;
-    accFloor *= 2*(1-2*Math.abs(this.veh[i].v/roadWidthRef)); //!!!
+    accFloor *= 2*(1-2*Math.abs(this.veh[i].v/roadWidthRef)); 
     this.veh[i].accLat += accFloor;
 
     // (5a) Tweak to forbid bikes to go to the utter left space as observed
@@ -768,7 +766,7 @@ road.prototype.calcAccelerationsOfVehicle=function(i){
   var relspeed_v0=this.veh[i].speed/this.veh[i].mixedModel.longModel.v0;
 
   var accRnd=accNoiseAmplLong*(Math.random()-0.5);
-  this.veh[i].accLong += accRnd*relspeed_v0; //!!! *relspeed_v0
+  this.veh[i].accLong += accRnd*relspeed_v0; //!! *relspeed_v0
 
   accRnd=accNoiseAmplLat*(Math.random()-0.5);
   this.veh[i].accLat += accRnd*relspeed_v0;
@@ -803,7 +801,7 @@ road.prototype.calcAccelerationsOfVehicle=function(i){
     console.log(" acc:            accLong=",
 		parseFloat(this.veh[i].accLong).toFixed(2),
 		" accLat=",parseFloat(this.veh[i].accLat).toFixed(2));
-    //console.log("exiting..."); clearInterval(myRun); //!!!
+ 
 
 	if(false){
 	  console.log("\n nLeaders=",nLeaders);
@@ -1184,7 +1182,7 @@ road.prototype.drawVehicles=function(carImg, truckImg, bikeImg, obstacleImg,
     var uCenterPhys=this.veh[i].u-0.5*this.veh[i].len;
     var vCenterPhys=this.veh[i].v; // incr left -> right, 0 @ road center
 
-    var vxmin=2; //!!!
+    var vxmin=2; //!! purely graphical
     var phiRoad=this.get_phi(uCenterPhys);
     var dvdu=this.veh[i].speedLat/(Math.max(this.veh[i].speed,vxmin));
     var phiVehRel=(this.veh[i].speed<1)  // 
@@ -1871,7 +1869,7 @@ road.prototype.changeTrafficLight=function(id,value){
     //}
 
 
-    for(var i=0; i<this.veh.length; i++){ //!!! is this.veh.length updated?
+    for(var i=0; i<this.veh.length; i++){ 
       if(this.veh[i].id===id){
 	this.veh.splice(i, 1); // red TL virt veh removed
 	//console.log("road.changeTrafficLight: removed virt red TL vehicle");

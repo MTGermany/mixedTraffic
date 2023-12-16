@@ -146,7 +146,8 @@ var dotdvdumax=0.3;    // max change rate of angle to road axis
 var phiVehRelMax=0.10; // only drawing: maximum visual angle to road axis
 var speedLatStuck=0.2;   // max lateral speed if long speed low!!DOS!!!
 
-var longParReductFactor=0.5; // long interaction reduced if completely lateral
+var longParReductFactor=0.1; // long interaction reduced if completely lateral
+                             // =lambda to save parameters
 
 
 
