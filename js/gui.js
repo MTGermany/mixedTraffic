@@ -1,13 +1,21 @@
 //####################################################################
 // TrafficObjects global state variables
+// (change in top-level sim if very small area in meters)
+// !!! reformulate in pixels ?!!
 //####################################################################
+
 var xUser, yUser;       // physical coordinates 
 var xUserDown, yUserDown; // physical coordinates at mousedown/touchStart evt
 var mousedown=false; //true if onmousedown event fired, but not yet onmouseup
 
 
-var distDragCrit=10;   // drag function if dragged more [m]; otherwise click
 var distDrag=0;        // physical distance[m] of the dragging
+
+var distCrit_m=15;  // make it rather large, compared to distDragCrit
+var distDragCrit=7;   // drag function if dragged more [m]; otherwise click
+
+var varWidthLeft=true;
+var varWidthRight=true;
 
 function formd0(x){return parseFloat(x).toFixed(0);}
 
@@ -217,7 +225,6 @@ function pickObject(xUser,yUser){
   }
 
   if(!(typeof trafficObjs === 'undefined')){ // just check for scenarios w/o
-    var distCrit_m=20; //[m] !! make it rather large  
     var pickResults=trafficObjs.pickObject(xPixUser, yPixUser, 
 				      distCrit_m*scale);
     console.log("  pickObject: pickResults=",pickResults);
@@ -267,7 +274,6 @@ function dropObject(xUser, yUser){
 
   if(trafficObjPicked){
 
-    var distCrit_m=20;  // optimize!!
     var distCritPix=distCrit_m*scale;
     trafficObjs.dropObject(trafficObject, mainroad, 
 			   xUser, yUser, distCritPix, scale);
@@ -387,7 +393,7 @@ function changeSpeedl(xPixUser,yPixUser){
 
       var iSelect=Math.floor(nLimit*(yPixUser-speedlBoxAttr.yPixTop)/
 			     speedlBoxAttr.hPix);
-      obj.value=speedlBoxAttr.limits[iSelect];
+      obj.value=speedlBoxAttr.limits[iSelect]; // obj.value=limit_kmh
       var fileIndex=(0.1*obj.value<13)
 	? Math.round(0.1*obj.value) : 0;
       obj.image.src = "figs/speedLimit_"+(fileIndex)+"0.svg";

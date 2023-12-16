@@ -557,76 +557,93 @@ road.prototype.calcAccelerations=function(){
 
 road.prototype.calcAccelerationsOfVehicle=function(i){
 
-    // just in case... road.prototype.calcAccelerations also checks it
-    if(this.veh[i].type==="obstacle"){console.log("obstacle!"); return;}
+  var useSeveralLeaders=false; //!!! test new model version
+
+  var bIntCrit=0.1;  // !! preselection for vehicles eligible for interaction:
+                     // if |longitudinal force| > bIntCrit
+
+  var smaxfollow=s0; // in addition to above criterion, followers only
+                     // included if their long gap <smaxfollow
+
+
+
+
+  // just in case... road.prototype.calcAccelerations also checks it
+
+  if(this.veh[i].type==="obstacle"){console.log("obstacle!"); return;}
 
  
-   // (0) preselection: get ordered index range of candidate vehicles 
-    //     (only longitudinal range considered)
+  // (0) preselection: get ordered index range of candidate vehicles 
+  //     (only longitudinal range considered)
 
-    var irange=this.get_neighborIndexRange(i);
-    var imin=irange[0];
-    var imax=irange[1];
+  var irange=this.get_neighborIndexRange(i);
+  var imin=irange[0];
+  var imax=irange[1];
 
     // (0a) get interacting leading and lagging vehicles (subset of above)
-    // notice: too many differences between veh.calcLeaderInteraction and 
+    // notice: too many differences between veh.calcAccLongLeaderSelect and 
     // veh.calcAccLong, veh.calcAccLat
     // => hardly performance gain by reusing actual accelerations
-    //    from the parts calculated by veh.calcLeaderInteraction
+    //    from the parts calculated by veh.calcAccLongLeaderSelect
     //    (actual interacting accelerations calculated for much fewer 
     //    leaders and followers than are in the preselection, anyway)
     // => make selection independently from the operative part
 
     // result: nLeaders, iLeaders[], nFollowers, iFollowers[]
 
-    var bIntCrit=0.1; //!!
 
-  // leaders
+  // selection of possibly interacting leaders
   // accInt=longitud interaction=accCFint*min(1,exp(-sy/s0ymax))
 
-    var iLeaders=[];
-    var accInteractionLeaders=[];
-    var nLeaders=0;
+  var iLeaders=[];
+  var accInteractionLeaders=[];
+  var nLeaders=0;
 
-    for(var j=imin; j<i; j++){
-	var accInt=this.veh[i].calcLeaderInteraction(this.veh[j]);
-	if(accInt<-bIntCrit){
+  for(var j=imin; j<i; j++){
+    var accInt=this.veh[i].calcAccLongLeaderSelect(this.veh[j]);
+    if(accInt<-bIntCrit){
 	    iLeaders[nLeaders]=j; 
 	    accInteractionLeaders[nLeaders]=accInt;
 	    nLeaders++;
-	}
     }
+  }
 
-    //followers (consider only if interacting AND gap<s0)
+  // selection of followers (consider only if interacting AND gap<s0)
 
-    var iFollowers=[];
-    var accInteractionFollowers=[];
-    var nFollowers=0;
+  var iFollowers=[];
+  var accInteractionFollowers=[];
+  var nFollowers=0;
 
-    for(var j=i+1; j<=imax; j++){
-      var accInt=this.veh[j].calcLeaderInteraction(this.veh[i]);
-      if((accInt<-bIntCrit)
-	 &&(this.veh[i].u-this.veh[i].len-this.veh[j].u<s0)) {
-	    iFollowers[nFollowers]=j;
-	    accInteractionFollowers[nFollowers]=accInt;
-	    nFollowers++;
-	}
+  for(var j=i+1; j<=imax; j++){
+    var accInt=this.veh[j].calcAccLongLeaderSelect(this.veh[i]);
+    if((accInt<-bIntCrit)
+       &&(this.veh[i].u-this.veh[i].len-this.veh[j].u<smaxfollow)) {
+      iFollowers[nFollowers]=j;
+      accInteractionFollowers[nFollowers]=accInt;
+      nFollowers++;
     }
+  }
 
  
-    //(1) longitudinal accelerations due to other vehicles ("traffic"): 
-    //  just chose the single LEADER
-    //  with strongest interaction 
-    //  initialize with no interaction (nLeaders=0)
+  //(1) longitudinal accelerations due to other vehicles ("traffic"): 
+  //  just chose the single LEADER
+  //  with strongest interaction 
+  //  initialize with no interaction (nLeaders=0)
  
-  var accLongTraffic=this.veh[i].calcAccLongFree();// just init
+  var accLongFree=this.veh[i].calcAccLongFree(); 
+  var accLongInt=0; 
   for(var ilead=0; ilead<nLeaders; ilead++){
     var j=iLeaders[ilead];
-    var accLongLeader=this.veh[i].calcAccLong(this.veh[j]);
-    if(accLongLeader<accLongTraffic){
-      accLongTraffic=accLongLeader;
-      this.veh[i].leaderType=this.veh[j].type;
+    //!!! optimize performance in models now in-tot-free and very sim IAM-int
+    var accLongLeader=this.veh[i].calcAccLongInt(this.veh[j]);
+    if(accLongLeader<accLongInt){
+      if(!useSeveralLeaders){accLongInt=accLongLeader;}
+
+      // leaderType needed for special lateral treatment of obstacles later
+      this.veh[i].mostInfluencingLeaderIndex=j;
     }
+    if(useSeveralLeaders){accLongInt+=accLongLeader;}
+    
   }
 
     //(1a) Longitudinal push from behind
@@ -634,24 +651,31 @@ road.prototype.calcAccelerationsOfVehicle=function(i){
     //  with strongest interaction 
     //  initialize with no interaction (nLeaders=0)
 
-  if(true){ // pushLong. -lat external slider
-    var gammax=1; //!!! only info purposes; corresponds to pushing/repulsive ratio gamma_x in Papa
-    var accLongPush=0;
+  if(true){ // gamma=pushLong. -lat external slider
+    var accLongPushMax=0;
     for(var ifollow=0; ifollow<nFollowers; ifollow++){
       var j=iFollowers[ifollow];
-      accLongPush=Math.max(-this.veh[j].calcAccLongInt(this.veh[i]),
-			   accLongPush); // i <-> j, + <-> -
+      
+      // pushLong=gamma, i <-> j means + <-> -
+      var accLongPush=-pushLong*this.veh[j].calcAccLongInt(this.veh[i]);
+      if(!useSeveralLeaders){ // just determine max push if only single flw
+        accLongPushMax=Math.max(accLongPush, accLongPushMax);
+      }
+      else{accLongInt+=accLongPush;} // add to final interaction if several
     }
-    accLongTraffic += pushLong*accLongPush;
-    //console.log("pushLong=",pushLong);
+    if(!useSeveralLeaders){accLongInt += accLongPushMax;}
   }
-  
-    //(2) lateral accelerations due to other vehicles ("traffic"):
-    //  include ALL leaders and followers, also leading obstacles
-    //  leaders with weight 1, followers with weight pushLat
-    //  initialize with no interaction (nLeaders=nFollowers=0)
+  // finished calculation of accLongInt
 
-    var accLatTraffic=this.veh[i].calcAccLatFree();
+
+  
+  //(2) lateral accelerations due to other vehicles ("traffic"):
+  //  include ALL leaders and followers, also leading obstacles
+  //  leaders with weight 1, followers with weight pushLat
+  //  initialize with no interaction (nLeaders=nFollowers=0)
+
+  var accLatFree=this.veh[i].calcAccLatFree();
+  var accLatInt=0;
 
     // leaders
 
@@ -660,34 +684,34 @@ road.prototype.calcAccelerationsOfVehicle=function(i){
   
   for(var ilead=0; ilead<nLeaders; ilead++){
 	var j=iLeaders[ilead];
-	accLatTraffic 
+	accLatInt
 	    += this.veh[i].calcAccLatInt(this.veh[j],logging);
   }
 
     // followers (actio=reactio => "-=" instead of "+=" !)
-    // of course, do not consider back obstacles
+    // of course, do not consider push effect of back obstacles
 
-    for(var ifollow=0; ifollow<nFollowers; ifollow++){
-	var j=iFollowers[ifollow];
-	var factor=(this.veh[j].type==="obstacle") ? 0 : pushLat; 
-	accLatTraffic 
-	    -= factor*this.veh[j].calcAccLatInt(this.veh[i],false);
-    }
-
-
-    // (3) repulsion effects of road boundaries/walls (vector)
-    // ! (possibly replaceable by obstacles but probably less effective)
-    // !!! make them more effective at high speeds to avoid BC crashes
-    // !!! make them not blindly "anticipate" situations further ahead
-
-    var accBoundaries=this.veh[i].calcAccB(widthLeft,widthRight);
-   //console.log("accBoundaries=",accBoundaries);
+  for(var ifollow=0; ifollow<nFollowers; ifollow++){
+    var j=iFollowers[ifollow];
+    var factor=(this.veh[j].type==="obstacle") ? 0 : pushLat;
+    accLatInt -= factor*this.veh[j].calcAccLatInt(this.veh[i],false);
+  }
+  // finished calculation of accLatInt
 
 
-    // (4) calculate final result of model w/o floor fields
+  // (3) repulsion effects of road boundaries/walls (vector)
+  // ! (possibly replaceable by obstacles but probably less effective)
+  // !!! make them more effective at high speeds to avoid BC crashes
+  // !!! make them not blindly "anticipate" situations further ahead
 
-    this.veh[i].accLong=accLongTraffic+accBoundaries[0];
-    this.veh[i].accLat=accLatTraffic+accBoundaries[1];
+  var accBoundaries=this.veh[i].calcAccB(widthLeft,widthRight);
+ //console.log("accBoundaries=",accBoundaries);
+
+
+  // (4) calculate final result of model w/o floor fields
+
+  this.veh[i].accLong=accLongFree+accLongInt+accBoundaries[0];
+  this.veh[i].accLat=accLatFree+accLatInt+accBoundaries[1];// accLatFree
 
  
   // (5) add floor fields (inited in sim-straight, controlled by gui)
@@ -755,6 +779,7 @@ road.prototype.calcAccelerationsOfVehicle=function(i){
     //################################
 
   if(false){
+  //if(this.veh[i].id==200540){
   //if(true){
   //if(this.veh[i].type != "obstacle"){
     //if((!isNumeric(this.veh[i].accLong))||(!isNumeric(this.veh[i].accLat))){
@@ -764,15 +789,20 @@ road.prototype.calcAccelerationsOfVehicle=function(i){
     console.log(" velocity:         vx=",
 		parseFloat(this.veh[i].speed).toFixed(2),
 		" vy=  ",parseFloat(this.veh[i].speedLat).toFixed(2));
-    console.log(" acc traffic:    accx=",
-		parseFloat(accLongTraffic).toFixed(2),
-		" accy=",parseFloat(accLatTraffic).toFixed(2));
-    console.log(" acc boundaries: accx=",
+
+    console.log(" acc_free:    accLongFree=",
+		parseFloat(accLongFree).toFixed(2),
+		" accLatFree=",parseFloat(accLatFree).toFixed(2));
+    console.log(" acc_int:    accLongInt=",
+		accLongInt.toFixed(2),
+		" accLatInt=",parseFloat(accLatInt).toFixed(2));
+    console.log(" acc boundaries: accBoundaries[0]=",
 		parseFloat(accBoundaries[0]).toFixed(2),
-		" accy=",parseFloat(accBoundaries[1]).toFixed(2));
-    console.log(" acc:            accx=",
+		" accBoundaries[1]=",parseFloat(accBoundaries[1]).toFixed(2));
+    console.log(" acc floor: (0,",accFloor.toFixed(2));
+    console.log(" acc:            accLong=",
 		parseFloat(this.veh[i].accLong).toFixed(2),
-		" accy=",parseFloat(this.veh[i].accLat).toFixed(2));
+		" accLat=",parseFloat(this.veh[i].accLat).toFixed(2));
     //console.log("exiting..."); clearInterval(myRun); //!!!
 
 	if(false){
@@ -822,22 +852,11 @@ road.prototype.updateSpeedPositions=function(dt){
     
     var accLong=this.veh[i].accLong;
     var speedOld=this.veh[i].speed;
+    var speedLatOld=this.veh[i].speedLat;
 
-    var du=speedOld*dt+0.5*accLong*dt*dt;
-    this.veh[i].speed = speedOld + accLong*dt;
-    if(this.veh[i].speed<-1e-6){
-	    this.veh[i].speed=0;
-	    du=-0.5*speedOld*speedOld/accLong;
-    }
-    this.veh[i].u += du;
-    if((this.isRing)&&(this.veh[i].u>this.roadLen)){ // close ring if isRing
-	    this.veh[i].u -= this.roadLen;
-    }
+    this.veh[i].speed    = speedOld + accLong*dt;
+    this.veh[i].speedLat = speedLatOld +this.veh[i].accLat*dt;
 
-    var dv=this.veh[i].speedLat*dt+0.5*this.veh[i].accLat*dt*dt;
-    this.veh[i].v += dv;
-
-    this.veh[i].speedLat += this.veh[i].accLat*dt;
 
     // restrict speedLat (1)
     // restrict change rate of angle to road axis by dotdvdumax
@@ -861,23 +880,48 @@ road.prototype.updateSpeedPositions=function(dt){
     // speedLatMax, speedLatStuck always >0
 
     var speedLatMax=Math.abs(this.veh[i].dvdu*this.veh[i].speed);
-    if(this.veh[i].leaderType=="obstacle"){
+
+    // if real obstacle (no TL)
+    var leaderIndex=this.veh[i].mostInfluencingLeaderIndex;
+    //console.log("this.veh[leaderIndex]=",this.veh[leaderIndex]);
+    
+    if((!(typeof this.veh[leaderIndex] === 'undefined'))
+       &&this.veh[leaderIndex].isRealObstacle()){
+      console.log("Vehicle ",this.veh[i].id," follows real obstacle!");
       speedLatMax=Math.max(speedLatStuck,speedLatMax);
     }
     this.veh[i].speedLat
       =Math.max(-speedLatMax,Math.min(speedLatMax,this.veh[i].speedLat));
 
+
+
+    // update positions (due this at the end because otherwise dvdu limits
+    // not into effect!
+
+    var dv=0.5*(speedLatOld+this.veh[i].speedLat)*dt;
+    var du=0.5*(speedOld+this.veh[i].speed)*dt;
+    if(this.veh[i].speed<-1e-6){
+	    this.veh[i].speed=0;
+	    du=-0.5*speedOld*speedOld/accLong;
+    }
+    this.veh[i].v+=dv;
+    this.veh[i].u+=du;
+    if((this.isRing)&&(this.veh[i].u>this.roadLen)){ // close ring if isRing
+	    this.veh[i].u -= this.roadLen;
+    }
+    
  
     // debug dvdumax, dotdvdumax, speedLatStuck (all def @ top level)
     // in top-level sim-straight*.js
 
     if(false){
+    //if(this.veh[i].id==974709){
       //if(this.veh[i].type!="obstacle"){
           console.log("road.updateSpeedPositions: t=",formd(time),
 		      " veh ID ",this.veh[i].id,
 		      " dvdu=",formd(dvdu),
 		      " this.veh[i].dvdu=",formd(this.veh[i].dvdu),
-		      " sign_dvdu=",sign_dvdu,
+		      " sign_dotdvdu=",sign_dotdvdu,
 		      "  x=",parseFloat(this.veh[i].u).toFixed(2),
 		      " vx=",parseFloat(this.veh[i].speed).toFixed(3),
 		      " accx=",parseFloat(this.veh[i].accLong).toFixed(3),
@@ -890,6 +934,8 @@ road.prototype.updateSpeedPositions=function(dt){
     }
   }
 
+
+  
   this.sortVehicles(); // positional update may have disturbed sorting
   if(downloadActive){this.updateExportString();} // MT 2021-11
 
@@ -1790,7 +1836,7 @@ and implement effects
 
 road.prototype.changeTrafficLight=function(id,value){
 
-  console.log("in road.changeTrafficLight");
+ // console.log("in road.changeTrafficLight");
   
   var success=false;
   var pickedTL;
@@ -1820,20 +1866,20 @@ road.prototype.changeTrafficLight=function(id,value){
   if(pickedTL.value==="green"){
     console.log("remove TL virt vehicle id=",id);
       // debug
-    for(var i=0; i<this.veh.length; i++){
-      console.log("before removing: u=",this.veh[i].u," id=",this.veh[i].id);
-    }
+    //for(var i=0; i<this.veh.length; i++){
+     // console.log("before removing: u=",this.veh[i].u," id=",this.veh[i].id);
+    //}
 
 
     for(var i=0; i<this.veh.length; i++){ //!!! is this.veh.length updated?
       if(this.veh[i].id===id){
 	this.veh.splice(i, 1); // red TL virt veh removed
-	console.log("road.changeTrafficLight: removed virt red TL vehicle");
+	//console.log("road.changeTrafficLight: removed virt red TL vehicle");
       }
     }
 
     for(var i=0; i<this.veh.length; i++){
-      console.log("after removing: u=",this.veh[i].u," id=",this.veh[i].id);
+      //console.log("after removing: u=",this.veh[i].u," id=",this.veh[i].id);
     }
     
     
@@ -1866,9 +1912,12 @@ road.prototype.changeTrafficLight=function(id,value){
   this.sortVehicles();
 
   // debug
-  for(var i=0; i<this.veh.length; i++){
-    if(this.veh[i].type==="obstacle"){
-      console.log("end changeTrafficLight: obstacle found: u=",this.veh[i].u," id=",this.veh[i].id);
+  if(false){
+    for(var i=0; i<this.veh.length; i++){
+      if(this.veh[i].type==="obstacle"){
+        console.log("end changeTrafficLight: obstacle found: u=",
+		    this.veh[i].u," id=",this.veh[i].id);
+      }
     }
   }
 

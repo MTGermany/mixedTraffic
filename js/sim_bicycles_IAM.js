@@ -4,12 +4,51 @@
 // Gloal var definitions and initial settings
 //#############################################################
 
-// (0) project-specific tweaks in
-// ~/versionedProjects/mixedTraffic/analysis/analyze.cpp
+// (0) project-specific tweaks road geometry
+
+// see also ~/versionedProjects/mixedTraffic/analysis/analyze.cpp
+// var varWidthLeft,-Right,floorField set toplevel <script>.../script> in html
 
 
-// record data only after some distance from the upstream end
-// var startRecording_at_u=40;  
+
+// reduce critical distances for mouse actions because small region here
+// (preset in gui.js)
+
+distCrit_m=5;
+distDragCrit=2;
+
+
+// custom road geometry
+
+function widthLeft(u){ // width left boundary - road axis
+  var wLeftRef=0.5*roadWidthRef;
+  
+  var u0=0.20*roadLen; var w0=1.0; // start with full width
+  var u1=0.25*roadLen; var w1=0.7; // center initial narrowing
+                                   // to disorder initial config
+  var u2=0.30*roadLen; var w2=1.0; // end initial narrowing
+  var u3=0.50*roadLen; var w3=1.0; // begin bottleneck taper
+  var u4=0.65*roadLen; var w4=0.5; // begin full bottleneck
+  var u5=0.80*roadLen; var w5=0.5; // end full bottleneck
+  var u6=0.80*roadLen; var w6=1.0; // outflow section
+
+
+
+
+  return (u<u0) ? wLeftRef
+    : (u<u1) ? w0*wLeftRef+(w1-w0)*wLeftRef*(u-u0)/(u1-u0)
+    : (u<u2) ? w1*wLeftRef+(w2-w1)*wLeftRef*(u-u1)/(u2-u1)
+    : (u<u3) ? w2*wLeftRef+(w3-w2)*wLeftRef*(u-u2)/(u3-u2)
+    : (u<u4) ? w3*wLeftRef+(w4-w3)*wLeftRef*(u-u3)/(u4-u3)
+    : (u<u5) ? w4*wLeftRef+(w5-w4)*wLeftRef*(u-u4)/(u5-u4)
+    : (u<u6) ? w5*wLeftRef+(w6-w5)*wLeftRef*(u-u5)/(u6-u5)
+    : wLeftRef;
+}
+
+function widthRight(u){ // width road axis - right boundary - symmetric here
+  return widthLeft(u);
+}
+
 
 
 
@@ -44,7 +83,7 @@ var displayForcefield=false; // can be changed interactively -> gui.js
 var displayForceStyle=2;    // 0: with probe, 1: arrow field arround veh,
                             // 2: moving arrows at veh
 var displayScatterplots=true;
-var displayMacroProperties=true;
+var displayMacroProperties=false;
 var displayVehIDs=false; // debugging
 
 var hasChanged=true; // physical dim have changed (e.g. by window resize)
@@ -65,11 +104,11 @@ showMouseCoords=true;
 // (initial) IDM/ACC parameterisation and creation of underlying longmodels
 //#############################################################
 
-var v0=5;  //!!! 25->5
-var Tgap=0.6;
-var s0=1;
-var amax=2;
-var bcomf=2;
+var v0Bike=5; var v0=6; // cars (v0 etc) are faster bicycles
+var TgapBike=0.5; var Tgap=0.5;
+var s0Bike=0.5; var s0=0.5;
+var amaxBike=1; var amax=1;
+var bcomfBike=1; var bcomf=1;
 
 var v0Truck=12;
 var TgapTruck=1.5;
@@ -77,11 +116,6 @@ var s0Truck=2;
 var amaxTruck=1;
 var bcomfTruck=2;
 
-var v0Bike=5; //!!! bicycles, not motobikes
-var TgapBike=0.5;
-var s0Bike=0.5;
-var amaxBike=1;
-var bcomfBike=1;
 var v0Obstacle=0;
 
 var speedlimit=1000; // per default no speedlimit
@@ -99,7 +133,7 @@ var speedmap_max=v0Bike; // !!! max speed (fixed in sim)
 
 
 //#############################################################
-// (initial) parameterisation and creation of the
+// (initial) IAM parameters and creation of the
 // mixed traffic models (MTM/IAM)
 //#############################################################
 
@@ -116,8 +150,9 @@ var longParReductFactor=0.5; // long interaction reduced if completely lateral
 
 
 
-// lateral force constants
-// s0yLat: cars should be straight in lane in 
+// IAM parameterisation 
+// (tau=tauLatOVM and lambda=pushLong, pushLat at the sliders)
+
 var s0y=0.10;       // lat. attenuation scale [m] long veh-veh interact [0.15]
 var s0yLat=0.10;    // !!! scale [m] lat veh-veh interact [0.60]
 var sensLat=0.5;    // !!! sigma  (max des lat speed)/(long accel) [s] [1.0]
@@ -131,10 +166,11 @@ var accFloorMax=0.5;        // MT 2023-01 standard 0.5; IAM lane paper 0.9
 
 // boundaries
 
-var glob_accLatBMax=20;   //max boundary lat accel, of the order of bmax
-var glob_accLatBRef=4;    //lateral acceleration if veh touches boundary
-var glob_accLongBRef=2; //!!!long acceleration if veh touches boundary
 var glob_anticFactorB=2;  //antic time for boundary response (multiples of T)
+var glob_accLatBMax=20;   //max boundary lat accel, of the order of bmax
+
+var glob_accLongBRef=2; //!!!long acceleration if veh touches boundary
+var glob_accLatBRef=4;    //lateral acceleration if veh touches boundary
 var s0yB=0.05;            //!!! long. attenuation scale [m] wall-veh interact
 var s0yLatB=0.1;         //!!! lat. attenuation scale [m] wall-veh interact
 
@@ -197,16 +233,14 @@ var densityInit=0.0;
 
 
 //#############################################################
-// specification of vehicle types and dimensions [SI units]
+// specification of vehicle types, widths, lengths [SI units]
 // (the actual vehicles are constructed in the road cstr)
 //#############################################################
 
-var car_length=5; 
-var car_width=2.0;
+var bike_length=1.4; var car_length=1.4; // cars=faster cyclists
+var bike_width=0.4; var car_width=0.4;
 var truck_length=10;
 var truck_width=2.5; 
-var bike_length=1.4; //!!! bicycles or motorbikes, depending on parameteris
-var bike_width=0.4;
 var obstacle_length=10;
 var obstacle_width=1.5;
 
@@ -235,9 +269,6 @@ var nLanes=Math.round(roadWidthRef/wLane);
 // if isRing, inflow automatically ignored and road geom not implemented
 
 var isRing=false; 
-//var varWidthLeft=false;  // as <script>.../script> in html
-//var varWidthRight=false; // as <script>.../script> in html
-//var floorField=true;     // as <script>.../script> in html
 
 function axis_x(u){ // physical coordinates
         var dxPhysFromCenter= // center=origin of half-circle element
@@ -255,27 +286,6 @@ function axis_y(u){ // physical coordinates
 	return center_yPhys+dyPhysFromCenter;
 }
 
-function widthLeft(u){ // width left boundary - road axis
-    if((!varWidthLeft)&&(relOutflow>=0.9999)){return 0.5*roadWidthRef;}
-    var u1_1=0.50*roadLen; // begin narrowing Bottl 1
-    var u1_2=0.65*roadLen; // end narrowing 1 (begin minimum capacity)
-    var u1_3=0.80*roadLen; // begin widening 1
-    var u1_4=0.80*roadLen; // end widening 1 (restore original capacity)
-
-    var wLeftRef=0.5*roadWidthRef;
-    var wNarrow1=(varWidthLeft)? 0.25*roadWidthRef : wLeftRef;
-
-
-    return (u<u1_1) ? wLeftRef
-	: (u<u1_2) ? wLeftRef+(wNarrow1-wLeftRef)*(u-u1_1)/(u1_2-u1_1)
-	: (u<u1_3) ? wNarrow1
-	: (u<u1_4) ? wNarrow1+(wLeftRef-wNarrow1)*(u-u1_3)/(u1_4-u1_3)
-	: wLeftRef;
-}
-
-function widthRight(u){ // width road axis - right boundary - symmetric here
-  return widthLeft(u);
-}
 
 
 
@@ -313,12 +323,14 @@ var umax=0.42*roadLen;    // downstream boundary of sampled region [m];
 
 
 // TrafficObjects(canvas,nTL,nLimit,xRelDepot,yRelDepot,nRow,nCol)
-var trafficObjs=new TrafficObjects(canvas,2,3,0.62,0.22,1,9);
+var trafficObjs=new TrafficObjects(canvas,2,2,0.62,0.22,1,7);
 
 // also needed to just switch the traffic lights
 // (then args xRelEditor,yRelEditor not relevant)
 var trafficLightControl=new TrafficLightControlEditor(trafficObjs,0.5,0.5);
 
+trafficObjs.setSpeedLimit(2,10); // trafficObj[2].value=x km/h, 0=free
+trafficObjs.setSpeedLimit(3,20);
 
 
 //#################################################################
@@ -581,7 +593,7 @@ function drawSim() {
 
     var speedmaxDisplay=25*Math.round(3.6*speedmap_max/25)/3.6; 
 
-    drawColormap(10+1.1*widthPix+0.05*refSizePix,
+    drawColormap(10+1.1*widthPix+0.10*refSizePix,
                  center_yPix,
                  0.1*refSizePix, 0.2*refSizePix,
 		 speedmap_min,speedmap_max,0,speedmaxDisplay);
@@ -609,9 +621,9 @@ function drawSim() {
         // determine overall rel dimensions 
 
 	var xCenterRel=0.71;
-	var yCenterRel=0.44; // horiz boundary of diags: (0=top, 1=bottom)
-	var wRel=0.25;
-	var hRel=0.12;
+	var yCenterRel=0.44; // horiz center of diagrams: (0=top, 1=bottom)
+	var wRel=0.24;
+	var hRel=0.11;
 
         // determine arguments for plotxy
 
@@ -619,7 +631,7 @@ function drawSim() {
 	//var hPix=refSizePix*hRel;
       var wPix=canvas.width*wRel;
       var hPix=wPix*hRel/wRel;
-      var vertSpacePix=0.05*hPix;
+      var vertSpacePix=0.10*hPix; // diagram separation
       var xPixLeft=canvas.width*xCenterRel-0.5*wPix;
       var yPixTop=canvas.height*yCenterRel+0.05*vertSpacePix; // lower diagr
 

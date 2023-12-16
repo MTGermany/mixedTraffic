@@ -405,7 +405,7 @@ TR{
   position: absolute;
   top: 35vh;
   height: 34vh;
-  left: 35vmin; 
+  left: 38vmin; 
   width: 30vw;
   background-color: rgba(255,255,255,0.6);
   z-index: 2; /* the higher the integer, the more on top */

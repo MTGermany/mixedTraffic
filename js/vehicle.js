@@ -29,7 +29,10 @@ function vehicle(type, len, width, u, v, speedLong, speedLat, mixedModel){
   this.speedLat=speedLat;
   this.dvdu=speedLat/(Math.max(speedLong,0.0001)); //tan angle to road axis
   this.mixedModel=mixedModel;
-  this.leaderType="car"; // init, needed to check if speedLatStuck applied
+
+  // init, needed to check if speedLatStuck applied
+  this.mostInfluencingLeaderIndex=0;
+  
   if(this.type=="obstacle"){
 	this.speed=0;
 	this.speedLat=0;
@@ -50,56 +53,23 @@ function vehicle(type, len, width, u, v, speedLong, speedLat, mixedModel){
     
 }
 
-/** 
-######################################################################
-NEW nov17
-calculate strength of longitudinal interaction as CF acceleration (<=0) 
-times lateral attenuation with scale=max(model.s0y, model.s0yLat)
-//######################################################################
 
-@param   leadveh: instance of the vehicle
-@return: interaction in terms of modified long acceleration 
-         (only used for selecting neighbor candidates, not for actual accel)
-*/
 
-vehicle.prototype.calcLeaderInteraction=function(leadveh){
-    if(this.type=="obstacle"){return 0;}
-    if(this==leadveh){return 0;}
-    var dx=leadveh.u-this.u;
-    var dy=leadveh.v-this.v;
-    var speedl=leadveh.speed;
-    var accl=leadveh.accLong;
-    var Ll=leadveh.len;
-    var Wavg=0.5*(this.width+leadveh.width);
-    return this.mixedModel.calcLeaderInteraction
-      (dx,dy,this.speed,speedl,accl,Ll,Wavg);
+vehicle.prototype.isRegularVeh=function(){
+    return (this.id>=200)&&(this.type !== "obstacle");
 }
 
-
-/** 
-######################################################################
-calculate longitudinal acceleration as effect of a single other vehicle
-including free acceleration
-//######################################################################
-
-@param leadveh: instance of the vehicle
-@return: longitudinal acceleration (this.accLong not automatically updated!)
-*/
-
-vehicle.prototype.calcAccLong=function(leadveh){
-    if(this.type=="obstacle"){return 0;}
-    if(this==leadveh){ // acceleration with itself as partner -> free acc
-	//console.log("vehicle.calcAccLong: itself as partner!");
-	return this.mixedModel.calcAccLongFree();
-    }
-    var dx=leadveh.u-this.u;
-    var dy=leadveh.v-this.v;
-    var speedl=leadveh.speed;
-    var accl=leadveh.accLong;
-    var Ll=leadveh.len;
-    var Wavg=0.5*(this.width+leadveh.width);
-    return this.mixedModel.calcAccLong(dx,dy,this.speed,speedl,accl,Ll,Wavg);
+// real obstacle since TL has also type obstacle
+vehicle.prototype.isRealObstacle=function(){
+  var isSpecialObstacle=(this.id>=50)&&(this.id<100);
+  var isNormalObstacle=(this.type=="obstacle");
+  return ((!this.isTL())&&(isSpecialObstacle||isNormalObstacle));
 }
+
+vehicle.prototype.isTL=function(){
+  return ((this.id>=100)&&(this.id<150));
+}
+
 
 
 // free longitudinal acceleration
@@ -109,11 +79,35 @@ vehicle.prototype.calcAccLongFree=function(){
     return this.mixedModel.longModel.calcAccFree(this.speed);
 }
 
-// difference is backwards interaction acceleration
+// longitudinal interaction acceleration by one vehicle
 
 vehicle.prototype.calcAccLongInt=function(leadveh){
-    return this.calcAccLong(leadveh)-this.calcAccLongFree();
+  if(this.type=="obstacle"){return 0;}
+  if(this==leadveh){return 0;}
+  var dx=leadveh.u-this.u;
+  var dy=leadveh.v-this.v;
+  var speedl=leadveh.speed;
+  var accl=leadveh.accLong;
+  var Ll=leadveh.len;
+  var Wavg=0.5*(this.width+leadveh.width);
+  return this.mixedModel.calcAccLongInt(dx,dy,this.speed,speedl,accl,Ll,Wavg);
 }
+ 
+// simplified longitudinal interaction acceleration
+vehicle.prototype.calcAccLongLeaderSelect=function(leadveh){
+    if(this.type=="obstacle"){return 0;}
+    if(this==leadveh){return 0;}
+    var dx=leadveh.u-this.u;
+    var dy=leadveh.v-this.v;
+    var speedl=leadveh.speed;
+    var accl=leadveh.accLong;
+    var Ll=leadveh.len;
+    var Wavg=0.5*(this.width+leadveh.width);
+    return this.mixedModel.calcAccLongLeaderSelect
+      (dx,dy,this.speed,speedl,accl,Ll,Wavg);
+}
+
+
 
 
 /** 
@@ -144,7 +138,10 @@ vehicle.prototype.calcAccLatInt=function(leadveh,logging){
   var axl=leadveh.accLong;
   var Ll=leadveh.len;
   var Wl=leadveh.width;
-  return this.mixedModel.calcAccLatInt(this.u,leadveh.u,this.v,leadveh.v,
+  var leadveh_veff=(leadveh.isTL()&&(Math.abs(this.v-leadveh.v)<Wl))
+      ? this.v : leadveh.v; // to avoid drivers go around TL
+    
+  return this.mixedModel.calcAccLatInt(this.u,leadveh.u,this.v,leadveh_veff,
 				       this.speed,vxl,this.speedLat,vyl,axl,
 				       this.len,Ll,this.width,Wl,roadWidthRef,
 				       logging);
@@ -173,10 +170,6 @@ vehicle.prototype.calcAccB=function(widthLeft,widthRight){
 					  this.width);
 }
 
-
-vehicle.prototype.isRegularVeh=function(){
-    return (this.id>=200)&&(this.type !== "obstacle");
-} 
 
 
 //#####################################################

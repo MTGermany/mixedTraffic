@@ -8,10 +8,10 @@ function plotxy(wPix,hPix,xPixLeft,yPixTop){
     this.sizePix=this.wPix;
     //this.sizePix=Math.min(this.wPix,this.hPix);
     this.yPixBot=this.yPixTop+this.hPix;
-    this.rPix=0.02*this.sizePix; // radius of scatter-plot bullets
+    this.rPix=0.010*this.sizePix; // radius of scatter-plot bullets
 
     var xrelOrig=0.12; // rel x-gap between y axis and left boundary
-    var yrelOrig=0.07; // rel y-gap between x axis and bottom boundary
+    var yrelOrig=0.10; // rel y-gap between x axis and bottom boundary
     this.xPixOrig=this.xPixLeft+xrelOrig*this.wPix;
     this.yPixOrig=this.yPixBot -yrelOrig*this.hPix;
     this.xPixDataMax=this.xPixOrig+(1-xrelOrig-0.01)*this.wPix;
@@ -72,16 +72,19 @@ plotxy.prototype.scatterplot=function(ctx, data, xSpec, ySpec, boxSpec){
 
 
 
-    // draw a white rectangle defining the place of the graphics
-
-    ctx.fillStyle="rgb(255,255,255)";
-    ctx.fillRect(this.xPixLeft,this.yPixTop, wPix, hPix);
+  // draw a white rectangle defining the place of the graphics
+  // correct vertical mismatch rectangle-plot by yrelOrig
+  // more padding needed to the right because of "overhanging" labels
+  
+  var pad=0.015*this.sizePix; 
+  ctx.fillStyle="rgb(255,255,255)";
+  ctx.fillRect(this.xPixLeft-pad,this.yPixTop-pad, wPix+4*pad, hPix+2*pad);
 
 
     // draw the axes including labelling
 
     ctx.fillStyle="rgb(0,0,0)";
-    var textsize=0.05*this.sizePix; 
+    var textsize=0.04*this.sizePix; 
     ctx.font=textsize+'px Arial';
 
     // x axis
@@ -129,7 +132,8 @@ plotxy.prototype.scatterplot=function(ctx, data, xSpec, ySpec, boxSpec){
 	    ctx.fill();
 	}
 
-        // draw box-whisker plot if applicable
+      // alternatively draw box-whisker plot if applicable (neve rboth
+      // generaly plot1 and plot2 specified in top-level!
 
 	else{
 	    //console.log(" in box-whisker branch: boxSpec=",boxSpec);
@@ -159,13 +163,13 @@ plotxy.prototype.scatterplot=function(ctx, data, xSpec, ySpec, boxSpec){
             ctx.fillStyle="rgb(100,100,100)";
 	    ctx.fillRect(center_xPix-0.5*wBox,yPix25,wBox,yPix75-yPix25);
 
-            // draw square whiskers at the ends and median in box body
+            // draw whiskers at the ends and median in box body
 
             ctx.fillStyle="rgb(50,0,150)";
-	    ctx.fillRect(center_xPix-wWhi,yPixMin-0.5*wWhi, 2*wWhi, wWhi);
-	    ctx.fillRect(center_xPix-wWhi,yPixMax-0.5*wWhi, 2*wWhi, wWhi);
+	    ctx.fillRect(center_xPix-wWhi,yPixMin-0.1*wWhi, 2*wWhi, 0.2*wWhi);
+	    ctx.fillRect(center_xPix-wWhi,yPixMax-0.1*wWhi, 2*wWhi, 0.2*wWhi);
             ctx.fillStyle="rgb(0,0,0)";
-	    ctx.fillRect(center_xPix-wWhi,yPix50-0.5*wWhi, 2*wWhi, wWhi);
+	    ctx.fillRect(center_xPix-wWhi,yPix50-0.1*wWhi, 2*wWhi, 0.2*wWhi);
 	}
 
 

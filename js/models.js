@@ -300,25 +300,54 @@ MTM.prototype.copy=function(mixedModel){
   this.sensDvy=mixedModel.sensDvy;
 }
 
-/**
+
+
+// no MTM.prototype.calcAccLongFree needed because then
+// reference to MTM.longmodel.calcAccLongFree
+
+/*
 ###########################################################################
-NEW nov17
-calculate strength of longitudinal interaction as CF acceleration (<=0) 
-times lateral attenuation with scale=max(model.s0y, model.s0yLat)
+MTM longitudinal interaction acceleration by one vehicle (only if dx>0)
+###########################################################################
 
-!!! Only used to select interacting candidates, not for actual acceleration
+@param dx:   longitudinal distance =u[other vehicle]-u [m] (u=front)
+@param dy:   lateral distance =v[other vehicle]-v [m] 
+             (v=lateral center position; dy>0 if other vehicle to the right)
+@param vx:   own long speed [m/s]
+@param vxl:  leading long speed [m/s]
+@param axl:  leading long acceleration [m/s^2]
+@param Ll:   length leading car [m]
+@param Wavg: 1/2(W+Wl) avg. vehicle width [m]
 
-only nonzero if partner is leader (dx>=0)
+NOTE: addition of accRnd in road.js
 
-NOTE: Identical to MTM.prototype.calcAccLong apart 
-      (i) w/o accFree
-      (ii) take the maximum of long and lat attenuation because I select
+@return:  acceleration ax [m/s^2]
+*/
+
+MTM.prototype.calcAccLongInt=function(dx,dy,vx,vxl,axl,Ll,Wavg){ 
+  var sx=Math.max(0,dx-Ll);
+  var sy=Math.abs(dy)-Wavg;
+
+  var accCFint=this.longModel.calcAccInt(sx,vx,vxl,axl);
+  var alpha=Math.min(Math.exp(-sy/this.s0y), 1);
+
+  // reduce longInt if parallel (dx<Ll) and no collision (sy>0)
+  if((dx<Ll)&&(sy>0)){ alpha*=longParReductFactor;} // factor=0 =>no interact
+
+  return alpha*accCFint;
+}
+
+
+
+/*
+###########################################################################
+Simplified calcAccLongInt to select leaders and followers
+NOTE: Differences to calcAccLongInt:
+      (i) take the maximum of long and lat attenuation because I select
            partners just on long acceleration!
-      (iii) no special provision for laterally neighboring vehs:
+      (ii) no special provision for laterally neighboring vehs:
            global.longParReductFactor
            (for selecting neighbors, just assume full long force)
-      (iv) with the maximum of long and lat attenuation (because I only
-           have the long accel as criterion for selection!)
 ###########################################################################
 
 @param dx:   longitudinal distance =u[other vehicle]-u [m] (u=front)
@@ -330,7 +359,7 @@ NOTE: Identical to MTM.prototype.calcAccLong apart
 @return:  CF interaction acceleration [m/s^2] 
 */
 
-MTM.prototype.calcLeaderInteraction=function(dx,dy,vx,vxl,axl,Ll,Wavg){ 
+MTM.prototype.calcAccLongLeaderSelect=function(dx,dy,vx,vxl,axl,Ll,Wavg){ 
   var sx=Math.max(0,dx-Ll);
   var sy=Math.abs(dy)-Wavg;
 
@@ -347,41 +376,15 @@ MTM.prototype.calcLeaderInteraction=function(dx,dy,vx,vxl,axl,Ll,Wavg){
 
 
 
-
-
-/**
-###########################################################################
-MTM longitudinal acceleration function effected by one vehicle (only if dx>0)
-###########################################################################
-
-@param dx:   longitudinal distance =u[other vehicle]-u [m] (u=front)
-@param dy:   lateral distance =v[other vehicle]-v [m] 
-             (v=lateral center position; dy>0 if other vehicle to the right)
-@param vx:   own long speed [m/s]
-@param vxl:  leading long speed [m/s]
-@param axl:  leading long acceleration [m/s^2]
-@param Ll:   length leading car [m]
-@param Wavg: 1/2(W+Wl) avg. vehicle width [m]
-
-@return:  acceleration ax [m/s^2]
-*/
-
-// addition of accRnd in road.js
+/* 
+not needed because free and int always separately used
 
 MTM.prototype.calcAccLong=function(dx,dy,vx,vxl,axl,Ll,Wavg){ 
-  var sx=Math.max(0,dx-Ll);
-  var sy=Math.abs(dy)-Wavg;
-
   var accFree= this.longModel.calcAccFree(vx);
-  var accCFint=this.longModel.calcAccInt(sx,vx,vxl,axl);
-  var alpha=Math.min(Math.exp(-sy/this.s0y), 1);
-
-  // reduce longInt if parallel (dx<Ll) and no collision (sy>0)
-  if((dx<Ll)&&(sy>0)){ alpha*=longParReductFactor;} // factor=0 =>no interact
-
-
+  var accInt=this.calcAccLongInt(dx,dy,vx,vxl,axl,Ll,Wavg)
   return accFree+alpha*accCFint;
-}//MTM.calcAccLong
+}
+*/
 
 
 /**
@@ -441,6 +444,7 @@ restrictions, and noise in higher-level road.js
 // addition of accRnd in road.js,
 // restrictions dudv->dvdu<dvdumax, |dvdu/dt|<dotdvdumax in road.js
 // restrictions speedLat<max(speedLatStuck,dvdu*speed) in road.js
+
 MTM.prototype.calcAccLatInt=function(x,xl,y,yl,vx,vxl,vy,vyl,axl,
 				     Lveh,Ll,Wveh,Wl,Wroad,logging){
   var dx=xl-x;

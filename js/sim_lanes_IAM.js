@@ -7,6 +7,18 @@
 
 // (0) project-specific tweaks
 
+// deactivate gui-driven variable widths of sim_main.js
+// (defined in gui.js)
+
+varWidthLeft=false; 
+varWidthRight=false;
+
+// reduce critical distances for mouse actions because small region here
+// (preset in gui.js)
+
+distCrit_m=9;
+distDragCrit=4;
+
 
 // in the Athens d8* data, the bikes did not use the space
 // left lane - boundary
@@ -43,9 +55,9 @@ var background_srcFile='figs/backgroundGrass.jpg';
 var displayForcefield=false; // can be changed interactively -> gui.js
 var displayForceStyle=2;    // 0: with probe, 1: arrow field arround veh,
                             // 2: moving arrows at veh
-var displayScatterplots=true;   // scatterplots of macroProperties
-var displayMacroProperties=true; // displays where macroProperties taken from
-var displayVehIDs=false;         // debugging
+var displayScatterplots=true; // scatterplots of macroPropert. at [umin,umax]
+var displayMacroProperties=false;//displays where macroProperties taken from
+var displayVehIDs=false;         // showvehIDs debugging vehLabels veh labels
 
 var hasChanged=true; // physical dim have changed (e.g. by window resize)
 var canvas=document.getElementById("canvas_mixed");
@@ -100,8 +112,7 @@ var speedmap_max=Math.max(v0, v0Truck, v0Bike); // max speed (fixed in sim)
 
 
 //#############################################################
-// (initial) parameterisation and creation of the
-// mixed traffic models (MTM)
+// (initial) parameterisation and creation of the MTM/IAM
 //#############################################################
 
 // (1) model constants/limits (behavioural and graphical)
@@ -116,8 +127,9 @@ var speedLatStuck=1.2; // 1.2 OK lift angle restriction if obstacle ahead
 
 var longParReductFactor=0.2; // long interaction reduced if completely lateral
 
-// lateral force constants
-// s0yLat: cars should be straight in lane in 
+// IAM parameterisation
+// (apart from tau->LatOVM, lambda=pushLong=pushLat in sliders)
+
 var s0y=0.20;       // lat. attenuation scale [m] long veh-veh interact [0.15]
 var s0yLat=0.30;    // lat. attenuation scale [m] lat veh-veh interact  [0.3]
 var sensLat=1.0;    // sensit. sigma (max des speedLat)/accLong [s] [0.5]
@@ -131,11 +143,12 @@ var accFloorMax=0.9;        // MT 2023-01 standard 0.5; IAM paper 0.9
 
 // boundaries
 
-var glob_accLatBMax=20;   //max boundary lat accel, of the order of bmax
-var glob_accLatBRef=4;    //lateral acceleration if veh touches boundary
-var glob_accLongBRef=0.5; //longitudinal acceleration if veh touches boundary
 var glob_anticFactorB=2;  //antic time for boundary response (multiples of T)
-var s0yB=0.15;            // long. attenuation scale [m] wall-veh interact
+var glob_accLatBMax=20;   //max boundary lat accel, of the order of bmax
+
+var glob_accLongBRef=0.5; //longitudinal acceleration if veh touches boundary
+var glob_accLatBRef=6;    //lateral acceleration if veh touches boundary
+var s0yB=0.20;            // long. attenuation scale [m] wall-veh interact
 var s0yLatB=0.20;         // lat. attenuation scale [m] wall-veh interact
 
 
@@ -204,7 +217,7 @@ var greenMain1=90-48; // 90-50
 var greenMain2=40; // 30 fake TL to make spillover effect of data
 var TL0_u=198;  //as the .trafficLights<n> file of extractTraj_pNEUMA
 var TL1_u=340;
-var TL2_u=385;
+var TL2_u=395;
 //var TL1_phaseshift=(TL1_u-TL0_u)/(0.65*speedMax);
 var TL1_phaseshift=8;
 var TL2_phaseshift=0;
@@ -393,12 +406,16 @@ var umax=0.76*roadLen;    // downstream boundary of sampled region [m];
 
 // TrafficObjects(canvas,nTL,nLimit,xRelDepot,yRelDepot,nRow,nCol)
 var nTL=3;
-var trafficObjs=new TrafficObjects(canvas,nTL,3,0.62,0.22,1,9);
+var trafficObjs=new TrafficObjects(canvas,nTL,3,0.44,0.81,1,9);
 var TL=trafficObjs.trafficObj.slice(0,nTL);  // last index not included
 
 // also needed to just switch the traffic lights
 // (then args xRelEditor,yRelEditor not relevant)
 var trafficLightControl=new TrafficLightControlEditor(trafficObjs,0.5,0.5);
+
+trafficObjs.setSpeedLimit(3,30); // trafficObj[2].value=x km/h, 0=free
+trafficObjs.setSpeedLimit(4,50);
+trafficObjs.setSpeedLimit(5,70);
 
 
 
@@ -666,7 +683,7 @@ function drawSim() {
 
     var speedmaxDisplay=25*Math.round(3.6*speedmap_max/25)/3.6; 
 
-    drawColormap(10+1.1*widthPix+0.05*refSizePix,
+    drawColormap(10+1.1*widthPix+0.09*refSizePix,
                  center_yPix,
                  0.1*refSizePix, 0.2*refSizePix,
 		 speedmap_min,speedmap_max,0,speedmaxDisplay);
@@ -694,7 +711,7 @@ function drawSim() {
         // determine overall rel dimensions 
 
 	var xCenterRel=0.71;
-	var yCenterRel=0.44; // horiz boundary of diags: (0=top, 1=bottom)
+	var yCenterRel=0.50; // horiz center of diagrams: (0=top, 1=bottom)
 	var wRel=0.25;
 	var hRel=0.12;
 
@@ -704,7 +721,7 @@ function drawSim() {
 	//var hPix=refSizePix*hRel;
       var wPix=canvas.width*wRel;
       var hPix=wPix*hRel/wRel;
-      var vertSpacePix=0.05*hPix;
+      var vertSpacePix=0.1*hPix; // vertical diagram separation
       var xPixLeft=canvas.width*xCenterRel-0.5*wPix;
       var yPixTop=canvas.height*yCenterRel+0.05*vertSpacePix; // lower diagr
 
@@ -713,8 +730,8 @@ function drawSim() {
       // and optional boxplot specifications: each point gets
       // vertical candlestick [col_ymin, col_25th, col_50th, 75, ymax]
 
-      var rhoSpec=[0,1000,200,"Density [veh/km]"];
-      var QSpec=[1,3600,3600,"Flow [veh/h]"];
+      var rhoSpec=[0,1000,200,"Density [1/km]"];
+      var QSpec=[1,3600,3600,"Flow [1/h]"];
       var VSpec=[2,3.6,50,"Speed [km/h]"];
       var boxSpec=[3,4,5,6,7];
 

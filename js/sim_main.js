@@ -6,6 +6,7 @@
 
 // (1) running the simulation
 
+
 var fps=30;  // frames per second (unchanged during runtime)
 var time=0;  // only initialization
 var itime=0; // only initialization
@@ -34,8 +35,8 @@ var background_srcFile='figs/backgroundGrass.jpg';
 var displayForcefield=false; // can be changed interactively -> gui.js
 var displayForceStyle=2;    // 0: with probe, 1: arrow field arround veh,
                             // 2: moving arrows at veh
-var displayScatterplots=false;   // scatterplots of macroProperties
-var displayMacroProperties=false; // displays where macroProperties taken from
+var displayScatterplots=true; // scatterplots of macroPropert. at [umin,umax]
+var displayMacroProperties=true; //displays where macroProperties taken from
 var displayVehIDs=false;         // debugging
 
 var hasChanged=true; // physical dim have changed (e.g. by window resize)
@@ -106,8 +107,9 @@ var speedLatStuck=1.2; // 1.2 OK lift angle restriction if obstacle ahead
 
 var longParReductFactor=0.2; // long interaction reduced if completely lateral
 
-// lateral force constants
-// s0yLat: cars should be straight in lane in 
+// IAM parameterisation
+// (apart from tau->LatOVM, lambda=pushLong=pushLat in sliders)
+
 var s0y=0.20;       // lat. attenuation scale [m] long veh-veh interact [0.15]
 var s0yLat=0.40;    // lat. attenuation scale [m] lat veh-veh interact  [0.3]
 var sensLat=1.0;    // sensit. sigma (max des speedLat)/accLong [s] [1.0]
@@ -121,11 +123,12 @@ var accFloorMax=0.5;        //MT 2021-11 reduced from 6.5
 
 // boundaries
 
-var glob_accLatBMax=20;   //max boundary lat accel, of the order of bmax
-var glob_accLatBRef=4;    //lateral acceleration if veh touches boundary
-var glob_accLongBRef=2; //longitudinal acceleration if veh touches boundary
 var glob_anticFactorB=2;  //antic time for boundary response (multiples of T)
-var s0yB=0.20;            // long. attenuation scale [m] wall-veh interact
+var glob_accLatBMax=20;   //max boundary lat accel, of the order of bmax
+
+var glob_accLongBRef=2; //longitudinal acceleration if veh touches boundary
+var glob_accLatBRef=4;    //lateral acceleration if veh touches boundary
+var s0yB=0.15;            // long. attenuation scale [m] wall-veh interact
 var s0yLatB=0.20;         // lat. attenuation scale [m] wall-veh interact
 
 
@@ -322,7 +325,7 @@ var mainroad=new road(roadID, isRing, roadLen,
 
 var detectors=[];
 detectors[0]=new stationaryDetector(mainroad,0.40*roadLen,10);
-detectors[1]=new stationaryDetector(mainroad,0.90*roadLen,10);
+detectors[1]=new stationaryDetector(mainroad,0.60*roadLen,10);
 
 // region [umin,umax] for downloaded flow-density data
 // every ndtSample timestep will be sampled in macroProperties[] vector
@@ -330,8 +333,8 @@ detectors[1]=new stationaryDetector(mainroad,0.90*roadLen,10);
 var macroProperties=[];
 var ndtSample=60; 
 
-var umin=0.58*roadLen;    // upstream boundary of sampled region [m];
-var umax=0.60*roadLen;    // downstream boundary of sampled region [m];
+var umin=0.59*roadLen;    // upstream boundary of sampled region [m];
+var umax=0.61*roadLen;    // downstream boundary of sampled region [m];
 
 
 //############################################
@@ -345,6 +348,10 @@ var trafficObjs=new TrafficObjects(canvas,2,3,0.62,0.22,1,9);
 // also needed to just switch the traffic lights
 // (then args xRelEditor,yRelEditor not relevant)
 var trafficLightControl=new TrafficLightControlEditor(trafficObjs,0.5,0.5);
+
+trafficObjs.setSpeedLimit(2,30); // trafficObj[2].value=x km/h, 0=free
+trafficObjs.setSpeedLimit(3,50);
+trafficObjs.setSpeedLimit(4,80);
 
 
 
@@ -597,11 +604,12 @@ function drawSim() {
 		 scaleStr_ylb-0.2*textsize);
 
 
-    // (6) draw the speed colormap (speedmaxDisplay set for nice axis scaling)
+  // (6) draw the speed colormap/colorbox
+  // (speedmaxDisplay set for nice axis scaling)
 
     var speedmaxDisplay=25*Math.round(3.6*speedmap_max/25)/3.6; 
 
-    drawColormap(10+1.1*widthPix+0.05*refSizePix,
+    drawColormap(10+1.1*widthPix+0.07*refSizePix,
                  center_yPix,
                  0.1*refSizePix, 0.2*refSizePix,
 		 speedmap_min,speedmap_max,0,speedmaxDisplay);
@@ -629,9 +637,9 @@ function drawSim() {
         // determine overall rel dimensions 
 
 	var xCenterRel=0.71;
-	var yCenterRel=0.44; // horiz boundary of diags: (0=top, 1=bottom)
-	var wRel=0.25;
-	var hRel=0.12;
+	var yCenterRel=0.44; // horiz boundary of diagrams: (0=top, 1=bottom)
+	var wRel=0.22;
+	var hRel=0.10;
 
         // determine arguments for plotxy
 
@@ -639,7 +647,7 @@ function drawSim() {
 	//var hPix=refSizePix*hRel;
       var wPix=canvas.width*wRel;
       var hPix=wPix*hRel/wRel;
-      var vertSpacePix=0.05*hPix;
+      var vertSpacePix=0.10*hPix; // vertical diagram separation
       var xPixLeft=canvas.width*xCenterRel-0.5*wPix;
       var yPixTop=canvas.height*yCenterRel+0.05*vertSpacePix; // lower diagr
 

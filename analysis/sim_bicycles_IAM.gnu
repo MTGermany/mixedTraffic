@@ -1,4 +1,10 @@
 
+# !! This is set by the run script in
+# ~/versionedProjects/mixedTraffic/analysis
+# can it also set by hand to typically "0_75", "1_25" or "2_00"
+
+width_str="1_25"
+
 
 #####################################################################
 # dashed now explicit with dt (implicit over "dashed" + ls no longer works)
@@ -47,11 +53,10 @@ selectRange(x,xmin,xmax)=((x>=xmin) && (x<=xmax)) ? 1 : NaN
 set term post eps enhanced color solid "Helvetica" 20
 
 
-width_str="1_25"
 
 ##############################################################
 hist_in=sprintf("sim_bicycles_IAM_w%s.hist",width_str)
-hist_out=sprintf("../figs/sim_bicycles_IAM_histogramw_w%s.eps",width_str)
+hist_out=sprintf("../figs/sim_bicycles_IAM_histogram_w%s.eps",width_str)
 set out hist_out
 print "plotting ",hist_out
 ##############################################################
@@ -64,8 +69,11 @@ set xlabel "Distance y to the right [m]"
 set xrange [-halfWidth:halfWidth]
 set ylabel "\#Cyclists"
 set boxwidth 0.9 relative
-plot hist_in u 1:2 t "Cyclists"\
-  w boxes lc rgb "#aa4477ff" lw 2 fs solid 0.50
+plot\
+  hist_in u 1:2 t "Slow cyclists"\
+  w boxes lc rgb "#1100ff" lw 2 fs solid 0.50,\
+  hist_in u 1:3 t "Fast cyclists"\
+  w boxes lc rgb "#cc0022" lw 2 fs transparent
 
 
 ##############################################################
@@ -76,13 +84,15 @@ print "plotting ",xy_out
 ##############################################################
 
 set xlabel "Distance x [m]"
-set xrange [120:170]
+set xrange [95:200]
 set ylabel "Distance y to the right [m]"
 set auto y
 plot[t=0:1]\
   xy_in u (filterData($2,0)*$3):($4)\
-    t "" w p ls 7 ps 0.3,\
-    t,t t "Bicycles" w l ls 17
+    t "Slow cyclists" w d ls 7,\
+  xy_in u (filterData($2,1)*$3):($4)\
+    t "Fast cyclists" w d ls 2
+
 
 
 ##############################################################
@@ -92,171 +102,28 @@ set out xt_out
 print "plotting ",xt_out
 ##############################################################
 
-set key opaque box bottom right
+set key opaque box top right
 
-set xlabel "Time [s]"
-set xrange [130:]
-tshift=0
-set ylabel "Distance x [m]"
-set yrange [120:170]
-
+set xlabel "Time [s]"  
+set xrange [180:300] #time
+set ylabel "Distance x [m]" #longitudinal
+set yrange [80:180]
+wLane=1.2
+ymin=-0.5*wLane
+ymax=0.5*wLane
+  
  
 plot[t=0:1]\
-  xt_in u (filterData($2,0)*($1+tshift)):($3) t "" w p ls 7 ps 0.18,\
-    t,t t "Motos right" w l ls 17
+  xt_in u (filterData($2,0)*selectRange($4,ymin,ymax)*$1):($3)\
+  t sprintf("slow cyclists, track center +/- %.2f m", ymax) w p ls 7 ps 0.18,\
+  xt_in u (filterData($2,1)*selectRange($4,ymin,ymax)*$1):($3)\
+  t sprintf("fast cyclists, track center +/- %.2f m", ymax)\
+  w p ls 2 ps 0.24 lc rgb "#ff0055"
 
+# psychologically, ls 2 looks more orange here => overrode it
 
+print "\nHint: set variable width_str to desired width"
+print " (where data are available)"
+print "present value widtstr=",width_str
 quit
-
-
-
-
-
-##############################################################
-set term post eps enhanced color solid "Helvetica" 20
-#set term png notransparent truecolor medium font "Helvetica,12"
-#set term pngcairo enhanced color notransparent crop font "Helvetica,12" #better
-
-
-set key box top right
-unset key
-set size 0.7,1
-
-set xlabel "lateral position y [m]" 
-set xrange [-1.1:1.1]
-set ylabel "\#Vehicles" offset 1,0
-set boxwidth 0.9 relative
-
-##############################################################
-set out "mixedBicycle_w1_0_histograms.eps"
-print "plotting mixedBicycle_w1_0_histograms.eps"
-##############################################################
-
-plot[t=0:1]\
-  "mixedBicycle_w1_0.hist" u 1:2 t "Bicycles"\
-     w boxes lc rgb "#aa4477ff" lw 2 fs solid 0.50,\
-   -0.5, 1200*t w l ls 11,\
-   0.5, 1200*t w l ls 11
-
-
-
-##############################################################
-set out "mixedBicycle_w1_6_histograms.eps"
-print "plotting mixedBicycle_w1_6_histograms.eps"
-##############################################################
-
-plot[t=0:1]\
-  "mixedBicycle_w1_6.hist" u 1:2 t "Bicycles"\
-     w boxes lc rgb "#aa4477ff" lw 2 fs solid 0.50,\
-   -0.8, 800*t w l ls 11,\
-   0.8, 800*t w l ls 11
-     
-
-##############################################################
-set out "mixedBicycle_w2_4_histograms.eps"
-print "plotting mixedBicycle_w2_4_histograms.eps"
-##############################################################
-
-plot[t=0:1]\
-  "mixedBicycle_w2_4.hist" u 1:2 t "Bicycles"\
-     w boxes lc rgb "#aa4477ff" lw 2 fs solid 0.50,\
-   -1.2, 800*t w l ls 11,\
-   1.2, 800*t w l ls 11
-
-
-
-##############################################################
-set out "mixedBicycle_w1_6_xy.eps"
-print "plotting mixedBicycle_w1_6_xy.eps"
-##############################################################
-
-set size 1,1
-
-set xlabel "longitudinal x [m]"
-set auto x
-set ylabel "lateral y [m]"
-plot\
-  "mixedBicycle_w1_6.traj" u (filterData($2,0)*$3):($4)\
-    t "Bicycles" w p ls 7 ps 0.3
-
-##############################################################
-set out "mixedBicycle_w2_0_xy.eps"
-print "plotting mixedBicycle_w2_0_xy.eps"
-##############################################################
-
-plot\
-  "mixedBicycle_w2_0.traj" u (filterData($2,0)*$3):($4)\
-    t "Bicycles" w p ls 7 ps 0.3
-
-##############################################################
-set out "mixedBicycle_w2_4_xy.eps"
-print "plotting mixedBicycle_w2_4_xy.eps"
-############################################# habe 2.6m statt 2.4m gewaehlt
-
-set xrange [10:190]
-plot\
-  "mixedBicycle_w2_4.traj" u (filterData($2,0)*$3):($4)\
-    t "Bicycles" w p ls 7 ps 0.3
-set auto x
-
-
-##############################################################
-set out "mixedBicycle_w1_6_xt_lane2.eps"
-print "plotting mixedBicycle_w1_6_xt_lane2.eps"
-##############################################################
-
-set xlabel "time [s]"
-set ylabel "longitudinal x [m]"
-set yrange [0:200]
-wLane=1.5
-ymin=-0.5*wLane
-ymax=0.5*wLane
-
-plot\
-  "mixedBicycle_w1_6.traj" u\
-   (filterData($2,0)*selectRange($4,ymin,ymax)*$1):($3)\
-    t "Bicycles" w p ls 7 ps 0.3
-
-##############################################################
-set out "mixedBicycle_w1_0_xt_lane2.eps"
-print "plotting mixedBicycle_w1_0_xt_lane2.eps"
-##############################################################
-
-wLane=1.0
-ymin=-0.5*wLane
-ymax=0.5*wLane
-
-plot\
-  "mixedBicycle_w1_0.traj" u\
-   (filterData($2,0)*selectRange($4,ymin,ymax)*$1):($3)\
-    t "Bicycles" w p ls 7 ps 0.3
-
-##############################################################
-set out "mixedBicycle_w2_0_xt_lane2.eps"
-print "plotting mixedBicycle_w2_0_xt_lane2.eps"
-##############################################################
-
-wLane=2.0
-ymin=-0.5*wLane
-ymax=0.5*wLane
-
-plot\
-  "mixedBicycle_w2_0.traj" u\
-   (filterData($2,0)*selectRange($4,ymin,ymax)*$1):($3)\
-    t "Bicycles" w p ls 7 ps 0.3
-
-##############################################################
-set out "mixedBicycle_w2_4_xt_lane2.eps"
-print "plotting mixedBicycle_w2_4_xt_lane2.eps"
-##############################################################
-
-wLane=2.4
-ymin=-0.5*wLane
-ymax=0.5*wLane
-
-plot\
-  "mixedBicycle_w2_4.traj" u\
-   (filterData($2,0)*selectRange($4,ymin,ymax)*$1):($3)\
-    t "Bicycles" w p ls 7 ps 0.3
-
 

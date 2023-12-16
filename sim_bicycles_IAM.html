@@ -54,12 +54,6 @@
 
 
 
-  <button id="varWidthLeftToggle" 
-          onclick="myVarWidthLeftToggle()">Var. width left off</button>
-  <script> var varWidthLeft=true; </script>
-
-
-
   <!--
   <button id="floorFieldToggle"
           onclick="myFloorFieldToggle()">Floor field off</button>
@@ -72,11 +66,11 @@
  
   <button id="varWidthLeftToggle" 
           onclick="myVarWidthLeftToggle()">Var. width left off</button>
-  <script> var varWidthLeft=true; </script>
+  <script> varWidthLeft=true; </script>
 
   <button id="varWidthRightToggle" 
           onclick="myVarWidthRightToggle()">Var. width right off</button>
-  <script> var varWidthRight=true; </script>
+  <script> varWidthRight=true; </script>
   -->
   
   <button id="floorFieldToggle"
@@ -184,9 +178,9 @@
 
 <!-- internal value=fraction, only display is %!  (->gui.js)-->
 <tr>
-  <td> Bike perc </td>
+  <td> Slower cyclists perc </td>
   <td> <input id="slider_fracBike" type="range" 
-              min="0" max="1" step="0.01" value="1.00"></td> <!--0.2-->
+              min="0" max="1" step="0.01" value="0.50"></td> <!--0.2-->
   <td> <div id="slider_fracBikeVal"></div></td>
 </tr>
 
