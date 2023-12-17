@@ -146,7 +146,7 @@ var dotdvdumax=0.3;    // max change rate of angle to road axis
 var phiVehRelMax=0.10; // only drawing: maximum visual angle to road axis
 var speedLatStuck=0.2;   // max lateral speed if long speed low!!DOS!!!
 
-var longParReductFactor=0.1; // long interaction reduced if completely lateral
+var longParReductFactor=0.2; // long interaction reduced if completely lateral
                              // =lambda to save parameters
 
 
@@ -155,8 +155,8 @@ var longParReductFactor=0.1; // long interaction reduced if completely lateral
 // (tau=tauLatOVM and lambda=pushLong, pushLat at the sliders)
 
 var s0y=0.10;       // lat. attenuation scale [m] long veh-veh interact [0.15]
-var s0yLat=0.10;    // !!! scale [m] lat veh-veh interact [0.60]
-var sensLat=0.5;    // !!! sigma  (max des lat speed)/(long accel) [s] [1.0]
+var s0yLat=0.15;    // !!! scale [m] lat veh-veh interact [0.60]
+var sensLat=1;    // !!! sigma  (max des lat speed)/(long accel) [s] [1.0]
 
 var accBiasRightTruck=0.8;  //MT 2021-11 
 var accBiasRightBike=0.0;  // MT 2023-01
@@ -170,9 +170,9 @@ var accFloorMax=0.5;        // MT 2023-01 standard 0.5; IAM lane paper 0.9
 var glob_anticFactorB=2;  //antic time for boundary response (multiples of T)
 var glob_accLatBMax=20;   //max boundary lat accel, of the order of bmax
 
-var glob_accLongBRef=2; //!!!long acceleration if veh touches boundary
+var glob_accLongBRef=0.2; //!!!long acceleration if veh touches boundary
 var glob_accLatBRef=4;    //lateral acceleration if veh touches boundary
-var s0yB=0.05;            //!!! long. attenuation scale [m] wall-veh interact
+var s0yB=0.1;            //!!! long. attenuation scale [m] wall-veh interact
 var s0yLatB=0.1;         //!!! lat. attenuation scale [m] wall-veh interact
 
 

@@ -148,7 +148,7 @@ var glob_anticFactorB=2;  //antic time for boundary response (multiples of T)
 var glob_accLatBMax=20;   //max boundary lat accel, of the order of bmax
 
 var glob_accLongBRef=0.5; //longitudinal acceleration if veh touches boundary
-var glob_accLatBRef=6;    //lateral acceleration if veh touches boundary
+var glob_accLatBRef=4;    //lateral acceleration if veh touches boundary
 var s0yB=0.20;            // long. attenuation scale [m] wall-veh interact
 var s0yLatB=0.20;         // lat. attenuation scale [m] wall-veh interact
 
