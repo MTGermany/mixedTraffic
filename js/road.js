@@ -857,7 +857,11 @@ road.prototype.updateSpeedPositions=function(dt){
 
 
     // restrict speedLat (1)
-    // restrict change rate of angle to road axis by dotdvdumax
+    // restrict change rate of approx heading angle to road axis by dotdvdumax
+    // and curvature radius r approx dotu/dotdvdu lead/shuld lead
+    // to addtl restriction according to
+    // accLat| < dotu^2/r_min and |accLat| < =dotu*dotphi approx dotu*dotdvdu
+
     // local dvdu: new; this.veh[i].dvdu: old+saved
 
     var dvdu=this.veh[i].speedLat/(Math.max(this.veh[i].speed,0.0001));
