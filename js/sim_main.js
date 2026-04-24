@@ -118,7 +118,6 @@ var accBiasRightTruck=0.8;  //MT 2021-11
 var accBiasRightBike=0.0;  // MT 2023-01
 var accBiasRightOthers=0.0;   // including cars
 var accFloorMax=0.5;        //MT 2021-11 reduced from 6.5
-//  sensDvy in sliders; default 1s/m
 
 
 // boundaries
@@ -135,9 +134,6 @@ var s0yLatB=0.20;         // lat. attenuation scale [m] wall-veh interact
 // (2) variable slider params
 
 var tauLatOVM=parseFloat(slider_tauLatOVM.value); // lat OVM relax time
-
-// FVDM-like inclusion of rel lateral speed, but multiplicative=>slider
-var sensDvy=parseFloat(slider_sensDvy.value);    
 
 // anisotropy factor long; in [0,1]; 1=Galilei-inv. =lambda=0.2 in TRL
 var pushLong=parseFloat(slider_pushLong.value); // in [0,1]; 1=Galilei-inv.
@@ -161,11 +157,11 @@ var longModelTruckRef=new ACC(v0Truck,TgapTruck,s0Truck,amaxTruck,bcomfTruck);
 var longModelBikeRef=new ACC(v0Bike,TgapBike,s0Bike,amaxBike,bcomfBike);
 
 var mixedModelCarRef=new MTM(longModelCarRef,s0y,s0yLat,s0yB,s0yLatB,
-			  sensLat,tauLatOVM,sensDvy);
+			  sensLat,tauLatOVM);
 var mixedModelTruckRef=new MTM(longModelTruckRef,s0y,s0yLat,s0yB,s0yLatB,
-			    sensLat,tauLatOVM,sensDvy);
+			    sensLat,tauLatOVM);
 var mixedModelBikeRef=new MTM(longModelBikeRef,s0y,s0yLat,s0yB,s0yLatB,
-			    sensLat,tauLatOVM,sensDvy);
+			    sensLat,tauLatOVM);
 var mixedModelObstacle=new ModelObstacle();
 
 
@@ -399,7 +395,6 @@ function updateSim(dt){    // called here by main_loop()
   fracTruck=parseFloat(slider_fracTruck.value); // !! otherwise string
   fracBike=parseFloat(slider_fracBike.value);  // frac+frac=e.g.0.20.2!!
   tauLatOVM=parseFloat(slider_tauLatOVM.value);
-  sensDvy=parseFloat(slider_sensDvy.value);
   pushLong=parseFloat(slider_pushLong.value);
   pushLat=parseFloat(slider_pushLat.value);
 
@@ -415,12 +410,7 @@ function updateSim(dt){    // called here by main_loop()
 	mixedModelBikeRef.tauLatOVM=tauLatOVM;
   }
 
-  if(true){
-	mixedModelCarRef.sensDvy=sensDvy; // passed by model ref to all cars!
-	mixedModelTruckRef.sensDvy=sensDvy;
-	mixedModelBikeRef.sensDvy=sensDvy;
-  }
-
+ 
   // updateSim (3):  Actual vehicle update
 
   // !!! distribute new models to the vehicles

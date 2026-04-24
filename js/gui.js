@@ -927,18 +927,6 @@ slider_tauLatOVM.oninput = function() {
 
 slider_tauLatOVMVal.innerHTML=slider_tauLatOVM.value+" s";
 
-// sensDvy slider
-
-var slider_sensDvy = document.getElementById('slider_sensDvy');
-var slider_sensDvyVal = document.getElementById("slider_sensDvyVal");
-slider_sensDvyVal.innerHTML = slider_sensDvy.value+" s/m";
-slider_sensDvy.oninput = function() {
-    console.log("in slider_sensDvy.oninput: this.value="
-		+ slider_sensDvy.value);
-    slider_sensDvyVal.innerHTML = slider_sensDvy.value+" s/m";
-}
-
-slider_sensDvyVal.innerHTML=slider_sensDvy.value+" s/m";
 
 
 // longitudinal pushing slider

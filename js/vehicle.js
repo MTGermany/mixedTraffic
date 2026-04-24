@@ -115,7 +115,8 @@ vehicle.prototype.calcAccLongLeaderSelect=function(leadveh){
 calculate transversal acceleration as effect of a single other vehicle
 //######################################################################
 
-@param leadveh: instance of the vehicles
+@param leadveh:   instance of the vehicles
+@param isPushing: when used for pushing by back vehicles
 @return:        lateral acceleration contribution 
                 (this.accLat not automatically updated!)
 */
@@ -129,7 +130,7 @@ vehicle.prototype.calcAccLatFree=function(){
 
 
 
-vehicle.prototype.calcAccLatInt=function(leadveh,logging){
+vehicle.prototype.calcAccLatInt=function(leadveh,isPushing,logging){
   if(this.type=="obstacle"){return 0;}
   if(this==leadveh){return 0;}
 
@@ -144,7 +145,7 @@ vehicle.prototype.calcAccLatInt=function(leadveh,logging){
   return this.mixedModel.calcAccLatInt(this.u,leadveh.u,this.v,leadveh_veff,
 				       this.speed,vxl,this.speedLat,vyl,axl,
 				       this.len,Ll,this.width,Wl,roadWidthRef,
-				       logging);
+				       isPushing, logging);
  }
 
 

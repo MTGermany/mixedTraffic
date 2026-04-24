@@ -139,7 +139,6 @@ var accBiasRightTruck=0.2;  // MT 2021-11
 var accBiasRightBike=-0.1;  // MT 2023-01
 var accBiasRightOthers=0.; // including cars
 var accFloorMax=0.9;        // MT 2023-01 standard 0.5; IAM paper 0.9
-//  sensDvy in sliders; default 1s/m
 
 
 // boundaries
@@ -156,8 +155,6 @@ var s0yLatB=0.20;         // lat. attenuation scale [m] wall-veh interact
 // (2) variable slider params
 
 var tauLatOVM=parseFloat(slider_tauLatOVM.value); // lat OVM relax time
-var sensDvy=parseFloat(slider_sensDvy.value);     // FVDM-like inclusion of
-                    // rel lateral speed, but multiplicative=>slider
 var pushLong=parseFloat(slider_pushLong.value); // in [0,1]; 1=Galilei-inv.
 var pushLat=parseFloat(slider_pushLat.value);   // in [0,1]; push by back vehs
 
@@ -177,11 +174,11 @@ var longModelTruckRef=new ACC(v0Truck,TgapTruck,s0Truck,amaxTruck,bcomfTruck);
 var longModelBikeRef=new ACC(v0Bike,TgapBike,s0Bike,amaxBike,bcomfBike);
 
 var mixedModelCarRef=new MTM(longModelCarRef,s0y,s0yLat,s0yB,s0yLatB,
-			  sensLat,tauLatOVM,sensDvy);
+			  sensLat,tauLatOVM);
 var mixedModelTruckRef=new MTM(longModelTruckRef,s0y,s0yLat,s0yB,s0yLatB,
-			    sensLat,tauLatOVM,sensDvy);
+			    sensLat,tauLatOVM);
 var mixedModelBikeRef=new MTM(longModelBikeRef,s0y,s0yLat,s0yB,s0yLatB,
-			    sensLat,tauLatOVM,sensDvy);
+			    sensLat,tauLatOVM);
 var mixedModelObstacle=new ModelObstacle();
 
 
@@ -475,7 +472,6 @@ function updateSim(dt){    // called here by main_loop()
   fracTruck=parseFloat(slider_fracTruck.value); // !! otherwise string
   fracBike=parseFloat(slider_fracBike.value);  // frac+frac=e.g.0.20.2!!
   tauLatOVM=parseFloat(slider_tauLatOVM.value);
-  sensDvy=parseFloat(slider_sensDvy.value);
   pushLong=parseFloat(slider_pushLong.value);
   pushLat=parseFloat(slider_pushLat.value);
 
@@ -491,11 +487,6 @@ function updateSim(dt){    // called here by main_loop()
 	mixedModelBikeRef.tauLatOVM=tauLatOVM;
   }
 
-  if(true){
-	mixedModelCarRef.sensDvy=sensDvy; // passed by model ref to all cars!
-	mixedModelTruckRef.sensDvy=sensDvy;
-	mixedModelBikeRef.sensDvy=sensDvy;
-  }
 
   // !!! distribute new models to the vehicles
   mainroad.updateSpeedlimits(trafficObjs); // !!! not yet impl. MT 2021-11

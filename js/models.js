@@ -256,13 +256,11 @@ politeness and dvdumax: higher-level: road.js
 @param sensLat:   sensitivity (desired lat speed)/(long accel) [s]
 @param tauLatOVM: time constant[s] lateral OVM 
                   (sensLat/tauLatOVM=maximum ratio lat/long accelerations)
-@param sensDvy:   FVDM-like but multiplicative dependence [s/m] 
-                  of lat rel speed
 @return      MTM instance (constructor)
 */
 
 // standard: longModel: longModelCar, -Truck, -Bike=new ACC(..)
-function MTM(longModel,s0y,s0yLat,s0yB,s0yLatB,sensLat,tauLatOVM,sensDvy){
+function MTM(longModel,s0y,s0yLat,s0yB,s0yLatB,sensLat,tauLatOVM){
   this.longModel=longModel;
   this.s0y=s0y;
   this.s0yB=s0yB;
@@ -270,7 +268,6 @@ function MTM(longModel,s0y,s0yLat,s0yB,s0yLatB,sensLat,tauLatOVM,sensDvy){
   this.s0yLatB=s0yLatB;
   this.sensLat=sensLat;
   this.tauLatOVM=tauLatOVM;
-  this.sensDvy=sensDvy;
 
   // fixed values within MTM (acc noise at longModels, v0LatMax at road!)
 
@@ -297,7 +294,6 @@ MTM.prototype.copy=function(mixedModel){
   this.s0yLatB=mixedModel.s0yLatB;
   this.sensLat=mixedModel.sensLat;
   this.tauLatOVM=mixedModel.tauLatOVM;
-  this.sensDvy=mixedModel.sensDvy;
 }
 
 
@@ -337,9 +333,7 @@ MTM.prototype.calcAccLongInt=function(dx,dy,vx,vxl,axl,Ll,Wavg){
   var alpha=Math.min(Math.exp(-sy/this.s0y), 1);
 
   // reduce longInt if parallel (dx<Ll) and no collision (sy>0)
-  // NOTE: calcAccLatInt does not have such a factor, only gamma for back veh
-  // see at the definition headers of calcAccLongInt, calcAccLatInt
-
+ 
   if((dx<Ll)&&(sy>0)){ alpha*=longParReductFactor;} // factor=0 =>no interact
 
   return alpha*accCFint;
@@ -384,16 +378,6 @@ MTM.prototype.calcAccLongLeaderSelect=function(dx,dy,vx,vxl,axl,Ll,Wavg){
 
 
 
-/* 
-not needed because free and int always separately used
-
-MTM.prototype.calcAccLong=function(dx,dy,vx,vxl,axl,Ll,Wavg){ 
-  var accFree= this.longModel.calcAccFree(vx);
-  var accInt=this.calcAccLongInt(dx,dy,vx,vxl,axl,Ll,Wavg)
-  return accFree+alpha*accCFint;
-}
-*/
-
 
 /*
 ###########################################################################
@@ -425,6 +409,9 @@ MTM lateral interaction acceleration effected by one vehicle
 @param Lveh: length own car [m]
 @param Ll:   length leading car [m]
 @param Wavg: 1/2(W+Wl) avg. vehicle width [m]
+@param isPushing: if calcAccLatInt is used for calc. the pushing force
+                  of followers, pushing set to zero if (yf-yl)*(vyf-vyl)>0
+                  since then possible crit situation resolves itself
 
 @return:  desired lateral acceleration [m/s^2] (including sign)
 
@@ -440,7 +427,8 @@ NOTE3: addition of accLatInt for several vehs, floorFields,
 
 
 MTM.prototype.calcAccLatInt=function(x,xl,y,yl,vx,vxl,vy,vyl,axl,
-				     Lveh,Ll,Wveh,Wl,Wroad,logging){
+				     Lveh,Ll,Wveh,Wl,Wroad,
+				     isPushing,logging){
   var dx=xl-x;
   var sx=Math.max(0,dx-Ll);
   var accCFint=this.longModel.calcAccInt(sx,vx,vxl,axl); // possibly reuse
@@ -453,38 +441,17 @@ MTM.prototype.calcAccLatInt=function(x,xl,y,yl,vx,vxl,vy,vyl,axl,
 
   // normalized lateral desire alpha in [-1,1]
 
-  // !!! Experiment with several powers
-  // power -> 0 => fixed lateral repulsion away from center
-  // good for lane free, bad lane-based because lateral instabilities if
-  // approaching slower objects
-  // power =1 => good for lane-based traffic
-  // power =2 => theoretiall gradient zero in lane center but still wobbling
-
+ 
   var alpha=-sign_dy*((overlap) 
 		      ? Math.abs(dy)/Wavg 
-		      //? Math.sqrt(Math.abs(dy)/Wavg)
-		      //? Math.pow(Math.abs(dy)/Wavg, 0.01)
-		      //? Math.pow(Math.abs(dy)/Wavg, 2)
 		      : Math.exp(-(Math.abs(dy)-Wavg)/this.s0yLat));
 
-  // !!! lin decrease if |dy|<Wavg
-  //var alpha=(overlap) 
-   //   ? -dy/Wavg
-   //   : -sign_dy*Math.exp(-(Math.abs(dy)-Wavg)/this.s0yLat);
 
-
-
-  // alphaB in {-1,0,1} replaces normalized lateral desire alpha
+  // correct normalized lateral desire alpha
   // if overlap with
   // leaders that are too close to the boundaries to pass on that side
   // introduced to avoid trapped cars behind slow vehs at boundaries
 
-  // 0: no overlap or leader sufficiently far away from boundaries
-  //    or very narrow road
-  // 1: tooNarrowLeft->positive force
-  // -1: tooNarrowRight->positive force
-  
-  // var alphaB=0; // will be directly overwritten to alpha
 
   //if(false){ // test without
   if(overlap){
@@ -496,23 +463,23 @@ MTM.prototype.calcAccLatInt=function(x,xl,y,yl,vx,vxl,vy,vyl,axl,
 
     if(!(tooNarrowRight&&tooNarrowLeft)){    // no infl for too narrow rd
     //if(false){
-      if(tooNarrowRight&&(y>yl)){alpha=-1;}  // alpha=alphaB
-      if(tooNarrowLeft&&(y<yl)){alpha=1;}    // alpha=alphaB
+      if(tooNarrowRight&&(y>yl)){alpha=-1;}  
+      if(tooNarrowLeft&&(y<yl)){alpha=1;}    
     }
   }
   
-  //if(logging){console.log("     sign_dy=",sign_dy," alpha=",alpha);}
 
-  var v0LatInt=-sensLat*alpha*accCFint; //accCFint<0; no cone restr as in gnuplot 
-
-    // multiplicative FVDM-like effect on lat speed difference
-    // 1/sensDvy=lateral speed difference where accLatInt=doubled or zeroed
-
-  var mult_dv_factor=(overlap)
-	? 1 : Math.max(0., 1.-this.sensDvy*sign_dy*(vyl-vy));
-
-  // !!sensDvy can be set=0 in sliders =>  mult_dv_factor=1
+  //note1: accCFint<0; note2: no cone restr as in gnuplot
   
+  var v0LatInt=-sensLat*alpha*accCFint; 
+
+  // !!! if isPushing set pushing to zero if (yf-yl)*(vyf-vyl)>0
+  // possibly generalize all situations by FVDM-like effect
+  // on lat relative speed 
+
+  var mult_dv_factor=(isPushing && ((yl-y)*(vyl-vy)>0)) ? 0 : 1;
+
+   
   var accLatInt=v0LatInt/this.tauLatOVM*mult_dv_factor;
 
   
@@ -538,7 +505,6 @@ MTM.prototype.calcAccLatInt=function(x,xl,y,yl,vx,vxl,vy,vyl,axl,
 	console.log(
 	  " MTM.calcAccLatInt:",
 	   // " this.tauLatOVM=",this.tauLatOVM,
-	   // " this.sensDvy=",this.sensDvy,
 	    " x=",formd(x),
 	    " dx=",formd(dx),
 	    " y=",formd(y),
@@ -791,7 +757,7 @@ MTM.prototype.calcTable_dxvx=function(dy,vxl,vy,vyl,axl,Lveh,Ll,Wavg){
 	  
 	  var ax=this.calcAccLong(dx,dy,vx,vxl,axl,Ll,Wavg);
 	  var ay=this.calcAccLatInt(0,dx,0,dy,vx,vxl,axl,
-				    Lveh,Ll,Wveh,Wl,10*Wavg,false);
+				    Lveh,Ll,Wveh,Wl,10*Wavg,false,false);
 		+ this.calcAccLatFree(vy);
 	    console.log(str_dx,
 			"\t",str_dy,

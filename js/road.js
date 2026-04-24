@@ -141,7 +141,7 @@ road.prototype.createNewMixedModel=function(iType){
   if(iType<3){ // overwrite params (not applicable to obstacles)
     longModel=new ACC(v0,Tgap,s0,amax,bcomf); // car; "new" important
     mixedModel=new MTM(longModel,s0y,s0yLat,s0yB,s0yLatB,
-		       sensLat,tauLatOVM,sensDvy); // car, new important
+		       sensLat,tauLatOVM); // car, new important
     mixedModel.copy(this.mixedModelRef[iType]);
   }
   else{ //iType==3
@@ -676,23 +676,30 @@ road.prototype.calcAccelerationsOfVehicle=function(i){
   var accLatFree=this.veh[i].calcAccLatFree();
   var accLatInt=0;
 
-    // leaders
+  
+    // leaders (second arg of accLatInt isPushing=false)
 
   //var logging=(this.veh[i].id==9364); // need fixed random seed for this
   var logging=false;
-  
+
+  var isPushing=false;
+
   for(var ilead=0; ilead<nLeaders; ilead++){
     var j=iLeaders[ilead];
-    accLatInt += this.veh[i].calcAccLatInt(this.veh[j],logging);
+    accLatInt += this.veh[i].calcAccLatInt(this.veh[j],isPushing,logging);
   }
 
-    // followers (actio=reactio => "-=" instead of "+=" !)
-    // of course, do not consider push effect of back obstacles
+  // followers (actio=reactio => "-=" instead of "+=" !)
+  // of course, do not consider push effect of back obstacles
+  // second arg of accLatInt isPushing=true
+  // ONLY place where slider pushLat value is used!
 
+  isPushing=true;
+  
   for(var ifollow=0; ifollow<nFollowers; ifollow++){
-    var j=iFollowers[ifollow];
-    var factor=(this.veh[j].type==="obstacle") ? 0 : pushLat;
-    accLatInt -= factor*this.veh[j].calcAccLatInt(this.veh[i],false);
+    let j=iFollowers[ifollow];
+    let factor=(this.veh[j].type==="obstacle") ? 0 : pushLat;
+    accLatInt -= factor*this.veh[j].calcAccLatInt(this.veh[i],isPushing, false);
   }
   // finished calculation of accLatInt
 
