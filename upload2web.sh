@@ -38,7 +38,7 @@ for file in `find $targetDir -type f`; do chmod o+r $file; done
 
 echo "made directory $targetDir ready for upload"
 
-echo "hint: In the simplest case, just rm -r old dir, cp -r new to it and upload"
+echo "hint: In the simplest case, test, then just rm old dir and cp new to it (if no saving history, mv), then upload"
 echo "rm -r $HOME/public_html/professional/mixedTraffic"
 echo "cp -rp $targetDir $HOME/public_html/professional/mixedTraffic"
 echo ""
